@@ -1,18 +1,18 @@
-module Lib
-    ( someFunc
-    , sqrt
-    )
+module Lib ( sqrt
+           , nextlet
+           , digitval
+           )
 where
 
 
 import Prelude hiding (sqrt, until)
-
+import Data.Char (ord, chr)
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
 
--- Ex. 2.1.17
+-- Ex. 2.1.7
 -- sqrt :: (Ord n, Fractional n) => n -> [n]
 sqrt n =
   newton f' n
@@ -61,3 +61,44 @@ newton f n =
 
     until'' p g y oldY =
       if p y oldY then y else until'' p g (g y) y
+
+
+-- Ex. 2.2.2
+sumsq x y z =
+  sq (max x y) + sq (min (max y z) (max x z))
+
+  where
+    sq x =
+      x * x
+
+    max a b =
+      if a > b then a else b
+
+    min a b =
+      if a < b then a else b
+
+
+nextlet c =
+  chr $ nextChr $ if isUpperCase c then 'A' else if isLowerCase c then 'a' else '\0'
+
+  where
+    nextChr firstChar =
+      ((ord c + 1) `mod` ord firstChar) `mod` 26 + ord firstChar
+
+    isUpperCase c =
+      ord c >= ord 'A' && ord c <= ord 'Z'
+
+    isLowerCase c =
+      ord c >= ord 'a' && ord c <= ord 'z'
+
+
+digitval c =
+  ord c - ord '0'
+
+
+
+
+
+main :: IO ()
+main =
+  undefined
