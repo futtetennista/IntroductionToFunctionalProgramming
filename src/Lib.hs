@@ -1,7 +1,4 @@
-module Lib ( sqrt
-           , nextlet
-           , digitval
-           )
+module Lib
 where
 
 
@@ -79,11 +76,11 @@ sumsq x y z =
 
 
 nextlet c =
-  chr $ nextChr $ if isUpperCase c then 'A' else if isLowerCase c then 'a' else '\0'
+  chr $ nextChar $ if isUpperCase c then 'A' else if isLowerCase c then 'a' else '\0'
 
   where
-    nextChr firstChar =
-      ((ord c + 1) `mod` ord firstChar) `mod` 26 + ord firstChar
+    nextChar start =
+      ((ord c + 1) `mod` ord start) `mod` 26 + ord start
 
     isUpperCase c =
       ord c >= ord 'A' && ord c <= ord 'Z'
@@ -96,9 +93,58 @@ digitval c =
   ord c - ord '0'
 
 
+countNegative :: [Int] -> Int
+countNegative xs =
+  length [ x | x <- xs, x < 0 ]
 
 
+intPairs :: Int -> [(Int, Int)]
+intPairs n =
+  [ (x, y) | x <- [1..n], y <- [1..n], x /= y ]
 
-main :: IO ()
-main =
-  undefined
+
+power :: Int -> Int -> Int
+power x n =
+  product [ x | _ <- [1..n] ]
+
+
+divisors n =
+  [ d | d <- [1..n], n `mod` d == 0 ]
+
+
+prime n =
+  mindivisor == [n]
+  where
+    mindivisor | divs == [] = []
+               | otherwise = [minimum divs]
+      where
+        divs =
+          [ x | x <- divisors n, x > 1 ]
+
+
+gcd' =
+  \a b -> maximum [ d | d <- divisors a, b `mod` d == 0 ]
+
+
+zip4 :: [a] -> [b] -> [c] -> [d] -> [(a, b, c, d)]
+zip4 as bs cs ds =
+  zipWith (\(a,b) (c,d) -> (a,b,c,d)) (zip as bs) (zip cs ds)
+
+
+-- L - 1 + 3 => O(L) where L = lenght xs
+trips :: [a] -> [(a, a, a)]
+trips xs | length xs < 3 =
+  []
+trips xs =
+  (xs!!0, xs!!1, xs!!2) : trips (drop 1 xs)
+
+
+trips' xs =
+  tripsd xs []
+  where
+    tripsd xs' acc | length xs' < 3 =
+                     reverse acc
+                     -- acc
+                   | otherwise =
+                     tripsd (drop 1 xs') ((xs'!!0, xs'!!1, xs'!!2) : acc)
+                     -- tripsd (drop 1 xs) (acc ++ [(xs!!0, xs!!1, xs!!2)])
