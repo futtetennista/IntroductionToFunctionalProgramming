@@ -1,98 +1,10 @@
-module Lib
+module Chapter3
 where
 
 
-import Prelude hiding (sqrt, until)
 import Data.Char (ord, chr)
 import Data.List ((\\))
 
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
-
-
--- Ex. 2.1.7
--- sqrt :: (Ord n, Fractional n) => n -> [n]
-sqrt n =
-  newton f' n
-  -- newton f n
-  where
-    f x =
-      x * x
-
-    f' x =
-      x * x - n
-
--- newton :: (Ord n, Fractional n) => (n -> n) -> n -> [n]
-newton f n =
-  -- until satisfies improve n
-  -- until satisfies' improve' n
-  -- WHY until satisfies improve' n with f x = x * x DOESN'T WORK ?!
-  until'' satisfies'' improve' n 0
-
-  where
-    -- until :: Fractional n => (n -> Bool) -> (n -> n) -> n -> [n] -> [n]
-    until p g y =
-      if p y then y else until p g (g y)
-
-    satisfies x =
-      abs (f x - n) < 0.0001
-
-    -- improve :: Fractional n => n -> n -> n
-    improve a =
-      (a + n / a) / 2
-
-    satisfies' x =
-      abs (f x) < 0.0001 * x
-
-    -- improve' :: Fractional n => (n -> n) -> n -> n
-    improve' a =
-      a - (f a / deriv f a)
-
-      where
-        deriv f a =
-          (f (a + dx) - f a) / dx
-
-        dx = 0.0001
-
-    satisfies'' a a' =
-      abs (a - a') < 0.0001 * abs a
-
-    until'' p g y oldY =
-      if p y oldY then y else until'' p g (g y) y
-
-
--- Ex. 2.2.2
-sumsq x y z =
-  sq (max x y) + sq (min (max y z) (max x z))
-
-  where
-    sq x =
-      x * x
-
-    max a b =
-      if a > b then a else b
-
-    min a b =
-      if a < b then a else b
-
-
-nextlet c =
-  chr $ nextChar $ if isUpperCase c then 'A' else if isLowerCase c then 'a' else '\0'
-
-  where
-    nextChar start =
-      ((ord c + 1) `mod` ord start) `mod` 26 + ord start
-
-    isUpperCase c =
-      ord c >= ord 'A' && ord c <= ord 'Z'
-
-    isLowerCase c =
-      ord c >= ord 'a' && ord c <= ord 'z'
-
-
-digitval c =
-  ord c - ord '0'
 
 
 countNegative :: [Int] -> Int
@@ -156,7 +68,13 @@ trips' xs =
 -- Ex. 3.3.10
 riffle :: [Int] -> [Int]
 riffle xs =
-  undefined
+  concat [[a, b] | (a, b) <- zippedOddsEvens]
+  where
+    zippedOddsEvens =
+      zip (xs \\ evens) evens
+
+    evens =
+      [x | x <- xs, x `mod` 2 == 0]
 
 
 -- Ex. 3.3.1
@@ -164,7 +82,7 @@ type TheNumber = Int
 type Guess = Int
 score :: TheNumber -> Guess -> Int
 score num guess =
-  10 * countDigits * bulls numList guessList + cows
+  10 * countDigits num 0 * bulls numList guessList + cows
   where
     numList =
       toList num
@@ -187,13 +105,10 @@ score num guess =
     toNum =
       sum [ x * 10 ^ y | (x, y) <- zip numList [length numList - 1, length numList - 2..] ]
 
-    countDigits =
-      countDigitsd toNum 0
-      where
-        countDigitsd 0 acc =
-          acc
-        countDigitsd n acc =
-          countDigitsd (n `div` 10) (acc + 1)
+    countDigits 0 acc =
+      acc
+    countDigits n acc =
+      countDigits (n `div` 10) (acc + 1)
 
     bulls [] [] =
       0
