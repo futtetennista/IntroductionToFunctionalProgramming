@@ -1,4 +1,4 @@
-module Lib
+module Chapter2
 where
 
 

@@ -53,6 +53,8 @@ trips xs | length xs < 3 =
 trips xs =
   (xs!!0, xs!!1, xs!!2) : trips (drop 1 xs)
 
+checkTrips =
+  trips [1..5] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
 
 trips' xs =
   tripsd xs []
@@ -63,6 +65,9 @@ trips' xs =
                    | otherwise =
                      tripsd (drop 1 xs') ((xs'!!0, xs'!!1, xs'!!2) : acc)
                      -- tripsd (drop 1 xs) (acc ++ [(xs!!0, xs!!1, xs!!2)])
+
+checkTrips' =
+  trips' [1..5] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
 
 
 -- Ex. 3.3.10
@@ -76,10 +81,13 @@ riffle xs =
     evens =
       [x | x <- xs, x `mod` 2 == 0]
 
+checkRiffle =
+  riffle ([1, 3..7] ++ [2, 4..8]) == [1..8]
 
 -- Ex. 3.3.1
 type TheNumber = Int
 type Guess = Int
+
 score :: TheNumber -> Guess -> Int
 score num guess =
   10 * countDigits num 0 * bulls numList guessList + cows
@@ -123,7 +131,9 @@ score num guess =
 filter' :: (a -> Bool) -> [a] -> [a]
 filter' p =
   concat . map box
-  where box x = if p x then [x] else []
+  where
+    box x =
+      if p x then [x] else []
 
 
 -- Ex. 3.4.3
@@ -134,10 +144,10 @@ rewriteListComprehension1 =
       res2 = concat . map (filter odd) $ xss
     putStrLn $ "res1 = " ++ show res1
     putStrLn $ "res2 = " ++ show res2
-    putStrLn $ "==? " ++ show(res1 == res2)
+    putStrLn $ "==? " ++ show (res1 == res2)
   where
     xss =
-      [[1, 2, 3], [4, 5, 6]]
+      [[1..5], [10..15]]
 
     odd x =
       x `mod` 2 /= 0
