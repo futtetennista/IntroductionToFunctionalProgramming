@@ -212,7 +212,7 @@ filter' p =
 
 
 -- Ex. 3.4.3
-holds1 =
+rewriteListComprehension1 =
   do
     let
       res1 = [ x | xs <- xss, x <- xs, odd x ]
@@ -227,10 +227,11 @@ holds1 =
     odd x =
       x `mod` 2 /= 0
 
-holds2 =
+
+rewriteListComprehension2 =
   do
     let
-      res1 = [(x, y) | x <- xs, odd x,  y <- ys]
+      res1 = [ (x, y) | x <- xs, odd x,  y <- ys ]
       res2 =  concat . map mkPairs $ filter odd xs
     putStrLn $ "res1 = " ++ show res1
     putStrLn $ "res2 = " ++ show res2
@@ -250,3 +251,6 @@ holds2 =
       x `mod` 2 /= 0
 
 -- Ex. 3.4.4
+-- f more performant since filtering is applied before ys are generated
+f = [ putStrLn (show (x, y)) | x <- [0..1000], x < 10, y <- [1..100] ]
+g = [ putStrLn (show (x, y)) | x <- [0..1000], y <- [1..100], x < 10]
