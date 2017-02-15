@@ -177,5 +177,31 @@ rewriteListComprehension2 =
 
 -- Ex. 3.4.4
 -- f more performant since filtering is applied before ys are generated
-f = [ putStrLn (show (x, y)) | x <- [0..1000], x < 10, y <- [1..100] ]
-g = [ putStrLn (show (x, y)) | x <- [0..1000], y <- [1..100], x < 10]
+earlyFilterListComprehension =
+  [ putStrLn (show (x, y)) | x <- [0..1000], x < 10, y <- [1..100] ]
+
+lateFilterListComprehension =
+  [ putStrLn (show (x, y)) | x <- [0..1000], y <- [1..100], x < 10 ]
+
+
+foldr1' :: (a -> a -> a) -> [a] -> a
+foldr1' f xs =
+  foldr f (last xs) (init xs)
+
+
+foldl1' :: (a -> a -> a) -> [a] -> a
+foldl1' f xs =
+  foldl f (head xs) (tail xs)
+
+
+-- Ex. 3.5.1
+all' :: (a -> Bool) -> [a] -> Bool
+all' p xs =
+  foldr (\x acc -> acc && p x) True xs
+
+-- Ex. 3.5.2
+foldlTrue x xs =
+  foldl (-) x xs == x - sum xs
+
+foldrFalse x xs =
+  foldr (-) x xs /= x - sum xs
