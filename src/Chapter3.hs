@@ -2,9 +2,7 @@ module Chapter3
 where
 
 
-import Data.Char (ord, chr)
 import Data.List ((\\))
-
 
 
 countNegative :: [Int] -> Int
@@ -184,6 +182,102 @@ lateFilterListComprehension =
   [ putStrLn (show (x, y)) | x <- [0..1000], y <- [1..100], x < 10 ]
 
 
+-- Ex. 3.5.1
+all' :: (a -> Bool) -> [a] -> Bool
+all' p xs =
+  foldl (\acc x -> acc && p x) True xs
+
+-- Ex. 3.5.2
+foldlTrue x xs =
+  foldl (-) x xs == x - sum xs
+
+
+foldrFalse x xs =
+  foldr (-) x xs /= x - sum xs
+
+-- Ex. 3.5.3
+isomorphicFoldlFuncs :: Eq b => (b -> a -> b) -> b -> [a] -> [a] -> Bool
+isomorphicFoldlFuncs f zero xs ys =
+  foldl f zero (xs ++ ys) == foldl f (foldl f zero xs) ys -- the equality holds since foldl starts from the left-most element
+
+
+-- using reverse (xs ++ ys) == reverse ys ++ reverse xs and the 3rd fold law
+isomorphicFoldrFuncs :: Eq b => (a -> b -> b) -> b -> [a] -> [a] -> Bool
+isomorphicFoldrFuncs f zero xs ys =
+  foldr f zero (xs ++ ys) == foldl (flip f) (foldl (flip f) zero $ reverse ys) (reverse xs)
+  -- foldr f zero (xs ++ ys) == foldr f (foldr f zero ys) xs
+
+
+-- Ex. 3.5.4
+insert :: Ord a => a -> [a] -> [a]
+insert x xs =
+  takeWhile (<= x) xs  ++ [x] ++ dropWhile (<= x) xs
+
+
+-- Time complexity: takeWhile will iterate through n/2 on average, same for dropWhile. This will happen n times so O(n^2).
+isort :: Ord a => [a] -> [a]
+isort =
+  foldr insert []
+
+
+-- 3.5.5
+remdups :: Ord a => [a] -> [a]
+remdups =
+  reverse . foldl (\acc x -> if elem x acc then acc else x : acc) []
+
+fastRemdups :: Ord a => [a] -> [a]
+fastRemdups =
+  toList . toSet
+  where
+    toList :: Set a -> [a]
+    toList Empty =
+      []
+    toList (Node k l r) =
+      toList l ++ [k] ++ toList r
+
+    toSet :: Ord a => [a] -> Set a
+    toSet =
+     foldl add Empty
+
+data Set a
+  = Node { key :: a
+         , left :: Set a
+         , right :: Set a
+         }
+  | Empty
+
+add :: Ord a => Set a -> a -> Set a
+add Empty x =
+  Node { key = x, left = Empty, right = Empty }
+
+add node@(Node k _ _) x
+  | k == x = node
+  | otherwise =
+    addLevelOrder node x
+
+addLevelOrder set x =
+  undefined
+
+
+-- Ex. 3.5.7
+ssum :: Ord a => [a] -> [a]
+ssum [] =
+  []
+
+ssum xs =
+  reverse $ foldl localMax ([head xs]) xs
+  where
+    localMax acc@(y:_) x =
+      if x > y then x : acc else acc
+
+    localMax [] _ =
+      fail "Accumulator must be a singleton list"
+
+testSsum :: Bool
+testSsum =
+  (ssum [3, 1, 3, 4, 9, 2, 10, 7] :: [Int]) == [3, 4, 9, 10]
+
+-- Ex. 3.5.8
 foldr1' :: (a -> a -> a) -> [a] -> a
 foldr1' f xs =
   foldr f (last xs) (init xs)
@@ -194,14 +288,53 @@ foldl1' f xs =
   foldl f (head xs) (tail xs)
 
 
--- Ex. 3.5.1
-all' :: (a -> Bool) -> [a] -> Bool
-all' p xs =
-  foldr (\x acc -> acc && p x) True xs
+scanl1' :: (a -> a -> a) -> [a] -> [a]
+scanl1' _ [] =
+  []
+scanl1' f (x:xs) =
+  scanl f x xs
 
--- Ex. 3.5.2
-foldlTrue x xs =
-  foldl (-) x xs == x - sum xs
+scanr1' :: (a -> a -> a) -> [a] -> [a]
+scanr1' _ [] =
+  []
+scanr1' f xs =
+  scanr f (last xs) (init xs)
 
-foldrFalse x xs =
-  foldr (-) x xs /= x - sum xs
+
+-- Ex. 3.5.9
+type Precision =
+  Int
+
+computeE :: Precision -> Double
+computeE x =
+  foldl (\acc y -> (1 / fact y 1) + acc) 0 $ take x [0..]
+  where
+    fact n acc
+      | n <= 0 =
+        acc
+      | otherwise =
+        fact (n - 1) (n * acc)
+
+
+-- Ex. 3.6.3
+rev2 :: [a] -> [a]
+rev2 (x:y:[]) =
+  (y:x:[])
+
+rev2 xs =
+  xs
+
+
+-- Ex. 3.6.4
+insert' :: Ord a => a -> [a] -> [a]
+insert' x =
+  foldr swap [x]
+  where
+    swap y (z:zs) =
+      if y > z then z:y:zs else y:z:zs
+
+
+-- Time complexity: 1 + 2 + … + n swaps =~ n^2/2 = O(n^2)
+isort' :: Ord a => [a] -> [a]
+isort' =
+  foldr insert' []
