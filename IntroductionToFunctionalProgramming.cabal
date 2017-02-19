@@ -3,11 +3,11 @@ version:             0.1.0.0
 synopsis:            Solutions to the exercises in the book "Introduction to Functional Programming" by Bird and Wadler
 description:         Please see README.md
 homepage:            https://github.com/futtetennista/IntroductionToFunctionalProgramming#readme
-license:             BSD3
+license:             MIT
 license-file:        LICENSE
-author:              Author name here
+author:              Futtetenista
 maintainer:          futtetennista@gmail.com
-copyright:           2016 Futtetennista
+copyright:           2017 Futtetennista
 category:            Exercises
 build-type:          Simple
 extra-source-files:  README.md
