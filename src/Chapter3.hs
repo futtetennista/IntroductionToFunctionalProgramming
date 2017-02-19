@@ -20,10 +20,12 @@ power x n =
   product [ x | _ <- [1..n] ]
 
 
+divisors :: Int -> [Int]
 divisors n =
   [ d | d <- [1..n], n `mod` d == 0 ]
 
 
+prime :: Int -> Bool
 prime n =
   mindivisor == [n]
   where
@@ -34,6 +36,8 @@ prime n =
           [ x | x <- divisors n, x > 1 ]
 
 
+
+gcd' :: Int -> Int -> Int
 gcd' =
   \a b -> maximum [ d | d <- divisors a, b `mod` d == 0 ]
 
@@ -44,16 +48,19 @@ zip4 as bs cs ds =
   zipWith (\(a,b) (c,d) -> (a,b,c,d)) (zip as bs) (zip cs ds)
 
 
--- Ex. 3.3.9: L - 1 + 3 => O(L) where L = lenght xs
+-- Ex. 3.3.9: L - 1 + 3 => O(L) where L = length xs
 trips :: [a] -> [(a, a, a)]
 trips xs | length xs < 3 =
   []
 trips xs =
   (xs!!0, xs!!1, xs!!2) : trips (drop 1 xs)
 
+checkTrips :: Bool
 checkTrips =
   trips [1..5] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
 
+
+trips' :: [a] -> [(a, a, a)]
 trips' xs =
   tripsd xs []
   where
@@ -64,6 +71,7 @@ trips' xs =
                      tripsd (drop 1 xs') ((xs'!!0, xs'!!1, xs'!!2) : acc)
                      -- tripsd (drop 1 xs) (acc ++ [(xs!!0, xs!!1, xs!!2)])
 
+checkTrips' :: Bool
 checkTrips' =
   trips' [1..5] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
 
@@ -79,16 +87,19 @@ riffle xs =
     evens =
       [x | x <- xs, x `mod` 2 == 0]
 
+
+checkRiffle :: Bool
 checkRiffle =
   riffle ([1, 3..7] ++ [2, 4..8]) == [1..8]
+
 
 -- Ex. 3.3.1
 type TheNumber = Int
 type Guess = Int
 
-score :: TheNumber -> Guess -> Int
+score :: TheNumber -> Guess -> String
 score num guess =
-  10 * countDigits num 0 * bulls numList guessList + cows
+  show (10 * countDigits num 0 * bulls numList guessList) ++ show cows
   where
     numList =
       toList num
@@ -102,11 +113,11 @@ score num guess =
       where
         toListn 0 acc =
           acc
-        toListn n acc =
+        toListn x acc =
           let
-            (res, rem) = n `divMod` 10
+            (res, rest) = x `divMod` 10
           in
-            toListn res (rem : acc)
+            toListn res (rest : acc)
 
     toNum =
       sum [ x * 10 ^ y | (x, y) <- zip numList [length numList - 1, length numList - 2..] ]
@@ -123,6 +134,14 @@ score num guess =
 
     cows =
       (length numList) - (length $ numList \\ guessList) - bulls numList guessList
+
+
+checkScore :: Bool
+checkScore =
+  [ score 2113 1234
+  , score 2113 1111
+  , score 2113 1212
+  ] == [ "03", "20", "12" ]
 
 
 -- Ex. 3.4.1
@@ -187,6 +206,7 @@ all' :: (a -> Bool) -> [a] -> Bool
 all' p xs =
   foldl (\acc x -> acc && p x) True xs
 
+
 -- Ex. 3.5.2
 foldlTrue x xs =
   foldl (-) x xs == x - sum xs
@@ -195,13 +215,14 @@ foldlTrue x xs =
 foldrFalse x xs =
   foldr (-) x xs /= x - sum xs
 
+
 -- Ex. 3.5.3
 isomorphicFoldlFuncs :: Eq b => (b -> a -> b) -> b -> [a] -> [a] -> Bool
 isomorphicFoldlFuncs f zero xs ys =
   foldl f zero (xs ++ ys) == foldl f (foldl f zero xs) ys -- the equality holds since foldl starts from the left-most element
 
 
--- using reverse (xs ++ ys) == reverse ys ++ reverse xs and the 3rd fold law
+-- using reverse (xs ++ ys) == reverse ys ++ reverse xs and the 3rd duality law
 isomorphicFoldrFuncs :: Eq b => (a -> b -> b) -> b -> [a] -> [a] -> Bool
 isomorphicFoldrFuncs f zero xs ys =
   foldr f zero (xs ++ ys) == foldl (flip f) (foldl (flip f) zero $ reverse ys) (reverse xs)
@@ -220,43 +241,43 @@ isort =
   foldr insert []
 
 
--- 3.5.5
+-- Ex. 3.5.5
 remdups :: Ord a => [a] -> [a]
 remdups =
   reverse . foldl (\acc x -> if elem x acc then acc else x : acc) []
 
-fastRemdups :: Ord a => [a] -> [a]
-fastRemdups =
-  toList . toSet
-  where
-    toList :: Set a -> [a]
-    toList Empty =
-      []
-    toList (Node k l r) =
-      toList l ++ [k] ++ toList r
+-- fastRemdups :: Ord a => [a] -> [a]
+-- fastRemdups =
+--   toList . toSet
+--   where
+--     toList :: Set a -> [a]
+--     toList Empty =
+--       []
+--     toList (Node k l r) =
+--       toList l ++ [k] ++ toList r
 
-    toSet :: Ord a => [a] -> Set a
-    toSet =
-     foldl add Empty
+--     toSet :: Ord a => [a] -> Set a
+--     toSet =
+--      foldl add Empty
 
-data Set a
-  = Node { key :: a
-         , left :: Set a
-         , right :: Set a
-         }
-  | Empty
+-- data Set a
+--   = Node { key :: a
+--          , left :: Set a
+--          , right :: Set a
+--          }
+--   | Empty
 
-add :: Ord a => Set a -> a -> Set a
-add Empty x =
-  Node { key = x, left = Empty, right = Empty }
+-- add :: Ord a => Set a -> a -> Set a
+-- add Empty x =
+--   Node { key = x, left = Empty, right = Empty }
 
-add node@(Node k _ _) x
-  | k == x = node
-  | otherwise =
-    addLevelOrder node x
+-- add node@(Node k _ _) x
+--   | k == x = node
+--   | otherwise =
+--     addLevelOrder node x
 
-addLevelOrder set x =
-  undefined
+-- addLevelOrder set x =
+--   undefined
 
 
 -- Ex. 3.5.7
@@ -332,6 +353,8 @@ insert' x =
   where
     swap y (z:zs) =
       if y > z then z:y:zs else y:z:zs
+    swap _ [] =
+      fail "Accumulator must be a non-empty list"
 
 
 -- Time complexity: 1 + 2 + … + n swaps =~ n^2/2 = O(n^2)

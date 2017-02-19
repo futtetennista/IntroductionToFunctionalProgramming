@@ -1,14 +1,14 @@
 name:                IntroductionToFunctionalProgramming
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Solutions to the exercises in the book "Introduction to Functional Programming" by Bird and Wadler
 description:         Please see README.md
-homepage:            https://github.com/githubuser/IntroductionToFunctionalProgramming#readme
+homepage:            https://github.com/futtetennista/IntroductionToFunctionalProgramming#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Author name here
-maintainer:          example@example.com
-copyright:           2016 Author name here
-category:            Web
+maintainer:          futtetennista@gmail.com
+copyright:           2016 Futtetennista
+category:            Exercises
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
@@ -45,4 +45,4 @@ test-suite IntroductionToFunctionalProgramming-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/IntroductionToFunctionalProgramming
+  location: https://github.com/futtetennista/IntroductionToFunctionalProgramming
