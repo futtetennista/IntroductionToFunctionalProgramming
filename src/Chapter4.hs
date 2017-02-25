@@ -7,6 +7,7 @@ module Chapter4( convert
 where
 
 
+-- 4.1
 units :: [String]
 units =
   [ "one"
@@ -166,7 +167,7 @@ reverseConvert str =
     reverseConvert' str' tuple@(t, h, d) =
       case span (/=' ') str' of
         ("thousand", rest) ->
-          reverseConvert' rest (calculateThousand(h, d), 0, 0)
+          reverseConvert' rest ((h + d) * 1000, 0, 0)
 
         ("hundred", rest) ->
           reverseConvert' rest (t, (d * 100), 0)
@@ -180,18 +181,13 @@ reverseConvert str =
         (s, rest) ->
           reverseConvert' rest (t, h, reverseTens s)
 
-    calculateThousand (0, d) =
-      d * 1000
-    calculateThousand (h, 0) =
-      h * 10
-    calculateThousand (h, d) =
-      (h + d) * 1000
-
 
 reverseTens :: String -> Int
 reverseTens str
   | elem '-' str =
     10 * (elemIndex prefix tens + 2) + (reverseUnits $ tail postfix)
+  | elem str tens =
+    10 * (elemIndex str tens + 2)
   | otherwise =
     reverseTeens str
   where

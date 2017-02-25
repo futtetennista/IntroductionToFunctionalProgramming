@@ -8,7 +8,7 @@ import Chapter4
 spec :: Spec
 spec =
   do
-    describe "Convert numbers to words" $ do
+    describe "4.1: Convert numbers to words" $ do
       it "should convert numbers to words" $ do
         convert 23 `shouldBe` "twenty-three"
         convert 123 `shouldBe` "one hundred and twenty-three"
