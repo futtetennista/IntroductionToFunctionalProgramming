@@ -217,3 +217,307 @@ elemIndex str xs =
       error $ "No index found for value " ++ str
     (_:_) ->
       error "Multiple indexes"
+
+
+-- 4.2
+type Base =
+  Int
+
+type Bigit =
+  Int
+
+type Vint =
+  [Bigit]
+
+
+strep :: Vint -> Vint
+strep [] =
+  [0]
+strep xs =
+  dropWhile (==0) xs
+
+
+align :: Vint -> Vint -> (Vint, Vint)
+align xs ys =
+  case (length ys) - (length xs) of
+    0 ->
+      (xs, ys)
+    n ->
+      if n > 0 then (copy 0 n ++ xs, ys)
+      else (xs, copy 0 n ++ ys)
+
+
+copy :: a -> Int -> [a]
+copy x times =
+  [x | _ <- [0..times]]
+
+
+vcompare :: (Vint -> Vint -> a) -> Vint -> Vint -> a
+vcompare op xs ys =
+  op axs ays
+  where
+    (axs, ays) =
+      align xs ys
+
+
+carry :: Base -> Bigit -> Vint -> Vint
+carry base x (c:xs) =
+  (x + c) `div` base : (x + c) `mod` base : xs
+
+
+norm :: Base -> Vint -> Vint
+norm base =
+  strep . foldr (carry base) [0]
+
+
+vadd :: Base -> Vint -> Vint -> Vint
+vadd base =
+  vop base (+)
+
+
+vsub :: Base -> Vint -> Vint -> Vint
+vsub base =
+  vop base (-)
+
+
+vop :: Base -> (Bigit -> Bigit -> Bigit) -> Vint -> Vint -> Vint
+vop base op xs ys =
+  (norm base) (zipWith op axs ays)
+  where
+    (axs, ays) =
+      align xs ys
+
+
+vnegative :: Vint -> Bool
+vnegative (x:_) =
+  x < 0
+
+
+vnegate :: Base -> Vint -> Vint
+vnegate base =
+  (norm base) . map negate
+
+
+vmult :: Base -> Vint -> Vint -> Vint
+vmult base xs ys =
+  foldr1 shiftaddPsums (psums xs ys)
+  where
+    shiftaddPsums xs' ys' =
+      vadd base (xs' ++ [0]) ys'
+
+    psums xs' ys' =
+      map (bmul base xs') ys'
+
+
+bmul :: Base -> Vint -> Bigit -> Vint
+bmul base xs y =
+  (norm base) . map (*y) $ xs
+
+-- 4.3
+type Word' =
+  String
+
+type Par =
+  [Word']
+
+type ColWidth =
+  Int
+
+fill :: ColWidth -> [Word'] -> [Par]
+fill _ [] =
+  [[]]
+
+fill limit ws =
+  [fstLine] ++ fill limit rest
+  where
+    fstLine =
+      take n ws
+
+    rest =
+      drop n ws
+
+    n =
+      greedy
+
+    greedy =
+      -- maximum [length ys | ys <- init ws, length (unwords $ ws) <= limit]
+      length (takeWhile (<= limit) (scanl countw (-1) ws)) -1
+      where
+        countw x word =
+          x + length word + 1
+
+
+-- 4.4
+type State =
+  (Direction, Pen, Point)
+type Direction =
+  Int
+type Pen =
+  Bool
+type Point =
+  (Int, Int)
+type Command =
+  State -> State
+
+move :: Command
+move (0, p, (x, y)) =
+  (0, p, (x - 1, y))
+move (1, p, (x, y)) =
+  (1, p, (x, y + 1))
+move (2, p, (x ,y)) =
+  (2, p, (x + 1, y))
+move (3, p, (x, y)) =
+  (3, p, (x, y - 1))
+
+
+right :: Command
+right (d, pen, point) =
+  ((d + 1) `mod` 4, pen, point)
+
+-- 4.4.1
+left :: Command
+left (d, pen, point) =
+  ((d - 1) `mod` 4, pen, point)
+
+
+up :: Command
+up (d, _, point) =
+  (d, False, point)
+
+down :: Command
+down (d, _, point) =
+  (d, True, point)
+
+
+square :: Int -> [Command]
+square k =
+  [down] ++ concat (copy side 4) ++ [up]
+  where
+    side =
+      copy move k ++ [right]
+
+
+turtle :: [Command] -> [State]
+turtle =
+  scanl applyTo (0, False, (0, 0))
+  where
+    applyTo x f =
+      f x
+
+
+display :: [Command] -> String
+display =
+  layout . picture . trail . turtle
+
+
+picture :: [Point] -> [String]
+picture =
+  symbolise . bitmap . sortpoints
+  --symbolise . fastbitmap . sortpoints
+
+
+{-|
+4.4.4: worst-case example for N=5:
+
+X----
+-X---
+--X--
+---X-
+----X
+
+Given N points ps of size S where S=(max ps - min ps), for each point p the function has to check if p is inside S. That is its time complexity is O(N*S^2).
+|-}
+bitmap :: [Point] -> [[Bool]]
+bitmap ps =
+  [[(x, y) `inside` ps | y <- yran ps] | x <- xran ps]
+  where
+    inside x xs =
+      or (map (==x) xs)
+
+yran :: (Enum a, Ord a) => [(b, a)] -> [a]
+yran ps =
+  range (map snd ps)
+
+xran :: (Enum a, Ord a) => [(a, b)] -> [a]
+xran ps =
+  range (map fst ps)
+
+range :: (Enum a, Ord a) => [a] -> [a]
+range xs =
+  [minimum xs..maximum xs]
+
+
+-- 4.4.7: The improvement wrt bitmap is that we don't have to iterate the entire NxN points to check if a point in the x/y range, we just need to check for inequality which takes constant time. That is the time complexity is now O(S^2) where S is defined as above.
+fastbitmap :: [Point] -> [[Bool]]
+fastbitmap ps =
+  [[ps2 /= [] | ps2 <- splitWith snd (yran ps) ps1] | ps1 <- splitWith fst (xran ps) ps]
+  where
+    splitWith f xs ys =
+      split (map (equals f) xs) ys
+
+    equals f x y =
+      f y == x
+
+    split [] _ =
+      []
+    split (p:preds) xs =
+      [takeWhile p xs] ++ split preds (dropWhile p xs)
+
+
+-- 4.4.2
+block :: Int -> [State]
+block k =
+  map trace (turtle (square k))
+  where
+    trace (d, _, p) =
+      (d, True, p)
+
+
+-- 4.4.3
+trail :: [State] -> [Point]
+trail ss =
+  [p | (_, _, p) <- ss]
+  -- map (\(_, _, p) -> p)
+
+
+layout :: [String] -> String
+layout xss =
+  concat [xs ++ "\n" | xs <- xss]
+  -- foldr (\x acc -> x ++ "\n" ++ acc) []
+
+
+-- 4.4.4
+boolstr :: Bool -> String
+boolstr True =
+  "."
+boolstr False =
+  " "
+
+
+symbolise :: [[Bool]] -> [String]
+symbolise bss =
+  [concat [boolstr b | b <- bs] | bs <- bss]
+
+
+-- 4.4.5
+sort :: Ord a => [a] -> [a]
+sort [] =
+  []
+sort (p:xs) =
+  sort [x | x <- xs, x < p] ++ [p] ++ sort [x | x <- xs, x >= p]
+
+-- I cannot think of an implementation with lists comprehensions + zip :-(
+remdups :: Ord a => [a] -> [a]
+remdups [] =
+  []
+remdups (x:xs) =
+  x : remdups (dropWhile (==x) xs)
+
+
+sortpoints :: Ord a => [a] -> [a]
+sortpoints =
+  remdups . sort
+
+
+squareTrail =
+  display (square 5)
