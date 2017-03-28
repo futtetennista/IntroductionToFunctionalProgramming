@@ -351,6 +351,7 @@ insert' :: Ord a => a -> [a] -> [a]
 insert' x =
   foldr swap [x]
   where
+    swap :: Ord a => a -> [a] -> [a]
     swap y (z:zs) =
       if y > z then z:y:zs else y:z:zs
     swap _ [] =

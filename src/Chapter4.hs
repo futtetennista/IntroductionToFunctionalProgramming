@@ -1,9 +1,4 @@
-module Chapter4( convert
-               , convertWithFullStop
-               , convertNatural
-               , convertMoney
-               , reverseConvert
-               )
+module Chapter4()
 where
 
 
@@ -249,7 +244,7 @@ align xs ys =
 
 copy :: a -> Int -> [a]
 copy x times =
-  [x | _ <- [0..times]]
+  [x | _ <- [1..times]]
 
 
 vcompare :: (Vint -> Vint -> a) -> Vint -> Vint -> a
@@ -347,7 +342,7 @@ fill limit ws =
           x + length word + 1
 
 
--- 4.4
+-- 4.4 Turtle graphics
 type State =
   (Direction, Pen, Point)
 type Direction =
@@ -443,6 +438,8 @@ xran ps =
   range (map fst ps)
 
 range :: (Enum a, Ord a) => [a] -> [a]
+range [] =
+  []
 range xs =
   [minimum xs..maximum xs]
 
@@ -467,17 +464,13 @@ fastbitmap ps =
 -- 4.4.2
 block :: Int -> [State]
 block k =
-  map trace (turtle (square k))
-  where
-    trace (d, _, p) =
-      (d, True, p)
+  map down (turtle (square k))
 
 
 -- 4.4.3
 trail :: [State] -> [Point]
 trail ss =
-  [p | (_, _, p) <- ss]
-  -- map (\(_, _, p) -> p)
+  [point | (_, pen, point) <- ss, pen]
 
 
 layout :: [String] -> String
@@ -506,12 +499,11 @@ sort [] =
 sort (p:xs) =
   sort [x | x <- xs, x < p] ++ [p] ++ sort [x | x <- xs, x >= p]
 
--- I cannot think of an implementation with lists comprehensions + zip :-(
+
+-- Assumption: dups are adjacents (list is sorted)
 remdups :: Ord a => [a] -> [a]
-remdups [] =
-  []
-remdups (x:xs) =
-  x : remdups (dropWhile (==x) xs)
+remdups xs =
+  [x | (x, y) <- zip xs (tail xs), x /= y]
 
 
 sortpoints :: Ord a => [a] -> [a]
@@ -519,5 +511,5 @@ sortpoints =
   remdups . sort
 
 
-squareTrail =
+squareTrail5 =
   display (square 5)
