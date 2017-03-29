@@ -3,27 +3,24 @@ where
 
 import Chapter4 (rjustify)
 
-binom :: Int -> Int -> Int
-binom n k
+binom :: (Int, Int) -> Int
+binom (n, k)
   | n < 0 =
     0
   | k == 0 =
     1
   | otherwise =
-    binom (n - 1) k + binom (n - 1) (k - 1)
+    binom ((n - 1), k) + binom ((n - 1), (k - 1))
 
 
 pascal :: Int -> [[Int]]
 pascal x =
-  [map toBinom xs | xs <- table]
+  [map binom xs | xs <- xss]
   where
-    toBinom (n, k) =
-      binom n k
-
     elemCount =
       x + 1
 
-    table =
+    xss =
       [take elemCount (drop n elems) | n <- [0, elemCount..(length elems - elemCount)]]
 
     elems =
@@ -32,14 +29,37 @@ pascal x =
 
 printPascal :: Int -> IO()
 printPascal x =
-  mapM_ putStr (printableTable (pascal x))
+  mapM_ putStr table
   where
-    printableTable :: [[Int]] -> [String]
-    printableTable xss =
-      map (printableRow (rjustify (longestDigit xss + 1))) xss
+    pascalTriangle =
+      pascal x
 
-    printableRow rjustified xs =
-      foldr ((++) . rjustified  . show) "\n" xs
+    table =
+      header ++ ["\n"] ++ divisor ++ ["\n"] ++ content
+
+    justification =
+      1 + (longestDigit pascalTriangle)
+
+    divisor =
+      take (2 + (length pascalTriangle + 1) * justification) (repeat "-")
+
+    content =
+      map row (zip pascalTriangle [0..length pascalTriangle])
+
+    row (r, idx) =
+      rowIndex idx ++ rowContent (rjustify justification) r
+
+    rowIndex idx =
+      (rjustify justification (show idx)) ++ " |"
+
+    header =
+      ["  " ++ rjustify justification "|"] ++ map ((rjustify justification) . show) [0..length pascalTriangle - 1]
+
+    rowContent rjustified xs =
+      foldr ((++) . rjustified . showNonZero) "\n" xs
+
+    showNonZero y =
+      if y > 0 then show y else " "
 
     longestDigit :: [[Int]] -> Int
     longestDigit =
