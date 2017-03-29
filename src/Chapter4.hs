@@ -1,6 +1,7 @@
-module Chapter4()
+module Chapter4
 where
 
+-- import Chapter3 (zip4)
 
 -- 4.1
 units :: [String]
@@ -513,3 +514,193 @@ sortpoints =
 
 squareTrail5 =
   display (square 5)
+
+
+-- 4.5 Printing a calendar
+type Picture a =
+  [a]
+
+height :: [Picture a] -> Int
+height p =
+  length p
+
+width :: [Picture a] -> Int
+width p =
+  length (head p)
+
+
+above :: [[a]] -> [[a]] -> [[a]]
+above p q
+  | width p == width q =
+      p ++ q
+
+
+beside :: [[a]] -> [[a]] -> [[a]]
+beside p q
+  | height p == height q =
+      zipWith (++) p q
+
+
+stack :: [[[a]]] -> [[a]]
+stack =
+  foldr1 above
+
+
+spread :: [[[a]]] -> [[a]]
+spread =
+  foldr1 beside
+
+
+group :: Int -> [Picture a] -> [[Picture a]]
+group n xs =
+  [take n (drop j xs) | j <- [0, n..(length xs - n)]]
+
+
+cblockH :: Int -> [[[a]]] -> [[a]]
+cblockH n =
+  stack . map spread . group n
+
+
+cblockV :: Int -> [[[a]]] -> [[a]]
+cblockV n =
+  spread . map stack . group n
+
+
+empty :: (Int, Int) -> [[String]]
+empty (h, w)
+  | h > 0 && w > 0 =
+    copy (copy "x" w) h
+
+
+lframe :: (Int, Int) -> [[String]] -> [[String]]
+lframe (h, w) p =
+  (p `beside` empty (h', w - w')) `above` empty (h - h', w)
+  where
+    h' =
+      height p
+    w' =
+      width p
+
+
+cdisplay :: [String] -> String
+cdisplay =
+  unlines
+
+
+-- calendar :: Year -> [[[String]]]
+calendar =
+  cdisplay . cblockH 3 . map cpicture . months
+
+
+type MonthName =
+  String
+
+type Day =
+  Int
+
+type Year =
+  Int
+
+-- 0 = Sunday … 6 = Saturday
+type FirstDayOfMonth =
+  Int
+
+type MonthLength =
+  Int
+
+
+cpicture :: (MonthName, Year, FirstDayOfMonth, MonthLength) -> [String]
+cpicture (mn, yr, fd, ml) =
+  title `above` table
+  where
+    title =
+      undefined
+      -- lframe (2, 25) [[mn ++ " " ++ show yr]]
+
+    table =
+      undefined
+      -- lframe (8, 25) (dayNames `beside` (entries fd ml))
+
+    dayNames :: [String]
+    dayNames =
+      ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+    -- Create the something like:
+    --      4  10  16  22  28
+    --      5  11  17  23  29
+    --      6  12  18  24  30
+    --  1   7  13  19  25  31
+    --  2   8  14  20  26
+    --  3   9  15  21  27
+    entries :: FirstDayOfMonth -> MonthLength -> [String]
+    entries fd ml =
+      cblockV 7 (dates fd ml)
+
+    -- Create the something like:
+    -- [-2, -1, 0...42] -> ["1","2".."31"]
+    dates :: FirstDayOfMonth -> MonthLength -> [[String]]
+    dates fd ml =
+      map (date ml) [1 - fd..42 - fd]
+
+    date :: MonthLength -> Day -> [String]
+    date ml day
+      | day < 1 || day > ml = [rjustify 3 " "]
+      | otherwise = [rjustify 3 (show day)]
+
+
+rjustify :: Int -> String -> String
+rjustify n xs =
+  concat (repeat " " (n - length xs)) ++ xs
+  where
+    repeat x n =
+      [x | _ <- [1..n]]
+
+
+months :: Year -> [(MonthName, Year, FirstDayOfMonth, MonthLength)]
+months yr =
+  zip4 (mnames, (copy yr 12), fstdays, mlengths)
+  where
+    mnames =
+      [ "JANUARY"
+      , "FEBRUARY"
+      , "MARCH"
+      , "APRIL"
+      , "MAY"
+      , "JUNE"
+      , "JULY"
+      , "AUGUST"
+      , "SEPTEMBER"
+      , "OCTOBER"
+      , "NOVEMBER"
+      , "DECEMBER"
+      ]
+
+    mlengths =
+      [31, feb, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      where
+        feb
+          | leapYear =
+              29
+          | otherwise =
+              28
+
+    leapYear
+      | yr `mod` 100 == 0 =
+          (yr `mod` 400 == 0)
+      | otherwise =
+          (yr `mod` 4) == 0
+
+    fstdays =
+      -- is take 12 needed ?!
+      take 12 (map (`mod` 7) (scanl (+) jan1 mlengths))
+
+    jan1 =
+      (yr + (yr - 1) `div` 4 - (yr - 1) `div` 100 + (yr - 1) `div` 400) `mod` 7
+
+
+zip4 :: ([a], [b], [c], [d]) -> [(a, b, c, d)]
+zip4 (as, bs, cs, ds) =
+  zipWith fourTuple (zip as bs) (zip cs ds)
+  where
+    fourTuple (a, b) (c, d) =
+      (a, b, c, d)
