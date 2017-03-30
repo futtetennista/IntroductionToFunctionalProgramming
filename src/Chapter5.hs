@@ -3,19 +3,21 @@ where
 
 import Chapter4 (rjustify)
 
-binom :: (Int, Int) -> Int
-binom (n, k)
+
+-- 5.1.3
+binom :: Int -> Int -> Int
+binom n k
   | n < 0 =
     0
   | k == 0 =
     1
   | otherwise =
-    binom ((n - 1), k) + binom ((n - 1), (k - 1))
+    binom (n - 1) k + binom (n - 1) (k - 1)
 
 
 pascal :: Int -> [[Int]]
 pascal x =
-  [map binom xs | xs <- xss]
+  [map (uncurry binom) xs | xs <- xss]
   where
     elemCount =
       x + 1
