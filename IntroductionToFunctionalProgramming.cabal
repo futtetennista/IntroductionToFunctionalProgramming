@@ -1,14 +1,12 @@
 name:                IntroductionToFunctionalProgramming
 version:             0.1.0.0
-synopsis:            Solutions to the exercises in the book "Introduction to Functional Programming" by Bird and Wadler
+synopsis:            Solutions to the exercises in the book "Introduction to Functional Programming" by Richard Bird and Philip Wadler
 description:         Please see README.md
 homepage:            https://github.com/futtetennista/IntroductionToFunctionalProgramming#readme
 license:             MIT
 license-file:        LICENSE
 author:              Futtetenista
-maintainer:          futtetennista@gmail.com
-copyright:           2017 Futtetennista
-category:            Exercises
+category:            Learning
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
@@ -34,7 +32,7 @@ executable IntroductionToFunctionalProgramming-exe
                      , IntroductionToFunctionalProgramming
   default-language:    Haskell2010
 
-test-suite IntroductionToFunctionalProgramming-test
+test-suite test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
