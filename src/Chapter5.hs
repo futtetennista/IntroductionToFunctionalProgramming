@@ -75,21 +75,21 @@ printPascal x =
 
     localLongestDigit :: [Int] -> Int
     localLongestDigit =
-      maximum . map digits
+      maximum . map digitCount
 
-    digits :: Integral a => Int -> a
-    digits n =
+    digitCount :: Integral a => Int -> a
+    digitCount n =
       floor $ logBase 10.0 (fromIntegral n) + 1
 
 
 (!) :: [a] -> Int -> a
-[]!_ =
+(!) [] _ =
   error "empty list"
-(x:xs)!i
+(!) (x:xs) i
   | i == 0 =
     x
   | otherwise =
-    xs!(i - 1)
+    xs ! (i - 1)
 
 
 takewhile :: (a -> Bool) -> [a] -> [a]
