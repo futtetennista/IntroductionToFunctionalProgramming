@@ -259,3 +259,55 @@ symqueens n =
 
     diagTrbl =
       reverse diagTlbr
+
+
+-- Ex. 6.5.6
+slowcountqueens :: [Int]
+slowcountqueens =
+  [length (queens i) | i <- [0..8]]
+
+
+fastcountqueens1 :: [Int]
+fastcountqueens1 =
+  reverse [length sol | sol <- scanr (\_ acc -> q acc) [] [0..8], length sol > 0]
+  where
+    q :: [[Int]] -> [[Int]]
+    q [] =
+      [[]]
+    q pos =
+      [pos' ++ [r] | pos' <- pos, r <- [1..8], safe pos' r]
+
+-- As in: https://wiki.haskell.org/Memoization
+fastcountqueens2 :: [Int]
+fastcountqueens2 =
+  [length (fastqueens i) | i <- [0..8]]
+  where
+    fastqueens :: Int -> [Board]
+    fastqueens =
+      (map mqueens [0..] !!)
+
+    mqueens 0 =
+      [[]]
+    mqueens n =
+      [pos ++ [r] | pos <- fastqueens (n - 1), r <- [1..8], safe pos r]
+
+
+fastcountqueens3 :: [Int]
+fastcountqueens3 =
+  [length (fastqueens i) | i <- [0..8]]
+  where
+    fastqueens =
+      fix (memoize . mqueens)
+
+    mqueens _ 0 =
+      [[]]
+    mqueens f n =
+      [pos ++ [r] | pos <- f (n - 1), r <- [1..8], safe pos r]
+
+    memoize f =
+      (map f [0..] !!)
+
+    fix f =
+      x
+      where
+        x = f x
