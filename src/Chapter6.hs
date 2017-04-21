@@ -219,3 +219,43 @@ mirrorDiag diag board =
       []
     qsortBy f (x:xs) =
       qsortBy f [y | y <- xs, f y <= f x] ++ [x] ++ qsortBy f [y | y <- xs, f y > f x]
+
+
+-- Ex. 6.5.4
+fasterqueens :: Int -> [Board]
+fasterqueens 0 =
+  [[]]
+fasterqueens n =
+  undefined
+
+
+-- Ex. 6.5.5
+symqueens :: Int -> [Board]
+symqueens 0 =
+  [[]]
+symqueens n =
+  [pos ++ [row] | pos <- symqueens (n - 1), row <- [1..8], safe pos row, sym pos row]
+  where
+    sym pos row
+      | n <= 4 =
+        True
+      | otherwise =
+        or [checkSym pos diag row | diag <- [diagTlbr, diagTrbl]]
+
+    checkSym pos diag row =
+      symRow row diag == pos !! (symCol - 1)
+
+    symRow r =
+      fst . head . filter ((==r) . snd) . zip [1..8]
+
+    symCol =
+      head . drop (n - 1) $ sloc
+
+    sloc =
+      [8,7..1]
+
+    diagTlbr =
+      [1..8]
+
+    diagTrbl =
+      reverse diagTlbr
