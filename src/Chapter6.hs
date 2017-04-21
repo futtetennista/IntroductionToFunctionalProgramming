@@ -1,27 +1,38 @@
 module Chapter6
 where
 
-import Chapter4 (copy)
 import Chapter5 (perms)
 
 
 kwic :: [String] -> String -> String
-kwic iws =
-  unlines . map unwords . qsort . concat . map perms . filterTitles . map words . fullstopLines
+kwic inconsws =
+  unlines . allUnwords . qsort . allPerms . filterIncons . allWords . fullstopLines
   where
-    filterTitles xss =
-      filter (not . inconsequential . head) xss
+    allUnwords =
+      map unwords
+
+    allPerms =
+      foldr ((++) . map perms) []
+      --concat . map perms
+
+    allWords =
+      map words
+
+    filterIncons =
+      filter (not . inconsequential . head)
 
     inconsequential xs =
-      foldr ((||) . (xs==)) False iws
+      or (map (==xs) inconsws)
+      -- foldr ((||) . (xs==)) False inconsws
 
     fullstopLines =
-      map (++ ".") . lines
+      map (++".") . lines
 
     qsort [] =
       []
     qsort (x:xs) =
       qsort [y | y <- xs, y <= x] ++ [x] ++ qsort [y | y <- xs, y > x]
+
 
 kwicTestInput :: String
 kwicTestInput =
@@ -44,9 +55,9 @@ minmax xs =
       length xs `div` 2
 
     merge (x, y) (x', y') =
-      (if x < x' then x else x', if y > y' then y else y')
+      (min x x', max y y')
 
--- findSmallest (>23) 10
+-- ex.: findSmallest (>23) 10
 type MonotonicPred =
   (Int -> Bool)
 
@@ -70,14 +81,17 @@ findSmallest p start =
           (a + b) `div` 2
 
 
-queens :: Int -> [[Int]]
+type Board =
+  [Int]
+
+queens :: Int -> [Board]
 queens 0 =
   [[]]
 queens n =
   [pos ++ [row] | pos <- queens (n - 1), row <- [1..8], safe pos row]
 
 
-sneeuq :: Int -> [[Int]]
+sneeuq :: Int -> [Board]
 sneeuq 0 =
   [[]]
 sneeuq n =
@@ -98,9 +112,9 @@ safe pos queryRow =
       row == row' || col + row == col' + row' || col - row == col' - row'
 
 
--- 6.5.1
+-- Ex. 6.5.1
 -- `sneeuq` doesn't support this optimisation because the row is created before the positions so it's not possible to filter it out
-queens' :: Int -> [[Int]]
+queens' :: Int -> [Board]
 queens' 0 =
   [[]]
 queens' n =
@@ -116,18 +130,18 @@ queens' n =
       col + row == col' + row' || col - row == col' - row'
 
 
-putSolutions :: [[Int]] -> IO ()
+putSolutions :: [Board] -> IO ()
 putSolutions =
   mapM_ putBoard
 
 
-putBoard :: [Int] -> IO ()
+putBoard :: Board -> IO ()
 putBoard =
-  putStrLn . board
+  putStrLn . showBoard
 
 
-board :: [Int] -> String
-board pos =
+showBoard :: Board -> String
+showBoard pos =
   unlines (header ++ content (zip ([1..8] :: [Int]) pos))
   where
     header =
@@ -140,4 +154,68 @@ board pos =
       show idx ++ " " ++ row x
 
     row p =
-      foldr (\x acc -> if x == p then "♕ " else "  " ++ acc) [] [1..8]
+      foldr (\x acc -> (if x == p then "♛ " else ". ") ++ acc) [] [1..8]
+
+
+-- Ex. 6.5.3
+data MirroringOptions
+  = Vertical
+  | Horizontal
+  | DiagonalTLBR -- from top-left to bottom-right
+  | DiagonalTRBL -- from top-right to bottom-left
+  | Rotation -- 90 degrees clockwise
+  deriving Show
+
+
+mirror :: MirroringOptions -> Board -> Board
+mirror Vertical =
+  unindexBoard . map (\(c, r) -> (c, 9 - r)) . indexBoard
+mirror Horizontal =
+  reverse
+mirror DiagonalTLBR =
+  mirrorDiag [1..8]
+  -- unindexBoard (qsortBy fst indexedRows)
+  -- where
+  --   indexedRows =
+  --     map (\(c, r) -> (r, c)) (zip [1..8] b)
+mirror DiagonalTRBL =
+  mirrorDiag [8,7..1]
+mirror Rotation =
+  undefined
+
+
+type IndexedBoard =
+  [(Int, Int)]
+
+
+indexBoard :: Board -> IndexedBoard
+indexBoard =
+  zip [1..8]
+
+
+unindexBoard :: IndexedBoard -> Board
+unindexBoard =
+  map snd
+
+
+mirrorDiag :: Board -> Board -> Board
+mirrorDiag diag board =
+  unindexBoard . qsortBy fst $ mirrorIBoard
+  where
+    mirrorIBoard =
+      map mirrorPos (zip [1..8] board)
+
+    mirrorPos (c,r) =
+      (mirrorLine r, mirrorLine c)
+
+    mirrorLine x =
+      fst . head . filter ((==x) . snd) $ idiag
+
+    idiag =
+      zip [1..8] diag
+
+    qsortBy :: Ord b => (a -> b) -> [a] -> [a]
+    qsortBy _ [] =
+      []
+    qsortBy f (x:xs) =
+      qsortBy f [y | y <- xs, f y <= f x] ++ [x] ++ qsortBy f [y | y <- xs, f y > f x]
