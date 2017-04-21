@@ -551,7 +551,7 @@ spread =
   foldr1 beside
 
 
-group :: Int -> [Picture a] -> [[Picture a]]
+group :: Int -> [[a]] -> [[[a]]]
 group n xs =
   [take n (drop j xs) | j <- [0, n..(length xs - n)]]
 

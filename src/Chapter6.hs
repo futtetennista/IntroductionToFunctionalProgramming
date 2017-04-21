@@ -269,13 +269,14 @@ slowcountqueens =
 
 fastcountqueens1 :: [Int]
 fastcountqueens1 =
-  reverse [length sol | sol <- scanr (\_ acc -> q acc) [] [0..8], length sol > 0]
+  reverse [length sol | sol <- scanr (\_ acc -> queenscol acc) [] [0..8], length sol > 0]
   where
-    q :: [[Int]] -> [[Int]]
-    q [] =
+    queenscol :: [[Int]] -> [[Int]]
+    queenscol [] =
       [[]]
-    q pos =
+    queenscol pos =
       [pos' ++ [r] | pos' <- pos, r <- [1..8], safe pos' r]
+
 
 -- As in: https://wiki.haskell.org/Memoization
 fastcountqueens2 :: [Int]

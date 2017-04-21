@@ -22,19 +22,21 @@ power x n =
 
 divisors :: Int -> [Int]
 divisors n =
-  [ d | d <- [1..n], n `mod` d == 0 ]
+  [ d | d <- [1..n `div` 2], n `mod` d == 0 ] ++ [n]
 
 
 prime :: Int -> Bool
 prime n =
   mindivisor == [n]
   where
-    mindivisor | divs == [] = []
-               | otherwise = [minimum divs]
-      where
-        divs =
-          [ x | x <- divisors n, x > 1 ]
+    mindivisor
+      | divs == [] =
+          []
+      | otherwise =
+          [minimum divs]
 
+    divs =
+      [ x | x <- divisors n, x > 1 ]
 
 
 gcd' :: Int -> Int -> Int
