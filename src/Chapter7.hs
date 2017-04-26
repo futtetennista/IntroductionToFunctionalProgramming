@@ -95,6 +95,34 @@ primes =
       p : rsieve [x | x <- xs, x `mod` p /= 0]
 
 
+-- Taken from http://users.monash.edu/~lloyd/tildeFP/1989SPE/
+fastprimes :: [Integer]
+fastprimes =
+  ps
+  where
+    ps =
+      2 : [x | x <- [3..], isprime x]
+
+    isprime :: Integer -> Bool
+    isprime =
+      knot (multiple ps)
+
+    multiple (x:xs) n
+      | x*x > n =
+        False
+      | divisor x n =
+        True
+      | otherwise =
+        multiple xs n
+
+    divisor m n =
+      n `mod` m == 0
+
+    knot :: (Integer -> Bool) -> Integer -> Bool
+    knot f =
+      not . f
+
+
 -- Ex. 7.3.1
 firstPrimeGreaterThan1000 :: Integer
 firstPrimeGreaterThan1000 =
@@ -165,7 +193,6 @@ fastgenhamming as =
     fgh (x:xs) =
       merge (map (x*) hs)
             (fgh xs)
-
 
 -- forget about union types for now
 type Move =
