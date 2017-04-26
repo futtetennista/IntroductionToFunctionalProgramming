@@ -133,29 +133,38 @@ fasthamming' :: Integer -> Integer -> Integer -> [Integer]
 fasthamming' a b c =
   xs
   where
-  xs =
-    1 : merge (map (a*) xs)
-              (merge (map (b*) xs)
-                     (map (c*) xs))
+    xs =
+      1 : merge (map (a*) xs)
+                (merge (map (b*) xs)
+                       (map (c*) xs))
 
 
 -- Ex 7.6.5
 genhamming :: [Integer] -> [Integer]
 genhamming as =
-  1 : genh as
+  1 : gh as
   where
-    genh [] =
+    gh [] =
       []
-    genh [y] =
+    gh [y] =
       map (y*) (genhamming as)
-    genh (y:ys) =
+    gh (y:ys) =
       merge (map (y*) (genhamming as))
-            (genh ys)
+            (gh ys)
 
 
 fastgenhamming :: [Integer] -> [Integer]
-fastgenhamming (_a:_as) =
-  1 : undefined
+fastgenhamming as =
+  hs
+  where
+    hs =
+      1 : fgh as
+
+    fgh [x] =
+      map (x*) hs
+    fgh (x:xs) =
+      merge (map (x*) hs)
+            (fgh xs)
 
 
 -- forget about union types for now
