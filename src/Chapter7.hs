@@ -194,6 +194,13 @@ fastgenhamming as =
       merge (map (x*) hs)
             (fgh xs)
 
+
+-- 7.6.6
+genhamming' :: [Integer] -> [Integer]
+genhamming' =
+  undefined
+
+
 -- forget about union types for now
 type Move =
   String
@@ -244,6 +251,40 @@ match n =
 total :: [(Int, Int)] -> (Int, Int)
 total scores =
   (sum (map fst scores), sum (map snd scores))
+
+
+rock :: Strategy
+rock _ms =
+  "Rock" : rock []
+
+
+paper :: Strategy
+paper _ms =
+  "Paper" : paper []
+
+
+scissors :: Strategy
+scissors _ms =
+  "Scissors" : scissors []
+
+
+leastfreq :: Strategy
+leastfreq ms =
+  "Paper" : map raremove freqs
+  where
+    freqs =
+      tail (scanl count (0, 0, 0) ms)
+
+    raremove (r, p, s)
+      | minfreq == r =
+        "Rock"
+      | minfreq == p =
+        "Paper"
+      | minfreq == s =
+        "Scissors"
+      where
+        minfreq =
+          minimum [r, p, s]
 
 
 recip :: Strategy
@@ -317,25 +358,6 @@ roundrobin _ms =
   "Rock" : map move [2..]
 
 
-leastfreq :: Strategy
-leastfreq ms =
-  "Paper" : map raremove freqs
-  where
-    freqs =
-      tail (scanl count (0, 0, 0) ms)
-
-    raremove (r, p, s)
-      | minfreq == r =
-        "Rock"
-      | minfreq == p =
-        "Paper"
-      | minfreq == s =
-        "Scissors"
-      where
-        minfreq =
-          minimum [r, p, s]
-
-
 move :: Int -> String
 move e
   | e `mod` 3 == 0 =
@@ -346,15 +368,12 @@ move e
       "Rock"
 
 
-third :: Strategy
-third ms =
-  "Scissors" : map lookthird (zip [2..] ms)
+thirdlook :: Strategy
+thirdlook ms =
+  zs
   where
-    lookthird (n, m)
-      | n `mod` 3 == 0 =
-        beats m
-      | otherwise =
-        move n
+    zs =
+      "Scissors" : take 2 (roundrobin ms) ++ map beats (take 1 ms) ++ zs
 
 
 -- Execute: `match 11 (recip, sneakycheat)`. The execution will never go past the 10th move.
