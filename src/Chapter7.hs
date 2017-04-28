@@ -380,3 +380,30 @@ thirdlook ms =
 sneakycheat :: Strategy
 sneakycheat ms =
   "Rock" : take 9 (leastfreq ms) ++ cheat (drop 10 ms)
+
+
+-- ƛ: fib 500000
+-- (21.66 secs, 11,241,527,416 bytes)
+fib :: Int -> Integer
+fib =
+  fst . (zs !!)
+  where
+    zs =
+      (0, 1) : map fibpair zs
+
+    fibpair (a, b) =
+      (b, a + b)
+
+
+-- ƛ: fib' 500000
+-- (31.51 secs, 11,398,284,264 bytes)
+fib' :: Int -> Integer
+fib' =
+  fst . ffib
+  where
+    ffib 0 =
+      (0, 1)
+    ffib n =
+      (b, a + b)
+      where (a, b) =
+              ffib (n - 1)
