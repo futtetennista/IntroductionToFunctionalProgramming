@@ -140,6 +140,8 @@ data Tag
   = Celsius'
   | Fahrenheit'
   | Kelvin'
+  deriving Show
+
 
 convert' :: Temperature -> Tag -> Temperature
 convert' ct@(Celsius _) Celsius' =
@@ -172,3 +174,13 @@ convert' (Kelvin x) Fahrenheit' =
   where
     y =
       floor (1.8 * (fromIntegral x - 273.15 :: Double) + 32.0 :: Double)
+
+
+-- Alternatively
+type Temperature' =
+  (Tag, Int)
+
+
+convert'' :: Temperature' -> Tag -> Temperature'
+convert'' _temp _tag =
+  undefined
