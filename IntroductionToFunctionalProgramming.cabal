@@ -20,6 +20,7 @@ library
                      , Chapter6
                      , Chapter7
                      , Hangman
+                     , Chapter8
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
