@@ -2,6 +2,8 @@ module Chapter8
 where
 
 
+import Chapter7 (getint)
+
 -- 8.2.3
 data Employee
   = E { name :: String
@@ -184,3 +186,221 @@ type Temperature' =
 convert'' :: Temperature' -> Tag -> Temperature'
 convert'' _temp _tag =
   undefined
+
+
+data Expr
+  = Num Int
+  | Expr Expr Op Expr
+  deriving Show
+
+
+data Op
+  = Add
+  | Sub
+  | Mul
+  | Div
+  deriving Show
+
+
+eval :: Expr -> Int
+eval (Num x) =
+  x
+eval (Expr e1 op e2) =
+  apply op (eval e1) (eval e2)
+
+
+apply :: Op -> (Int -> Int -> Int)
+apply Add =
+  (+)
+apply Sub =
+  (-)
+apply Mul =
+  (*)
+apply Div =
+  div
+
+
+numcount :: Expr -> Int
+numcount (Num _) =
+  1
+numcount (Expr e1 _op e2) =
+  numcount e1 + numcount e2
+
+
+opcount :: Expr -> Int
+opcount (Num _) =
+  0
+opcount (Expr e1 _ e2) =
+  1 + opcount e1 + opcount e2
+
+
+size :: Expr -> Int
+size expr =
+  opcount expr + numcount expr
+
+
+-- Stack machine
+data Instr
+  = Load Int
+  | Apply Op
+  deriving Show
+
+type Stack =
+  [Int]
+
+
+execute :: Instr -> Stack -> Stack
+execute (Load x) xs =
+  x : xs
+execute (Apply op) (x:y:xs) =
+  apply op y x : xs
+execute (Apply _) (_) =
+  error "Invalid instruction"
+
+
+run :: [Instr] -> Stack -> Stack
+run [] xs =
+  xs
+run (ins:inss) xs =
+  run inss (execute ins xs)
+
+
+compile :: Expr -> [Instr]
+compile (Num x) =
+  [Load x]
+compile (Expr e1 op e2) =
+  compile e1 ++ compile e2 ++ [Apply op]
+
+
+-- Ex. 8.3.4
+unparse :: Expr -> String
+unparse (Expr e1 op e2) =
+  "(" ++ unparse e1 ++ show op ++ unparse e2 ++ ")"
+unparse (Num x) =
+  show x
+
+
+-- run (compile (parse "(6+(-11*3))")) []
+parse :: String -> Expr
+parse (x:xs) =
+  case xs' of
+    [] ->
+      expr
+
+    _ ->
+      error "Invalid expression"
+  where
+    (expr, xs') =
+      uglyparse x xs
+
+uglyparse :: Char -> String -> (Expr, String)
+uglyparse c cs
+  | isUnaryMinus c || isDigit c =
+    (Num (getint n), zs)
+  | '(' == c =
+      case rems of
+        [] ->
+          (expr, [])
+
+        (')':xs) ->
+          (expr, xs)
+
+        _ ->
+          error "Invalid expression"
+  | otherwise =
+      error ("Invalid character '" ++ [c] ++ "'")
+  where
+    (expr, rems) =
+      case ys of
+        [] ->
+          (e1, [])
+
+        [')'] ->
+          (e1, [])
+
+        _ ->
+          (Expr e1 op e2, ys'')
+
+    (e1, ys) =
+      uglyparse (head cs) (tail cs)
+    (op, ys') =
+      parseOp (head ys) (tail ys)
+    (e2, ys'') =
+      uglyparse (head ys') (tail ys')
+
+    parseOp '+' =
+      (,) Add
+    parseOp '-'=
+      (,) Sub
+    parseOp '*' =
+      (,) Mul
+    parseOp '/'=
+      (,) Div
+    parseOp x =
+      error ("Unsupported operation: '" ++ [x] ++ "'")
+
+    (n, zs) =
+      parseDigit [c] cs
+
+    isUnaryMinus =
+      ('-'==)
+
+    isDigit y =
+      not . null . filter (==y) $ "1234567890"
+
+    parseDigit d [] =
+      (d, [])
+    parseDigit d rem'@(x:xs)
+      | isDigit x =
+          parseDigit (d ++ [x]) xs
+      | otherwise =
+          (d, rem')
+
+
+-- Ex. 8.3.5
+foldexpr :: (Int -> a) -> (a -> Op -> a -> a) -> Expr -> a
+foldexpr f _g (Num x) =
+  f x
+foldexpr f g (Expr e1 op e2) =
+  g (foldexpr f g e1) op (foldexpr f g e2)
+
+
+eval' :: Expr -> Int
+eval' =
+  foldexpr id (flip apply) -- foldexpr id (\e1 op e2 -> apply op e1 e2)
+
+size' :: Expr -> Int
+size' =
+  foldexpr (const 1) (\numcountl _op numcountr -> 1 + numcountl + numcountr)
+
+
+unparse' :: Expr -> String
+unparse' =
+  foldexpr show (\left op right -> "(" ++ left ++ show op ++ right ++ ")")
+
+
+-- Ex. 8.3.6
+data Val
+  = Nval Int
+  | Oval Op
+  deriving Show
+
+
+preorder :: Expr -> [Val]
+preorder (Num x) =
+  [Nval x]
+preorder (Expr e1 op e2) =
+  [Oval op] ++ preorder e1 ++ preorder e2
+
+
+postorder :: Expr -> [Val]
+postorder (Num x) =
+  [Nval x]
+postorder (Expr e1 op e2) =
+  postorder e1 ++ postorder e2 ++ [Oval op]
+
+
+-- Ex.8.3.7
+run' :: [Instr] -> Stack -> Stack
+run' inss xs =
+  foldl (flip execute) xs inss
