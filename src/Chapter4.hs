@@ -54,18 +54,14 @@ convert2 x =
 combine2 :: (Int, Int) -> String
 combine2 (0, 0) =
   ""
-
 combine2 (0, u) =
-  units!!(u - 1)
-
+  units !! (u - 1)
 combine2 (1, u) =
-  teens!!u
-
+  teens !! u
 combine2 (t, 0) =
-  tens!!(t - 2)
-
+  tens !! (t - 2)
 combine2 (t, u) =
-  tens!!(t - 2) ++ "-" ++ units!!(u - 1)
+  tens !! (t - 2) ++ "-" ++ units !! (u - 1)
 
 
 convert3 :: Int -> String
@@ -76,12 +72,10 @@ convert3 x =
 combine3 :: (Int, Int) -> String
 combine3 (0, t) =
   convert2 t
-
 combine3 (h, 0) =
-  units!!(h - 1) ++ " hundred"
-
+  units !! (h - 1) ++ " hundred"
 combine3 (h, t) =
-  units!!(h - 1) ++ " hundred and " ++ convert2 t
+  units !! (h - 1) ++ " hundred and " ++ convert2 t
 
 
 convert6 :: Int -> String
@@ -151,15 +145,14 @@ combineMoney (pound, pence) =
 
 -- Ex. 4.1.5
 reverseConvert :: String -> Int
-reverseConvert str =
-  toNum . reverseConvert' str $ (0, 0, 0)
+reverseConvert =
+  toNum . flip reverseConvert' (0, 0, 0)
   where
     toNum (t, h, d) =
       t + h + d
 
     reverseConvert' [] tuple =
       tuple
-
     reverseConvert' str' tuple@(t, h, d) =
       case span (/=' ') str' of
         ("thousand", rest) ->
@@ -503,8 +496,10 @@ sort (p:xs) =
 
 -- Assumption: dups are adjacents (list is sorted)
 remdups :: Ord a => [a] -> [a]
-remdups xs =
-  [x | (x, y) <- zip xs (tail xs), x /= y]
+remdups [] =
+  []
+remdups (x:xs) =
+  [a | (a, b) <- zip (x:xs) (xs ++ [x]), a /= b]
 
 
 sortpoints :: Ord a => [a] -> [a]

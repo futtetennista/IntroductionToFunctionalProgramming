@@ -343,7 +343,6 @@ computeE x =
 rev2 :: [a] -> [a]
 rev2 (x:y:[]) =
   (y:x:[])
-
 rev2 xs =
   xs
 
