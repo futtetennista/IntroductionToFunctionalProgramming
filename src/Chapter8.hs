@@ -293,6 +293,43 @@ parse (x:xs) =
     (expr, xs') =
       uglyparse x xs
 
+
+parser :: String -> (Expr, String)
+parser xs =
+  (openPar xs) `then'` expr `then'` closePar
+  where
+    expr (c:ys)
+      | '-' == c || (not . null . filter (==c) $ "1234567890") =
+           (Num (getint n), rest)
+      | otherwise = parser (c:ys)
+      where
+        parseDigit d [] =
+          (d, [])
+        parseDigit d rem'@(x:zs)
+          | (not . null . filter (==x) $ "1234567890") =
+            parseDigit (d ++ [x]) zs
+          | otherwise =
+            (d, rem')
+
+        (n, rest) =
+          parseDigit [c] ys
+
+
+    then' ys f =
+      f ys
+
+    openPar (c:ys)
+      | c == '(' = ys
+      | otherwise = (c:ys)
+
+    closePar (e, (c:ys))
+      | c == ')' = (e, ys)
+      | c == '+' = (Expr e Add e2, r)
+      | c == '*' = (Expr e Mul e2, r)
+      | otherwise = (e, (c:ys))
+      where (e2, r) = parser ys
+
+
 uglyparse :: Char -> String -> (Expr, String)
 uglyparse c cs
   | isUnaryMinus c || isDigit c =
@@ -400,7 +437,111 @@ postorder (Expr e1 op e2) =
   postorder e1 ++ postorder e2 ++ [Oval op]
 
 
--- Ex.8.3.7
+-- Ex. 8.3.7
 run' :: [Instr] -> Stack -> Stack
 run' inss xs =
   foldl (flip execute) xs inss
+
+
+-- Ex. 8.3.9
+data Expr'
+  = Num' Int
+  | Expr' Expr' Op Expr'
+  | Neg Expr'
+  deriving Show
+
+
+eval'' :: Expr' -> Int
+eval'' (Num' x) =
+  x
+eval'' (Expr' e1 op e2) =
+  apply op (eval'' e1) (eval'' e2)
+eval'' (Neg e) =
+  0 - eval'' e
+
+
+-- Ex. 8.3.10
+type Env =
+  String -> Int
+
+data EnvExpr
+  = EnvNum Int
+  | EnvExpr EnvExpr Op EnvExpr
+  | EnvNeg EnvExpr
+  | EnvVar String
+  deriving Show
+
+
+-- evalWith (\x -> if x == "x" then 6 else undefined) (EnvExpr (EnvVar "x") Mul (EnvNum 11))
+evalWith :: Env -> EnvExpr -> Int
+evalWith f (EnvVar x) =
+  f x
+evalWith _f (EnvNum x) =
+  x
+evalWith f (EnvExpr e1 op e2) =
+  apply op (evalWith f e1) (evalWith f e2)
+evalWith f (EnvNeg x) =
+  0 - evalWith f x
+
+
+data RepQueue a
+  = Start
+  | Join (RepQueue a) a
+  deriving Show
+
+
+empty :: RepQueue a
+empty =
+  Start
+
+
+join :: RepQueue a -> a -> RepQueue a
+join =
+  Join
+
+
+peek :: RepQueue a -> Maybe a
+peek (Join Start x) =
+  Just x
+peek (Join q _) =
+  peek q
+peek _ =
+  Nothing
+
+
+pop :: RepQueue a -> Maybe (RepQueue a)
+pop (Join Start _) =
+  Just Start
+pop (Join q x) =
+  maybe Nothing (Just . flip join x) (pop q)
+pop _ =
+  Nothing
+
+
+-- TODO: this is not what I need, 'a' in reality is 'Container b' but I'm not sure how to write it down yet
+-- class Queue a where
+--   start :: a
+--   join :: a -> b -> a
+--   front :: a -> b
+--   reduce :: a -> a
+--
+-- instance Queue (RepQueue a) where
+--   start =
+--     Start
+
+--   join =
+--     Join
+
+--   front Start =
+--     undefined
+--   front (Join Start x) =
+--     undefined -- x
+--   front (Join rq _) =
+--     front rq
+
+--   reduce Start =
+--     undefined
+--   reduce (Join Start x) =
+--     Start
+--   reduce (Join rq x) =
+--     join (reduce rq) x
