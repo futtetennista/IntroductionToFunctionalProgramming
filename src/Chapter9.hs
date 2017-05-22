@@ -104,13 +104,17 @@ testMinimalBTree xs =
 
 
 -- Huffman coding trees
-data Path
+data Step
   = Left
   | Right
   deriving Show
 
 
-decodexs :: BTree Char -> [Path] -> String
+type Path =
+  [Step]
+
+
+decodexs :: BTree Char -> Path -> String
 decodexs t =
   trace t t
   where
@@ -123,37 +127,37 @@ decodexs t =
     trace tree (Bin _ right) (Right:zs) =
       trace tree right zs
     trace _ _ _ =
-      error "Invalid input"
+      error "Invalid code"
 
 
-encodexs :: BTree Char -> String -> [Path]
+encodexs :: BTree Char -> String -> Path
 encodexs htree =
-  concat . map (codes htree)
+  concat . map (encodex htree)
   where
-    codes :: BTree Char -> Char -> [Path]
-    codes t =
-      head  . codes' t
+    encodex :: BTree Char -> Char -> Path
+    encodex t =
+      head  . codesx t
 
-    codes' (Tip x) c
+    codesx (Tip x) c
       | x == c =
         [[]]
       | otherwise =
         []
-    codes' (Bin left right) c =
-      map (Left:) (codes' left c) ++ map (Right:) (codes' right c)
+    codesx (Bin left right) c =
+      map (Left:) (codesx left c) ++ map (Right:) (codesx right c)
 
 
 testHuffmanCoding :: IO ()
 testHuffmanCoding =
   do let
-       e = encodexs htree "xet"
+       e = encodexs htree "text"
        d = decodexs htree e
-     putStrLn "Original Text: \"xet\""
+     putStrLn "Original Text: \"text\""
      putStrLn $ "Encoded text: " ++ show e
      putStrLn $ "Decoded text: \"" ++ d ++ "\""
   where
     htree =
-      betterbuild (zip ['x', 'e', 't'] [1, 1, 1])
+      betterbuild (zip ['x', 'e', 't'] [1, 1, 2])
 
 
 slowbuild :: [(Char, Int)] -> BTree Char
@@ -180,11 +184,8 @@ slowbuild =
 
 
 single :: [a] -> Bool
-single xs
-  | length xs == 1 =
-    True
-  | otherwise =
-    False
+single xs =
+  1 == length xs
 
 
 until :: (a -> Bool) -> (a -> a) -> a -> a
