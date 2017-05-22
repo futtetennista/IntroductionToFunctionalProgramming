@@ -2,6 +2,7 @@ module Chapter9
 where
 
 import Prelude hiding (until, Left, Right)
+import Chapter6 (qsortBy)
 
 
 data BTree a
@@ -236,3 +237,70 @@ betterbuild =
 testBuildHTree :: BTree Char
 testBuildHTree =
   betterbuild (zip ['g', 'r', 'a', 't', 'e'] [8, 9, 11, 13, 17])
+
+
+-- Ex. 9.2.7
+data LabelledBTree a
+  = LLeaf a
+  | LNode a (LabelledBTree a) (LabelledBTree a)
+  deriving Show
+
+
+-- Time complexity: O(P + L*S*(logBase 2 S) + S*(logBase 2 S)) where S is the size of htree and L is the lenght of the input string and P is the cost of concatenating L paths
+fastencodexs :: BTree Char -> String -> Path
+fastencodexs htree =
+  concat . map encodex
+  where
+    encodex =
+      bsearch dict
+
+    -- Time complexity: O(logBase 2 S) where S is the size of htree
+    bsearch :: LabelledBTree (Char, Path) -> Char -> Path
+    bsearch (LLeaf (x, path)) query
+      | x == query =
+        path
+      | otherwise =
+        error $ "Unknown char to encode '" ++ show query ++ "'"
+    bsearch (LNode (x, path) left right) query
+      | x == query =
+        path
+      | query > x =
+        bsearch right query
+      | query < x =
+        bsearch left query
+
+    -- Time complexity: O(S*(logBase 2 S)) where S is the size of htree
+    dict :: LabelledBTree (Char, Path)
+    dict =
+      buildDict . qsortBy fst $ codes htree [] []
+
+    -- Builds the code dictionary as a balanced bst
+    -- Time complexity: O(S) where n is the size of the htree
+    buildDict :: [(Char, Path)] -> LabelledBTree (Char, Path)
+    buildDict [x] =
+      LLeaf x
+    buildDict xs@(_:_) =
+      LNode (xs !! mid) (buildDict (take mid xs)) (buildDict (drop (mid + 1) xs))
+      where
+        mid =
+          length xs `div` 2
+
+    -- Time complexity: O(S) where n is the size of htree
+    codes :: BTree Char -> Path -> [(Char, Path)] -> [(Char, Path)]
+    codes (Tip x) xpath paths =
+      (x, reverse xpath) : paths
+    codes (Bin left right) xpath paths =
+      codes right (Right:xpath) (codes left (Left:xpath) paths)
+
+
+testHuffmanCoding' :: IO ()
+testHuffmanCoding' =
+  do let
+       e = fastencodexs htree "text"
+       d = decodexs htree e
+     putStrLn "Original Text: \"text\""
+     putStrLn $ "Encoded text: " ++ show e
+     putStrLn $ "Decoded text: \"" ++ d ++ "\""
+  where
+    htree =
+      betterbuild (zip ['x', 'e', 't'] [1, 1, 2])

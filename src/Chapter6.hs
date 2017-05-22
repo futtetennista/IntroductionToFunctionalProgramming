@@ -214,11 +214,11 @@ mirrorDiag diag board =
     idiag =
       zip [1..8] diag
 
-    qsortBy :: Ord b => (a -> b) -> [a] -> [a]
-    qsortBy _ [] =
-      []
-    qsortBy f (x:xs) =
-      qsortBy f [y | y <- xs, f y <= f x] ++ [x] ++ qsortBy f [y | y <- xs, f y > f x]
+qsortBy :: Ord b => (a -> b) -> [a] -> [a]
+qsortBy _ [] =
+  []
+qsortBy f (x:xs) =
+  qsortBy f [y | y <- xs, f y <= f x] ++ [x] ++ qsortBy f [y | y <- xs, f y > f x]
 
 
 -- Ex. 6.5.4
