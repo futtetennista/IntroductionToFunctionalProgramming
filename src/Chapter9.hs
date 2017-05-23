@@ -246,11 +246,17 @@ data LabelledBTree a
   deriving Show
 
 
--- Time complexity: O(P + L*S*(logBase 2 S) + S*(logBase 2 S)) where S is the size of htree and L is the lenght of the input string and P is the cost of concatenating L paths
+-- Time complexity:
+--   O(D * S)                  [concatenating S codes of length D]
+-- + O(L * S * (logBase 2 S))  [encoding L chars]
+-- + O(S * (logBase 2 S))      [building the dict]
+-- = O((D * S) + L * S * (logBase 2 S))
+-- where D is the depth of the given htree and S its size and L is the length of the input string
 encodexs' :: BTree Char -> String -> Path
 encodexs' htree =
   concat . map encodex
   where
+    encodex :: Char -> Path
     encodex =
       bsearch dict
 
@@ -269,7 +275,7 @@ encodexs' htree =
       | query < x =
         bsearch left query
 
-    -- Time complexity: O(S*(logBase 2 S)) where S is the size of htree
+    -- Time complexity: O(S * (logBase 2 S)) where S is the size of htree
     dict :: LabelledBTree (Char, Path)
     dict =
       buildDict . qsortBy fst $ codes htree [] []
@@ -295,12 +301,15 @@ encodexs' htree =
 
 testHuffmanCoding' :: IO ()
 testHuffmanCoding' =
-  do let
-       e = encodexs' htree "text"
-       d = decodexs htree e
-     putStrLn "Original Text: \"text\""
-     putStrLn $ "Encoded text: " ++ show e
-     putStrLn $ "Decoded text: \"" ++ d ++ "\""
+  do putStrLn "Original Text: \"text\""
+     putStrLn $ "Encoded text: " ++ show encoded
+     putStrLn $ "Decoded text: \"" ++ decoded ++ "\""
   where
+    encoded =
+      encodexs' htree "text"
+
+    decoded =
+      decodexs htree encoded
+
     htree =
       betterbuild (zip ['x', 'e', 't'] [1, 1, 2])
