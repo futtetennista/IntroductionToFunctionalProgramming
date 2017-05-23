@@ -105,7 +105,7 @@ fastprimes =
 
     isprime :: Integer -> Bool
     isprime =
-      knot (multiple ps)
+      not . multiple ps
 
     multiple (x:xs) n
       | x*x > n =
@@ -117,10 +117,6 @@ fastprimes =
 
     divisor m n =
       n `mod` m == 0
-
-    knot :: (Integer -> Bool) -> Integer -> Bool
-    knot f =
-      not . f
 
 
 -- Ex. 7.3.1
@@ -154,6 +150,7 @@ hamming' a b c =
             (merge (map (b*) (hamming' a b c))
                    (map (c*) (hamming' a b c)))
 
+
 -- Ex. 7.6.4
 -- ƛ: take 500 (fasthamming' 2 3 5)
 -- (0.01 secs, 3,339,976 bytes)
@@ -167,7 +164,7 @@ fasthamming' a b c =
                        (map (c*) xs))
 
 
--- Ex 7.6.5
+-- Ex. 7.6.5
 genhamming :: [Integer] -> [Integer]
 genhamming as =
   1 : gh as
@@ -195,7 +192,7 @@ fastgenhamming as =
             (fgh xs)
 
 
--- 7.6.6
+-- Ex. 7.6.6
 genhamming' :: [Integer] -> [Integer]
 genhamming' =
   undefined

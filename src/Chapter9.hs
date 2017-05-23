@@ -247,8 +247,8 @@ data LabelledBTree a
 
 
 -- Time complexity: O(P + L*S*(logBase 2 S) + S*(logBase 2 S)) where S is the size of htree and L is the lenght of the input string and P is the cost of concatenating L paths
-fastencodexs :: BTree Char -> String -> Path
-fastencodexs htree =
+encodexs' :: BTree Char -> String -> Path
+encodexs' htree =
   concat . map encodex
   where
     encodex =
@@ -296,7 +296,7 @@ fastencodexs htree =
 testHuffmanCoding' :: IO ()
 testHuffmanCoding' =
   do let
-       e = fastencodexs htree "text"
+       e = encodexs' htree "text"
        d = decodexs htree e
      putStrLn "Original Text: \"text\""
      putStrLn $ "Encoded text: " ++ show e
