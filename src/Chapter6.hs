@@ -1,7 +1,44 @@
 module Chapter6
 where
 
+import Data.List (foldl')
 import Chapter5 (perms)
+
+
+copy :: Int -> a -> [a]
+copy n x =
+  [x | _ <- [1..n]]
+
+
+-- Ex. 6.3.3
+foldrOr :: Int -> Bool
+foldrOr n =
+  {-# SCC foldrOr #-} foldr (||) False (copy n True)
+
+
+foldlOr :: Int -> Bool
+foldlOr n =
+  {-# SCC foldlOr #-} foldl (||) False (copy n True)
+
+
+foldl'Or :: Int -> Bool
+foldl'Or n =
+  {-# SCC foldr'Or #-} foldl' (||) False (copy n True)
+
+
+foldrAppend :: Int -> Int -> String
+foldrAppend m n =
+  {-# SCC foldrAppend #-} foldr (++) [] (copy m (copy n 'X'))
+
+
+foldlAppend :: Int -> Int -> String
+foldlAppend m n =
+  {-# SCC foldlAppend #-} foldl (++) [] (copy m (copy n 'X'))
+
+
+foldl'Append :: Int -> Int -> String
+foldl'Append m n =
+  {-# SCC foldl'Append #-} foldl' (++) [] (copy m (copy n 'X'))
 
 
 kwic :: [String] -> String -> String

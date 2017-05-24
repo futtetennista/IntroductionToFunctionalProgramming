@@ -89,7 +89,7 @@ getint xs =
 
 primes :: [Integer]
 primes =
-  rsieve [2..]
+  {-# SCC primes #-} rsieve [2..]
   where
     rsieve (p:xs) =
       p : rsieve [x | x <- xs, x `mod` p /= 0]
@@ -98,7 +98,7 @@ primes =
 -- Taken from http://users.monash.edu/~lloyd/tildeFP/1989SPE/
 fastprimes :: [Integer]
 fastprimes =
-  ps
+  {-# SCC fastprimes #-} ps
   where
     ps =
       2 : [x | x <- [3..], isprime x]
@@ -146,6 +146,7 @@ merge (x:xs) (y:ys)
 -- (11.84 secs, 4,892,275,184 bytes)
 hamming' :: Integer -> Integer -> Integer -> [Integer]
 hamming' a b c =
+  {-# SCC hamming' #-}
   1 : merge (map (a*) (hamming' a b c))
             (merge (map (b*) (hamming' a b c))
                    (map (c*) (hamming' a b c)))
@@ -156,7 +157,7 @@ hamming' a b c =
 -- (0.01 secs, 3,339,976 bytes)
 fasthamming' :: Integer -> Integer -> Integer -> [Integer]
 fasthamming' a b c =
-  xs
+  {-# SCC fasthamming' #-} xs
   where
     xs =
       1 : merge (map (a*) xs)
@@ -167,7 +168,7 @@ fasthamming' a b c =
 -- Ex. 7.6.5
 genhamming :: [Integer] -> [Integer]
 genhamming as =
-  1 : gh as
+  {-# SCC genhamming #-} 1 : gh as
   where
     gh [] =
       []
@@ -180,11 +181,13 @@ genhamming as =
 
 fastgenhamming :: [Integer] -> [Integer]
 fastgenhamming as =
-  hs
+  {-# SCC fastgenhamming #-} hs
   where
     hs =
       1 : fgh as
 
+    fgh [] =
+      []
     fgh [x] =
       map (x*) hs
     fgh (x:xs) =
@@ -358,11 +361,11 @@ roundrobin _ms =
 move :: Int -> String
 move e
   | e `mod` 3 == 0 =
-      "Scissors"
+    "Scissors"
   | e `mod` 3 == 1 =
-      "Paper"
+    "Paper"
   | e `mod` 3 == 2 =
-      "Rock"
+    "Rock"
 
 
 thirdlook :: Strategy
@@ -381,9 +384,9 @@ sneakycheat ms =
 
 -- ƛ: fib 500000
 -- (21.66 secs, 11,241,527,416 bytes)
-fib :: Int -> Integer
-fib =
-  fst . (zs !!)
+fasterfib :: Int -> Integer
+fasterfib =
+  {-# SCC fasterfib #-} fst . (zs !!)
   where
     zs =
       (0, 1) : map fibpair zs
@@ -394,13 +397,14 @@ fib =
 
 -- ƛ: fib' 500000
 -- (31.51 secs, 11,398,284,264 bytes)
-fib' :: Int -> Integer
-fib' =
-  fst . ffib
+fastfib :: Int -> Integer
+fastfib =
+  {-# SCC fastfib  #-} fst . ffib
   where
     ffib 0 =
       (0, 1)
     ffib n =
       (b, a + b)
-      where (a, b) =
-              ffib (n - 1)
+      where
+        (a, b) =
+          ffib (n - 1)

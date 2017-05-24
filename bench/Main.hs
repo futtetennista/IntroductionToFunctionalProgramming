@@ -5,6 +5,7 @@ where
 
 import Weigh (Weigh, mainWith, func)
 import Chapter5 (subs)
+import Chapter6 (foldrAppend, foldlAppend, foldl'Append)
 import Chapter7 (primes, fastprimes, hamming, hamming', fasthamming', genhamming, fastgenhamming)
 import Data.List (foldl')
 
@@ -42,12 +43,13 @@ primeNums =
 
 foldsNonStrictF :: Weigh ()
 foldsNonStrictF =
-  do func "foldr (&&)" (foldr (&&) True) xs
-     func "foldl (&&)" (foldl (&&) True) xs
-     func "foldl' (&&)" (foldl' (&&) True) xs
-     func "foldr (++)" (foldr (++) []) (copy 500 (copy 1000 'X'))
-     func "foldl (++)" (foldl (++) []) (copy 500 (copy 1000 'X'))
-     func "foldl' (++)" (foldl' (++) []) (copy 500 (copy 1000 'X'))
+  do func "foldr (||)" (foldr (||) False) (copy 1000 True)
+     func "foldl (||)" (foldl (||) False) (copy 1000 True)
+     func "foldl' (||)" (foldl' (||) False) (copy 1000 True)
+     func "foldr (++)" (uncurry foldrAppend) (500, 1000)
+     func "foldl (++)" (uncurry foldlAppend) (500, 1000)
+     -- This is kinda surprising to me
+     func "foldl' (++)" (uncurry foldl'Append) (500, 1000)
        where
          xs :: [Bool]
          xs =
@@ -70,15 +72,16 @@ foldsStrictF =
          xs =
            [1..5000000]
 
-         -- calcSum' !f x =
          calcSum' f x =
-           f (+) 0 xs
+           f (+) 0 ys
            where
-             -- xs = ([1..x]::[Int])
-             xs = seq const ([1..x]::[Int])
+             ys :: [Int]
+             -- ys = [1..x]
+             !ys =
+               [1..x]
 
          calcSum f =
-           f (+) 0
+           {-# SCC calcSum #-} f (+) 0
 
 
 -- foldsStrictF' :: Weigh ()
