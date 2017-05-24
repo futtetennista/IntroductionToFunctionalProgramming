@@ -45,21 +45,33 @@ tips (Bin left right) =
   tips left ++ tips right
 
 
+-- Time complexity: S (maptree) + N (foldtree) = O(N) if the tree is balanced where S is the size of the tree and N is 3 * P where P is the size of a subtree (given the two subtrees have the same size)
+-- TODO: come up with a better analysis
 tips' :: BTree a -> [a]
 tips' =
-  foldtree ((++)) . maptree unit
+  foldtree (++) . maptree unit
   where
     unit x =
       [x]
 
 
+-- Ex. 9.1.8
+-- Time complexity: S (maptree) + S (foldtree) = O(S) where S is the size of the tree
 bettertips :: BTree a -> [a]
 bettertips t =
   mtips t []
   where
-    -- TODO: understand this func and expand it without using pointfree style
+    -- Making sense of this function:
+    -- :t (:) :: a -> [a] -> [a]
+    -- :t (1:) :: Num a => [a] -> [a]
+    -- :t ((1:).) :: Num a => (a1 -> [a]) -> a1 -> [a]
+    -- :t (.) :: (b -> c) -> (a -> b) -> a -> c
+    -- :t ((1:).(2:)) :: Num a => [a] -> [a]
+    -- :t ((1:).(2:)) [] :: Num a => [a]
+    mtips :: BTree a -> [a] -> [a]
+    -- mtips tree xs = foldtree (.) (maptree (:) tree) xs
     mtips =
-      foldtree ((.)) . maptree (:)
+      foldtree (.) . maptree (:)
 
 
 maptree :: (a -> b) -> BTree a -> BTree b
