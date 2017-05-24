@@ -82,7 +82,7 @@ maptree f (Bin left right) =
 
 
 foldtree :: (a -> a -> a) -> BTree a -> a
-foldtree _f (Tip x) =
+foldtree _ (Tip x) =
   x
 foldtree f (Bin left right) =
   f (foldtree f left) (foldtree f right)
@@ -325,3 +325,31 @@ testHuffmanCoding' =
 
     htree =
       betterbuild (zip ['x', 'e', 't'] [1, 1, 2])
+
+
+data BSTree a
+  = Nil
+  | Bin' a (BSTree a) (BSTree a)
+
+
+instance Show a => Show (BSTree a) where
+  show Nil =
+    ""
+  show (Bin' x left right) =
+    "{" ++ show left ++ "." ++ show x ++ "." ++ show right ++ "}"
+
+
+mapbstree :: (a -> b) -> BSTree a -> BSTree b
+mapbstree _ Nil =
+  Nil
+mapbstree f (Bin' x left right) =
+  Bin' (f x) (mapbstree f left) (mapbstree f right)
+
+
+foldbstree :: (a -> a -> a) -> BSTree a -> a -> a
+foldbstree _ Nil z0 =
+  z0
+foldbstree f (Bin' x left right) z0 =
+  -- foldbstree f right (foldbstree f left (f x z0)) -- pre-order
+  -- f x (f (foldbstree f left z0) (foldbstree f right z0)) -- post-order
+  foldbstree f right (f x (foldbstree f left z0)) -- in-order
