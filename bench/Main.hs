@@ -46,9 +46,25 @@ foldsNonStrictF =
   do func "foldr (||)" (foldr (||) False) (copy 1000 True)
      func "foldl (||)" (foldl (||) False) (copy 1000 True)
      func "foldl' (||)" (foldl' (||) False) (copy 1000 True)
+     -- "XXX" ++ ("XXX" ++ ( … ++ ("XXX" ++ "")))
+     --                           |___________|
+     --          |_____________________________|
+     -- |_______________________________________|
+     -- Space complexity implications:
      func "foldr (++)" (uncurry foldrAppend) (500, 1000)
+     -- ( … (("XXX" ++ "") ++ "XXX") ++ "XXX")  N.B.: ("XXX" ++ …) is actually ('X':_)
+     --      |___________|
+     --     |______________________|
+     -- |____________________________________|
+     -- Time complexity: slower than foldr since the biggest list is on the left
+     -- Space complexity: less efficient than foldr since thunks build up until the result is evaluated
      func "foldl (++)" (uncurry foldlAppend) (500, 1000)
-     -- This is kinda surprising to me
+     -- !( … !(!("XXX" ++ "") ++ "XXX") ++ "XXX")  N.B.: !("XXX" ++ …) is actually ('X':_)
+     --        |____________|
+     --      |________________________|
+     -- |_______________________________________|
+     -- Time complexity: slower than foldr since the biggest list is on the left
+     -- Space complexity: less efficient than foldr since it's still too lazy, the strictness added doesn't actually achieve anything more than foldl since the first thunk is already in WHNF - that is ('X':_)
      func "foldl' (++)" (uncurry foldl'Append) (500, 1000)
        where
          xs :: [Bool]

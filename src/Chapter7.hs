@@ -7,7 +7,7 @@ import Prelude hiding (iterate)
 -- Ex. 7.2.1
 powerlist :: [[Integer]]
 powerlist =
-  [[x ^ y | y <- ([0..]::[Int])] | x <- [1..]]
+  [[x ^ y | y <- ([0..] :: [Int])] | x <- [1..]]
 
 
 powerlistOf :: Int -> [Integer]
@@ -18,6 +18,14 @@ powerlistOf n =
 iterate :: (a -> a) -> a -> [a]
 iterate f x =
   x : iterate f (f x)
+
+
+iterate' :: (a -> a) -> a -> [a]
+iterate' f x =
+  zs
+  where
+    zs =
+      x : map f zs
 
 
 -- Ex. 7.2.2
