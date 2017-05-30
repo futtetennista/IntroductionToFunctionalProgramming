@@ -346,10 +346,288 @@ mapbstree f (Bin' x left right) =
   Bin' (f x) (mapbstree f left) (mapbstree f right)
 
 
-foldbstree :: (a -> a -> a) -> BSTree a -> a -> a
-foldbstree _ Nil z0 =
+foldbstree :: (a -> a -> a) -> a -> BSTree a -> a
+foldbstree _ z0 Nil =
   z0
-foldbstree f (Bin' x left right) z0 =
+foldbstree f z0 (Bin' x left right) =
+  foldbstree f (f x (foldbstree f z0 left)) right -- in-order
   -- foldbstree f right (foldbstree f left (f x z0)) -- pre-order
   -- f x (f (foldbstree f left z0) (foldbstree f right z0)) -- post-order
-  foldbstree f right (f x (foldbstree f left z0)) -- in-order
+
+
+depth' :: BSTree a -> Int
+depth' Nil =
+  0
+depth' (Bin' _ left right) =
+  1 + max (depth' left) (depth' right)
+
+
+depthbal :: BSTree a -> Bool
+depthbal Nil =
+  True
+depthbal (Bin' _ left right) =
+  depth' left - depth' right <= 1
+  && depthbal left
+  && depthbal right
+
+
+rebal :: BSTree a -> BSTree a
+rebal Nil =
+  Nil
+rebal tree@(Bin' _ _ _)
+  | slope tree == 2 =
+    shiftr tree
+  | slope tree == -2 =
+    shiftl tree
+  | otherwise =
+    tree
+  where
+    slope (Bin' _ left right) =
+      depth' left - depth' right
+
+    shiftr (Bin' x t1 t2)
+      | slope t1 == -1 =
+        rotr(Bin' x (rotl t1) t2)
+      | otherwise =
+        rotr (Bin' x t1 t2)
+
+    shiftl (Bin' x t1 t2)
+      | slope t2 == 1 =
+        rotl(Bin' x t1 (rotr t2))
+      | otherwise =
+        rotl (Bin' x t1 t2)
+
+    rotr (Bin' x (Bin' y t1 t2) t3) =
+      Bin' y t1 (Bin' x t2 t3)
+
+    rotl (Bin' x t1 (Bin' y t2 t3)) =
+      Bin' y (Bin' x t1 t2) t3
+
+
+-- Set as bstree (conditionally balanced)
+type Set' a =
+  BSTree a
+
+
+type Rebalance =
+  Bool
+
+
+insert :: Ord a => a -> Rebalance -> Set' a -> Set' a
+insert x _ Nil =
+  Bin' x Nil Nil
+insert x b (Bin' y t1 t2)
+  | x > y =
+    condRebal $ Bin' y t1 (insert x b t2)
+  | otherwise =
+    condRebal $ Bin' y (insert x b t1) t2
+  where
+    condRebal tree =
+      if b then rebal tree else tree
+
+
+-- Ex. 9.4.3
+delete :: Ord a => a -> Rebalance -> Set' a -> Set' a
+delete _ _ Nil =
+  Nil
+delete x b (Bin' y left right)
+  | x > y =
+    condRebal $ Bin' y left (delete x b right)
+  | x < y =
+    condRebal $ Bin' y (delete x b left) right
+  | x == y =
+    condRebal $ join left right
+  where
+    condRebal tree =
+      if b then rebal tree else tree
+
+    join Nil t2 =
+      t2
+    join t1 t2 =
+      Bin' z t t2
+      where
+        (z, t) =
+          split t1
+
+
+split :: BSTree a -> (a, BSTree a)
+split (Bin' x t1 Nil) =
+  (x, t1)
+split (Bin' x t1 t2) =
+  (y, Bin' x t1 t)
+  where
+    (y, t) =
+      split t2
+
+
+type Depths =
+  (Int, Int)
+
+
+-- Set as balanced bstree with cached depths
+type Set'' a =
+  BSTree (a, Depths)
+
+
+-- Ex. 9.4.2
+fastrebal :: BSTree (a, Depths) -> BSTree (a, Depths)
+fastrebal Nil =
+  Nil
+fastrebal tree@(Bin' (_, (dleft, dright)) _ _)
+  | slope == 2 =
+    shiftr tree
+  | slope == -2 =
+    shiftl tree
+  | otherwise =
+    tree
+  where
+    slope =
+      dleft - dright
+
+    shiftr (Bin' x t1@(Bin' (_, (dt3, dt4)) _t3 _t4) t2)
+      | dt3 - dt4 == -1 =
+        rotr (Bin' x (rotl t1) t2)
+      | otherwise =
+        rotr (Bin' x t1 t2)
+
+    shiftl (Bin' x t1 t2@(Bin' (_, (dt3, dt4)) _t3 _t4))
+      | dt3 - dt4 == 1 =
+        rotl (Bin' x t1 (rotr t2))
+      | otherwise =
+        rotl (Bin' x t1 t2)
+
+    rotr (Bin' (x, (_, dt3)) (Bin' (y, (dt1, dt2)) t1 t2) t3) =
+      Bin' (y, (dt1, max dt2 dt3)) t1 newT2
+      where
+        newT2 =
+          Bin' (x, (dt2, dt3)) t2 t3
+
+    rotl (Bin' (x, (dt1, _)) t1 (Bin' (y, (dt2, dt3)) t2 t3)) =
+      Bin' (y, (max dt1 dt2, dt3)) newT1 t3
+      where
+        newT1 =
+          Bin' (x, (dt1, dt2)) t1 t2
+
+
+fastinsert :: Ord a => a -> Set'' a -> Set'' a
+fastinsert x Nil =
+  Bin' (x, (0, 0)) Nil Nil
+fastinsert x tree@(Bin' (y, (dt1, dt2)) t1 t2)
+  | x > y =
+    fastrebal $ Bin' (y, (dt1, fastdepth dt1r dt2r)) t1 newT2
+  | x < y =
+    fastrebal $ Bin' (y, (fastdepth dt1l dt2l, dt2)) newT1 t2
+  | otherwise =
+    tree
+  where
+    fastdepth dt1' dt2' =
+      1 + max dt1' dt2'
+
+    newT1@(Bin' (_, (dt1l, dt2l)) _ _) =
+      fastinsert x t1
+
+    newT2@(Bin' (_, (dt1r, dt2r)) _ _) =
+      fastinsert x t2
+
+
+fastdelete :: Ord a => a -> Set'' a -> Set'' a
+fastdelete _ Nil =
+  Nil
+fastdelete x (Bin' (y, (dt1, dt2)) t1 t2)
+  | x > y =
+    Bin' (y, (dt1, depth' newT2)) t1 newT2
+  | x < y =
+    Bin' (y, (depth' newT1, dt2)) newT1 t2
+  | x == y =
+    join t1 t2
+  where
+    newT1 =
+      fastdelete x t1
+
+    newT2 =
+      fastdelete x t2
+
+    join Nil t2' =
+      t2'
+    join t1' t2'@(Bin' (_, (dl, dr)) _ _) =
+      Bin' (z, (depth' t, max dl dr)) t t2'
+      where
+        ((z, _), t) =
+          split t1'
+
+
+-- Set as ordered list
+type Set a =
+  [a]
+
+
+add :: Ord a => a -> Set a -> Set a
+add x [] =
+  [x]
+add x xs@(_:_)
+  | x > midX =
+    take (mid + 1) xs ++ add x (drop (mid + 1) xs)
+  | x < midX =
+    add x (take mid xs) ++ drop mid xs
+  | otherwise =
+    xs
+  where
+    midX =
+      xs !! mid
+    mid =
+      length xs `div` 2
+
+
+remove :: Ord a => a -> Set a -> Set a
+remove _ [] =
+  []
+remove x xs@(_:_)
+  | x > midX =
+    take (mid + 1) xs ++ remove x (drop (mid + 1) xs)
+  | x < midX =
+    remove x (take mid xs) ++ drop mid xs
+  | x == midX =
+    take mid xs ++ drop (mid + 1) xs
+  where
+    midX =
+      xs !! mid
+
+    mid =
+      length xs `div` 2
+
+
+-- Ex. 9.4.5
+-- ƛ: sumSetBalBSTree' 10000   (0.11 secs,   79,920,752 bytes)
+-- ƛ: sumSetOrderedList 10000  (3.47 secs,    5,666,114,808 bytes)
+-- ƛ: sumSetBSTree 10000       (8.98 secs,   11,679,908,808 bytes)
+-- ƛ: sumSetBalBSTree 10000    (126.56 secs, 56,911,774,856 bytes)
+sumSetOrderedList :: Int -> Integer
+sumSetOrderedList n =
+  foldr (+) 0 . map toInteger $ foldr add [] xs
+  where
+    xs =
+      drop (n `div` 2) [1..n] ++ take (n `div` 2) [1..n]
+
+
+sumSetBSTree :: Int -> Integer
+sumSetBSTree n =
+  foldbstree (+) 0 . mapbstree toInteger $ foldr (flip insert False) Nil xs
+  where
+    xs =
+      drop (n `div` 2) [1..n] ++ take (n `div` 2) [1..n]
+
+
+sumSetBalBSTree :: Int -> Integer
+sumSetBalBSTree n =
+  foldbstree (+) 0 . mapbstree toInteger $ foldr (flip insert True) Nil xs
+  where
+    xs =
+      drop (n `div` 2) [1..n] ++ take (n `div` 2) [1..n]
+
+
+sumSetBalBSTree' :: Int -> Integer
+sumSetBalBSTree' n =
+  foldbstree (+) 0 . mapbstree (toInteger . fst) $ foldr fastinsert Nil xs
+  where
+    xs =
+      drop (n `div` 2) [1..n] ++ take (n `div` 2) [1..n]
