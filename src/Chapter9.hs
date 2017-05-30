@@ -497,16 +497,23 @@ fastrebal tree@(Bin' (_, (dleft, dright)) _ _)
         rotl (Bin' x t1 t2)
 
     rotr (Bin' (x, (_, dt3)) (Bin' (y, (dt1, dt2)) t1 t2) t3) =
-      Bin' (y, (dt1, max dt2 dt3)) t1 newT2
+      Bin' (y, (dt1, fastdepth newT2)) t1 newT2
       where
         newT2 =
           Bin' (x, (dt2, dt3)) t2 t3
 
     rotl (Bin' (x, (dt1, _)) t1 (Bin' (y, (dt2, dt3)) t2 t3)) =
-      Bin' (y, (max dt1 dt2, dt3)) newT1 t3
+      Bin' (y, (fastdepth newT1, dt3)) newT1 t3
       where
         newT1 =
           Bin' (x, (dt1, dt2)) t1 t2
+
+
+fastdepth :: BSTree (a, Depths) -> Int
+fastdepth Nil =
+  0
+fastdepth (Bin' (_, (dt1, dt2)) _t1 _t2) =
+  1 + max dt1 dt2
 
 
 fastinsert :: Ord a => a -> Set'' a -> Set'' a
@@ -514,19 +521,16 @@ fastinsert x Nil =
   Bin' (x, (0, 0)) Nil Nil
 fastinsert x tree@(Bin' (y, (dt1, dt2)) t1 t2)
   | x > y =
-    fastrebal $ Bin' (y, (dt1, fastdepth dt1r dt2r)) t1 newT2
+    fastrebal $ Bin' (y, (dt1, fastdepth newT2)) t1 newT2
   | x < y =
-    fastrebal $ Bin' (y, (fastdepth dt1l dt2l, dt2)) newT1 t2
+    fastrebal $ Bin' (y, (fastdepth newT1, dt2)) newT1 t2
   | otherwise =
     tree
   where
-    fastdepth dt1' dt2' =
-      1 + max dt1' dt2'
-
-    newT1@(Bin' (_, (dt1l, dt2l)) _ _) =
+    newT1 =
       fastinsert x t1
 
-    newT2@(Bin' (_, (dt1r, dt2r)) _ _) =
+    newT2 =
       fastinsert x t2
 
 
