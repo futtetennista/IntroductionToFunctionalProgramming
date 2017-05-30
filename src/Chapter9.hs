@@ -366,7 +366,7 @@ depthbal :: BSTree a -> Bool
 depthbal Nil =
   True
 depthbal (Bin' _ left right) =
-  depth' left - depth' right <= 1
+  abs(depth' left - depth' right) <= 1
   && depthbal left
   && depthbal right
 
