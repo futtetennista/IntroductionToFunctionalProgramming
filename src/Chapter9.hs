@@ -1,7 +1,7 @@
 module Chapter9
 where
 
-import Prelude hiding (until, Left, Right)
+import Prelude hiding (until, Left, Right, lookup)
 import Chapter6 (qsortBy)
 
 
@@ -114,6 +114,48 @@ testMinimalBTree xs =
     minimalDepth :: BTree a -> Bool
     minimalDepth tree =
       depth tree == ceiling (logBase 2.0 (fromIntegral $ size tree))
+
+
+data LBTree a b
+  = LTip a
+  | LBin b (LBTree a b) (LBTree a b)
+
+
+instance (Show a, Show b) => Show (LBTree a b) where
+  show (LTip x) =
+    "(" ++ show x ++ ")"
+  show (LBin y t1 t2) =
+    "{" ++ show t1 ++ "." ++ "[" ++ show y  ++ "]" ++ "." ++ show t2 ++ "}"
+
+
+tipslbtree :: LBTree a b -> [a]
+tipslbtree lbtree =
+  tipslbtreeHelp lbtree []
+  where
+    tipslbtreeHelp :: LBTree a b -> [a] -> [a]
+    tipslbtreeHelp =
+      foldlbtree (.) . maplbtree (:)
+
+
+sizelbtree :: LBTree a b -> Int
+sizelbtree (LTip _) =
+  1
+sizelbtree (LBin _ t1 t2) =
+  sizelbtree t1 + sizelbtree t2
+
+
+maplbtree :: (a -> c) -> LBTree a b -> LBTree c b
+maplbtree f (LTip x) =
+  LTip (f x)
+maplbtree f (LBin y t1 t2) =
+  LBin y (maplbtree f t1) (maplbtree f t2)
+
+
+foldlbtree :: (a -> a -> a) -> LBTree a b -> a
+foldlbtree _ (LTip x) =
+  x
+foldlbtree f (LBin _ t1 t2) =
+  f (foldlbtree f t1) (foldlbtree f t2)
 
 
 -- Huffman coding trees
@@ -635,3 +677,68 @@ sumSetBalBSTree' n =
   where
     xs =
       drop (n `div` 2) [1..n] ++ take (n `div` 2) [1..n]
+
+
+sizebal :: LBTree a b -> Bool
+sizebal (LTip _) =
+  True
+sizebal (LBin _ t1 t2) =
+  abs(sizelbtree t1 - sizelbtree t2) <= 1
+  && sizebal t1
+  && sizebal t2
+
+
+type Array a =
+  LBTree a Int
+
+
+type Index =
+  Int
+
+
+mkarray :: [a] -> Array a
+-- mkarray [] = LTip undefined
+mkarray (x:xs)
+  | n == 1 =
+    LTip x
+  | n > 1 =
+    LBin sizeT1 (mkarray ys) (mkarray zs)
+  where
+    n =
+      length xs
+
+    sizeT1 =
+      n `div` 2
+
+    ys =
+      take sizeT1 xs
+
+    zs =
+      drop sizeT1 xs
+
+
+lookup :: Array a -> Index -> a
+lookup (LTip x) 0 =
+  x
+lookup (LBin sizeT1 t1 t2) k
+  | k < sizeT1 =
+    lookup t1 k
+  | otherwise =
+    lookup t2 (k - sizeT1)
+
+
+update :: Array a -> Index -> a -> Array a
+update (LTip _) 0 x =
+  LTip x
+update (LBin sizeT1 t1 t2) k x
+  | k < sizeT1 =
+    LBin sizeT1 (update t1 k x) t2
+  | otherwise =
+    LBin sizeT1 t1 (update t2 (k - sizeT1) x)
+
+
+length' :: Array a -> Int
+length' (LTip _) =
+  1
+length' (LBin sizeT1 _ t2) =
+  sizeT1 + length' t2
