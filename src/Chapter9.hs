@@ -1,7 +1,8 @@
 module Chapter9
 where
 
-import Prelude hiding (until, Left, Right, lookup)
+import Prelude hiding (until, Left, Right, lookup, curry, uncurry)
+import Data.List (intercalate)
 import Chapter6 (qsortBy)
 
 
@@ -123,9 +124,9 @@ data LBTree a b
 
 instance (Show a, Show b) => Show (LBTree a b) where
   show (LTip x) =
-    "(" ++ show x ++ ")"
+    show x
   show (LBin y t1 t2) =
-    "{" ++ show t1 ++ "." ++ "[" ++ show y  ++ "]" ++ "." ++ show t2 ++ "}"
+    "{" ++ show t1 ++ "." ++ "#" ++ show y  ++ "." ++ show t2 ++ "}"
 
 
 tipslbtree :: LBTree a b -> [a]
@@ -696,11 +697,11 @@ type Index =
   Int
 
 
+-- Builds non-empty arrays
 mkarray :: [a] -> Array a
--- mkarray [] = LTip undefined
-mkarray (x:xs)
+mkarray xs
   | n == 1 =
-    LTip x
+    LTip (head xs)
   | n > 1 =
     LBin sizeT1 (mkarray ys) (mkarray zs)
   where
@@ -717,9 +718,34 @@ mkarray (x:xs)
       drop sizeT1 xs
 
 
+-- Ex. 9.5.4
+mkarray2 :: [a] -> Array a
+mkarray2 xs =
+  fst (mkarray2' (length xs) xs)
+  where
+    mkarray2' n xs'
+      | n == 1 =
+        (LTip (head xs'), tail xs')
+      | n > 1 =
+        (LBin sizeT1 t1 t2, zs)
+      where
+        sizeT1 =
+          n `div` 2
+
+        (t1, ys) =
+          mkarray2' sizeT1 xs'
+
+        (t2, zs) =
+          mkarray2' (n - sizeT1) ys
+
+
+-- lookup :: Array a -> Index -> Maybe a
 lookup :: Array a -> Index -> a
-lookup (LTip x) 0 =
-  x
+lookup (LTip x) k
+  | k == 0 =
+    x
+  | otherwise =
+    undefined
 lookup (LBin sizeT1 t1 t2) k
   | k < sizeT1 =
     lookup t1 k
@@ -727,9 +753,13 @@ lookup (LBin sizeT1 t1 t2) k
     lookup t2 (k - sizeT1)
 
 
+-- update :: Array a -> Index -> a -> Maybe (Array a)
 update :: Array a -> Index -> a -> Array a
-update (LTip _) 0 x =
-  LTip x
+update (LTip _) k x
+  | k == 0 =
+    LTip x
+  | otherwise =
+    undefined
 update (LBin sizeT1 t1 t2) k x
   | k < sizeT1 =
     LBin sizeT1 (update t1 k x) t2
