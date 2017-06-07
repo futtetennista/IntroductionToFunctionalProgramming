@@ -772,3 +772,71 @@ length' (LTip _) =
   1
 length' (LBin sizeT1 _ t2) =
   sizeT1 + length' t2
+
+
+-- General Trees
+data GTree a =
+  GNode a [GTree a]
+
+
+instance Show a => Show (GTree a) where
+  show (GNode x ts) =
+    show x ++ ".{" ++ intercalate "," (map show ts) ++ "}"
+
+
+sizegtree :: GTree a -> Int
+sizegtree (GNode _ ts) =
+  1 + sum (map sizegtree ts)
+
+
+depthgtree :: GTree a -> Int
+depthgtree (GNode _ ts)
+  | length ts == 0 =
+    0
+  | otherwise =
+    1 + maximum (map depthgtree ts)
+
+
+data ExpTree a
+  = ExpTip a
+  | ExpBin (ExpTree a) (ExpTree a)
+
+
+instance Show a => Show (ExpTree a) where
+  show (ExpTip x) =
+    show x
+  show (ExpBin t1 t2) =
+    "{" ++ show t1 ++ "." ++ show t2  ++ "}"
+
+
+curry :: GTree a -> ExpTree a
+curry (GNode x ts) =
+  foldl ExpBin (ExpTip x) (map curry ts)
+
+
+uncurry :: ExpTree a -> GTree a
+uncurry (ExpTip x) =
+  GNode x []
+uncurry (ExpBin t1 t2) =
+  GNode x (ts ++ [t])
+  where
+    GNode x ts =
+      uncurry t1
+
+    t =
+      uncurry t2
+
+
+-- Ex. 9.6.1
+mapgtree :: (a -> b) -> GTree a -> GTree b
+mapgtree f (GNode x gts) =
+  GNode (f x) (map (mapgtree f) gts)
+
+
+-- Ex. 9.6.3
+foldlgtree :: (b -> a -> b) -> b -> GTree a -> b
+foldlgtree f z0 (GNode x gts) =
+  foldl (foldlgtree f) (f z0 x) gts
+
+-- wrongfoldlgtree f z0 (GNode x []) = f z0 x
+-- wrongfoldlgtree f z0 (GNode x (gt:gts)) = wrongfoldlgtree f (foldl (wrongfoldlgtree f) (f z0 x) gts) gt
