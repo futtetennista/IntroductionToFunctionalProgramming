@@ -777,9 +777,12 @@ length' (LBin sizeT1 _ t2) =
 -- General Trees
 data GTree a =
   GNode a [GTree a]
+  deriving Eq
 
 
 instance Show a => Show (GTree a) where
+  show (GNode x []) =
+    show x
   show (GNode x ts) =
     show x ++ ".{" ++ intercalate "," (map show ts) ++ "}"
 
@@ -812,6 +815,22 @@ instance Show a => Show (ExpTree a) where
 curry :: GTree a -> ExpTree a
 curry (GNode x ts) =
   foldl ExpBin (ExpTip x) (map curry ts)
+
+
+-- f (g x y) u (h w)
+expressionGTree :: GTree String
+expressionGTree = GNode "f" [ GNode "g" [ GNode "x" [], GNode "y" [] ]
+                            , GNode "u" []
+                            , GNode "h" [ GNode "w" [] ]
+                            ]
+
+
+showExprgtree :: GTree String -> String
+showExprgtree (GNode x []) =
+  x
+showExprgtree (GNode x gts@(_:_)) =
+  "(" ++ x ++ foldr (\x acc -> " " ++ showExprgtree x ++ acc) [] gts ++ ")"
+  -- "(" ++ x ++ foldr ((++) . (" "++) . showExprgtree) [] gts ++ ")"
 
 
 uncurry :: ExpTree a -> GTree a
