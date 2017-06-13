@@ -888,3 +888,361 @@ include d (GNode x ts) =
         ts'
       | otherwise =
         concatMap (include' (d' - 1)) ts'
+
+
+-- Game trees
+type Position =
+  (Int, Int)
+
+
+type Moves =
+  Position -> [Position]
+
+
+type GameTree position =
+  GTree position
+
+
+gametree :: PositionTTT -> GameTree PositionTTT
+gametree p =
+  reptree movesTTT p
+  where
+    -- reptree :: (position -> [position]) -> position -> GameTree position
+    reptree f x =
+      GNode x (map (reptree f) (f x))
+
+
+moves :: position -> [position]
+moves =
+  undefined
+
+
+prune :: Int -> GTree a -> GTree a
+prune 0 (GNode x _) =
+  GNode x []
+prune n (GNode x gts) =
+  GNode x (map (prune (n - 1)) gts)
+
+
+type Estimate =
+  Int
+
+
+minimax :: GTree Estimate -> Estimate
+minimax (GNode x ts)
+  | null ts =
+    x
+  | otherwise =
+    negate . minimum $ map minimax ts
+
+
+dynamic :: Int -> PositionTTT -> Estimate
+dynamic n =
+  minimax . mapgtree static . prune n . gametree
+
+
+type EstimateTree =
+  GTree Estimate
+
+
+static :: position -> Estimate
+static =
+  undefined
+
+
+-- alpha-beta pruning
+bmx :: Estimate -> Estimate -> GTree Estimate -> Estimate
+bmx a b (GNode x []) =
+  a `max` x `min` b
+bmx a b (GNode _ gts) =
+  cmx a b gts
+  where
+    cmx a _ [] =
+      a
+    cmx a b (t:ts)
+      | a' == b =
+        a'
+      | otherwise =
+        cmx a' b ts
+      where
+        a' =
+          - (bmx (-b) (-a) t)
+
+
+-- 9.7.2
+type Dynamic a =
+  Int -> a -> Estimate
+
+
+optimal :: Int -> Dynamic position -> GameTree position -> GameTree position
+optimal n dyn (GNode _ gts) =
+  ngt
+  where
+    ngt =
+      fst best
+
+    -- best :: (GameTree position, Estimate)
+    best =
+      maxEstimate treeEstimates
+
+    treeEstimates =
+      zip gts es
+      where
+        es =
+          map (dyn n . pos) gts
+
+        pos (GNode x _) =
+          x
+
+    -- maxEstimate :: (GameTree position, Estimate)
+    maxEstimate =
+      foldr1 (\x currentMax -> if snd x > snd currentMax then x else currentMax)
+
+
+-- 9.7.3
+type Grid =
+  [Char]
+
+
+data Player
+  = Crosses
+  | Noughts
+  deriving (Show, Eq)
+
+
+data Outcome
+  = CrossesWins
+  | NoughtsWins
+  | Draw
+  deriving Show
+
+
+empty :: Grid
+empty =
+  take 9 (repeat '\NUL')
+
+
+showGrid :: Grid -> [[Char]]
+showGrid grid =
+  map (map f) [take 3 (drop n grid) ++ ['\n'] | n <- [0, 3, 6]]
+  where
+    f '\NUL' =
+      '_'
+    f x =
+      x
+
+
+positions :: [Position]
+positions =
+  [(x, y) | x <- [0..2], y <- [0..2]]
+
+
+dynamicTTT :: Int -> PositionTTT -> Estimate
+dynamicTTT n =
+  minimax . mapgtree staticTTT . prune n . gametree
+
+
+type PositionTTT =
+  (Grid, Player)
+
+
+type Strategy =
+  PositionTTT -> PositionTTT
+  -- GameTree PositionTTT -> GameTree PositionTTT
+
+
+enemy :: Player -> Player
+enemy Crosses =
+  Noughts
+enemy Noughts =
+  Crosses
+
+
+strategy :: Strategy
+strategy pos =
+  newPos
+  where
+    GNode newPos _ =
+      optimal 2 dynamicTTT (gametree pos)
+
+
+ticTacToe :: Strategy -> Strategy -> (Outcome, [Grid])
+ticTacToe crosses noughts =
+  outcome game
+  where
+    outcome :: [PositionTTT] -> (Outcome, [Grid])
+    outcome xs =
+      case checkOutcome of
+        ["ooo"] ->
+          (NoughtsWins, gs)
+
+        ["xxx"] ->
+          (CrossesWins, gs)
+
+        [] ->
+          (Draw, gs)
+
+        x ->
+          error $ "'" ++ show x ++ "' is not an valid outcome"
+      where
+        gs =
+          map fst xs
+
+        checkOutcome =
+          [xs | xss <- [diagonals g, rows g, columns g], xs <- xss, threeCrosses xs || threeNoughts xs]
+          where
+            g =
+              fst (head xs)
+
+        threeCrosses =
+          (=="xxx")
+
+        threeNoughts =
+          (=="ooo")
+
+    initialPosition =
+      (empty, Crosses)
+
+    game :: [PositionTTT]
+    game =
+      until (gameEnded . head) play [initialPosition]
+
+    play :: [PositionTTT] -> [PositionTTT]
+    play xs@(x@(_, Noughts):_) =
+      (fst (noughts x), Crosses):xs
+    play xs@(x@(_, Crosses):_) =
+      (fst (crosses x), Noughts):xs
+
+
+    gameEnded :: PositionTTT -> Bool
+    gameEnded (g, _) =
+      fullGrid g || winner g
+
+    fullGrid :: Grid -> Bool
+    fullGrid =
+      null . filter (=='\NUL')
+
+    winner :: Grid -> Bool
+    winner g =
+      checkWinner (diagonals g) || checkWinner (rows g) || checkWinner (columns g)
+      where
+        checkWinner :: [String] -> Bool
+        checkWinner =
+          foldr ((||) . threeMarks) False
+
+        threeMarks "ooo" =
+          True
+        threeMarks "xxx" =
+          True
+        threeMarks _ =
+          False
+
+
+diagonals :: Grid -> [[Char]]
+diagonals g =
+  [ [g !! 0, g !! 4, g !! 8]
+  , [g !! 2, g !! 4, g !! 6]
+  ]
+
+
+columns :: Grid -> [[Char]]
+columns g =
+  [[g !! x, g !! (x + 3), g !! (x + 6)] | x <- [0..2]]
+
+
+rows :: Grid -> [[Char]]
+rows g =
+  [take 3 (drop x g) | x <- [0, 3, 6]]
+
+
+toIdx :: Position -> Int
+toIdx (r, c) =
+  3 * r + c
+
+
+movesTTT :: PositionTTT -> [PositionTTT]
+movesTTT (g, player) =
+  [(mkGrid p, player) | p <- positions, freePos p]
+  where
+
+    freePos =
+      (g' !!) . toIdx
+
+    g' =
+      freeIdxs g
+
+    mkGrid p =
+      move g p (mark player)
+
+
+move :: Grid -> Position -> Char -> Grid
+move grid p mark
+  | grid !! idx == '\NUL' =
+    take idx grid ++ [mark] ++ drop (idx + 1) grid
+  | otherwise =
+    error $ "Position '" ++ show p ++ "' is already marked"
+  where
+    idx =
+      toIdx p
+
+
+mark :: Player -> Char
+mark Crosses =
+  'x'
+mark Noughts =
+  'o'
+
+
+freeIdxs :: Grid -> [Bool]
+freeIdxs =
+  map toBool
+  where
+    toBool '\NUL' =
+      True
+    toBool _ =
+      False
+
+
+staticTTT :: PositionTTT -> Estimate
+staticTTT (g, player) =
+  sum (scores triplets)
+  where
+    triplets =
+      diagonals g ++ rows g ++ columns g
+
+    scores =
+      map (score player)
+
+score :: Player -> [Char] -> Estimate
+score player xs
+  | win =
+    18 -- i.e. "xxx"
+  | block =
+    12 -- i.e. "oox"
+  | countGood == 1 =
+    2 -- i.e. "x--"
+  | countGood == 2 =
+    6 -- i.e. "x-x"
+  | otherwise =
+    0
+  where
+    win =
+      3 == foldr (\x acc -> if x == thisPlayerMark then 1 + acc else acc) 0 xs
+
+    block =
+      2 == length (filter (==otherPlayerMark) xs)
+      && 1 == length (filter (==thisPlayerMark) xs)
+
+    countGood =
+      foldr (\x acc -> if x == thisPlayerMark
+                       then 1 + acc
+                       else if x == otherPlayerMark
+                            then 1 - acc
+                            else acc) 0 xs
+      -- length (filter (==thisPlayerMark) xs) - length (filter (==otherPlayerMark) xs)
+
+    otherPlayerMark =
+      mark (enemy player)
+
+    thisPlayerMark =
+      mark player
