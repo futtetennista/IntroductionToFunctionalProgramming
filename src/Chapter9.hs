@@ -784,7 +784,7 @@ instance Show a => Show (GTree a) where
   show (GNode x []) =
     show x
   show (GNode x ts) =
-    show x ++ ".{" ++ intercalate "," (map show ts) ++ "}"
+    show x ++ ".[" ++ intercalate "," (map show ts) ++ "]"
 
 
 sizegtree :: GTree a -> Int
@@ -859,3 +859,34 @@ foldlgtree f z0 (GNode x gts) =
 
 -- wrongfoldlgtree f z0 (GNode x []) = f z0 x
 -- wrongfoldlgtree f z0 (GNode x (gt:gts)) = wrongfoldlgtree f (foldl (wrongfoldlgtree f) (f z0 x) gts) gt
+
+
+-- Ex. 9.6.5
+curry1 :: GTree a -> ExpTree a -> GTree a
+curry1 gt bt =
+  GNode x (fs ++ [gt])
+  where
+    GNode x fs =
+      uncurry' bt
+
+
+uncurry' :: ExpTree a -> GTree a
+uncurry' (ExpTip x) =
+  GNode x []
+uncurry' (ExpBin t1 t2) =
+  curry1 (uncurry' t2) t1
+
+
+-- Ex. 9.7.1
+include :: Int -> GTree a -> GTree a
+include d (GNode x ts) =
+  GNode x (concatMap (include' (d - 1)) ts)
+  where
+    include' :: Int -> GTree a -> [GTree a]
+    include' d' (GNode _ ts')
+      | d' == 0 =
+        ts'
+      | otherwise =
+        concatMap (include' (d' - 1)) ts'
+
+
