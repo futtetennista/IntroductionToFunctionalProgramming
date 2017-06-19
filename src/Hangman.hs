@@ -1,39 +1,35 @@
 module Hangman (hangman)
 where
 
-import Control.Monad (when)
+
+type TargetWord =
+  String
 
 hangman :: IO ()
-hangman =
-  do
-    word <- getWord
-    win <- play word "" 0
-    when win hangman
-    where
-      getWord :: IO String
-      getWord =
-        do putStr "Enter a word: "
-           getLine
+hangman = do
+  word <- getWord
+  loop word "" 0
+  where
+    loop word guess mistakeCount =
+      do c <- getChar
+         let state =
+               play word guess mistakeCount c
+         case state of
+           Lost (p, n) ->
+             putState p n
 
+           Won ->
+             hangman
 
-play :: String -> String -> Int -> IO Bool
-play word guess mistakeCount =
-  do c <- getChar
-     let (progress, newGuess, success) =
-           game word guess c
-         newMistakeCount =
-           if success then mistakeCount else mistakeCount + 1
-     putStrLn $ " " ++ progress
-     putStr (hangmanFigure !! newMistakeCount)
-     if gameOver newMistakeCount then return False
-     else if guessing progress then play word newGuess newMistakeCount
-     else return True
-       where
-         gameOver n =
-           n == length hangmanFigure - 1
+           Playing (p, g, n) ->
+             do putState p n ; loop word g n
 
-         guessing =
-           elem '-'
+    putState xs n =
+      do putStrLn $ " " ++ xs ; putStr (hangmanFigure !! n)
+
+    getWord :: IO String
+    getWord =
+      do putStr "Enter a word: " ; getLine
 
 
 --   O
@@ -53,14 +49,45 @@ hangmanFigure =
   ]
 
 
-game :: String -> String -> Char -> (String, String, Bool)
-game word guess c =
-  (reveal, newGuess, elem c word)
+type DashedString =
+  String
+
+
+data State
+  = Lost (DashedString, Int)
+  | Won
+  | Playing (DashedString, String, Int)
+
+
+play :: TargetWord -> String -> Int -> Char -> State
+play word guess mistakeCount c =
+  if gameOver newMistakeCount
+  then Lost (progress, newMistakeCount)
+  else if guessing progress
+  then Playing (progress, newGuess, newMistakeCount)
+  else Won
+  where
+    (progress, newGuess, success) =
+      reveal word guess c
+
+    newMistakeCount =
+      if success then mistakeCount else mistakeCount + 1
+
+    gameOver =
+      (== length hangmanFigure - 1)
+
+    guessing =
+      elem '-'
+
+
+reveal :: TargetWord -> String -> Char -> (DashedString, String, Bool)
+reveal word guess c =
+  (progress, newGuess, elem c word)
   where
     newGuess =
       c:guess
 
-    reveal =
+    progress =
       [dash x | x <- word]
 
     dash x
