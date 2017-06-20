@@ -1,6 +1,7 @@
 module Hangman (hangman)
 where
 
+import System.IO (hSetEcho, stdin)
 
 type TargetWord =
   String
@@ -16,20 +17,39 @@ hangman = do
                play word guess mistakeCount c
          case state of
            Lost (p, n) ->
-             putState p n
+             putState p (Just n) ; putStrLn ("You lost! The word was: " ++ word) ; hangman
 
            Won ->
-             hangman
+             do putState word Nothing ; putStrLn "Got it!" ; hangman
 
            Playing (p, g, n) ->
-             do putState p n ; loop word g n
+             do putState p (Just n) ; loop word g n
 
-    putState xs n =
-      do putStrLn $ " " ++ xs ; putStr (hangmanFigure !! n)
+    putState xs mn =
+      do putStrLn $ " " ++ xs ; maybe (return ()) (putStr . (hangmanFigure !!)) mn
 
-    getWord :: IO String
-    getWord =
-      do putStr "Enter a word: " ; getLine
+
+getWord :: IO String
+getWord =
+  do putStr "Enter a word: " ; sgetLine'
+  where
+    sgetChar = do
+      hSetEcho stdin False
+      c <- getChar
+      hSetEcho stdin True
+      return c
+
+    sgetLine' = do
+      c <- sgetChar
+      if c == '\n'
+      then do putChar '\n' ; return []
+      else do putChar '*' ; cs <- sgetLine' ; return (c:cs)
+
+    -- sgetLine input = do
+    --   c <- sgetChar
+    --   if c == '\n'
+    --   then do putChar '\n' ; return (reverse input)
+    --   else do putChar '*' ; sgetLine (c : input)
 
 
 --   O
