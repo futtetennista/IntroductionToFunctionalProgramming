@@ -9,25 +9,53 @@ type Grid =
   [[Player]]
 
 
+putGrid :: Grid -> IO ()
 putGrid =
   putStrLn . showGrid
 
+
+--    |   |
 --  O |   | X
--- -----------
 --    |   |
 -- -----------
+--    |   |
+--    |   |
+--    |   |
+-- -----------
+--    |   |
 --  X | X | O
+--    |   |
 showGrid :: Grid -> String
 showGrid =
-  unlines . L.intersperse hLine . map showRow
+  unlines . concat . L.intersperse line . map showRow
   where
-    hLine :: String
-    hLine =
-      replicate (size * 4 - 1) '-'
+    line :: [String]
+    line =
+      [replicate (size * 4 - 1) '-']
 
-    showRow :: [Player] -> String
+     --   |  |
+     -- O |  | X = [O,B,X]
+     --   |  |
+    showRow :: [Player] -> [String]
     showRow =
-      L.intercalate "|" . map show
+      beside . L.intersperse bar . map showPlayer
+      where
+        bar :: [String]
+        bar =
+          replicate 3 "|"
+
+       -- [[" x ","|"," x ", "|", " "], … ] => [" x | x |   "]
+        beside :: [[[a]]] -> [[a]]
+        beside =
+          foldr1 (zipWith (++))
+
+
+    showPlayer :: Player -> [String]
+    showPlayer p =
+      [ "   "
+      , show p
+      , "   "
+      ]
 
 
 empty :: Grid
