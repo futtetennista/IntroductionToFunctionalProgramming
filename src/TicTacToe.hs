@@ -2,8 +2,8 @@ module TicTacToe
 
 where
 
-import qualified Data.List as L
-import qualified Data.Char as C
+import qualified Data.List as L (intersperse, transpose)
+import qualified Data.Char as C (isDigit)
 
 type Grid =
   [[Player]]
@@ -27,8 +27,12 @@ putGrid =
 --    |   |
 showGrid :: Grid -> String
 showGrid =
-  unlines . concat . L.intersperse line . map showRow
+  unlines . concat . L.intersperse line . map showRow . indexed
   where
+    indexed :: Grid -> [[(Int, Player)]]
+    indexed =
+      snd . foldr (\xs (i, acc) -> (i - 3, zip [i..] xs : acc)) (6, [])
+
     line :: [String]
     line =
       [replicate (size * 4 - 1) '-']
@@ -36,9 +40,9 @@ showGrid =
      --   |  |
      -- O |  | X = [O,B,X]
      --   |  |
-    showRow :: [Player] -> [String]
+    showRow :: [(Int, Player)] -> [String]
     showRow =
-      beside . L.intersperse bar . map showPlayer
+      beside . L.intersperse bar .  map showCell
       where
         bar :: [String]
         bar =
@@ -49,13 +53,17 @@ showGrid =
         beside =
           foldr1 (zipWith (++))
 
-
-    showPlayer :: Player -> [String]
-    showPlayer p =
+    showCell :: (Int, Player) -> [String]
+    showCell x =
       [ "   "
-      , show p
+      , content x
       , "   "
       ]
+      where
+        content (i, B) =
+          " " ++ show i ++ " "
+        content (_, p) =
+          show p
 
 
 empty :: Grid
@@ -178,12 +186,12 @@ ticTacToe = do
 
     play g p = do
       putGrid g
-      putStr ("'" ++ show p ++ "' turn: ")
+      putStr ("It's '" ++ show p ++ "' turn: ")
       c <- getChar
       putChar '\n'
       case toIdx g c of
         [] ->
-          do putStrLn $ "'" ++ show c ++ "' is not a valid index" ; play g p
+          do putStrLn $ show c ++ " is not a valid index" ; play g p
 
         [i] ->
           case play' g p i of
