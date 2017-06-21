@@ -1,9 +1,11 @@
-module TicTacToe
+module TicTacToe (tictactoe)
 
 where
 
 import qualified Data.List as L (intersperse, transpose)
 import qualified Data.Char as C (isDigit)
+
+
 
 type Grid =
   [[Player]]
@@ -175,50 +177,116 @@ data State
   | Playing Grid
 
 
-ticTacToe :: IO ()
-ticTacToe = do
-  play empty (turn empty)
+play :: State -> Player -> IO ()
+play Draw _ =
+  do putStrLn "It's a draw!" ; tictactoe
+play (Win p') p =
+  do putStrLn $ "'" ++ show p' ++ "' wins!" ; play (Playing empty) (next p)
+play (Playing g) p = do
+  putGrid g
+  g' <- play' p
+  play (gameState g') (next p)
   where
-    toIdx :: Grid -> Char -> [Int]
-    toIdx g c =
-      if C.isDigit c && valid g (read [c])
-      then [read [c]]
-      else []
-
-    play g p = do
-      putGrid g
-      putStr ("It's '" ++ show p ++ "' turn: ")
+    play' :: Player -> IO Grid
+    play' X = do
+      return $ bestmove 9 g X
+    play' O = do
+      putStr ("It's '" ++ show O ++ "' turn: ")
       c <- getChar
       putChar '\n'
       case toIdx g c of
         [] ->
-          do putStrLn $ show c ++ " is not a valid index" ; play g p
+          do putStrLn $ show c ++ " is not a valid index" ; return g
 
         [i] ->
-          case play' g p i of
-            Draw ->
-              do putStrLn "It's a draw!" ; ticTacToe
+          return (head . move g O $ i)
 
-            Win p' ->
-              do putStrLn $ "'" ++ show p' ++ "' wins!" ; play empty (next p)
+    toIdx :: Grid -> Char -> [Int]
+    toIdx g' c =
+      if C.isDigit c && valid g' (read [c])
+      then [read [c]]
+      else []
 
-            Playing g' ->
-              play g' (next p)
-
-    play' g p i =
-      case move g p i of
-        [] ->
-          Playing g
-
-        [g'] ->
-          gameState g'
-
-    gameState g
-      | win g O =
+    gameState :: Grid -> State
+    gameState g'
+      | win g' O =
         Win O
-      | win g X =
+      | win g' X =
         Win X
-      | full g =
+      | full g' =
         Draw
       | otherwise =
-        Playing g
+        Playing g'
+
+
+tictactoe :: IO ()
+tictactoe = do
+  play (Playing empty) (turn empty)
+
+
+data GTree a =
+  Node a [GTree a]
+  deriving (Show, Eq)
+
+
+moves :: Grid -> Player -> [Grid]
+moves g p
+  | win g p =
+    []
+  | full g =
+    []
+  | otherwise =
+    concat [move g p i | i <- [0..(size * size) - 1]]
+
+
+gametree :: Grid -> Player -> GTree Grid
+gametree g p =
+  Node g [gametree g' (next p) | g' <- moves g p]
+
+
+prune :: Int -> GTree a -> GTree a
+prune 0 (Node x _) =
+  Node x []
+prune n (Node x ts) =
+  Node x [prune (n - 1) t | t <- ts]
+
+
+minimax :: GTree Grid -> GTree (Grid, Player)
+minimax (Node g [])
+  | win g O =
+    Node (g, O) []
+  | win g X =
+    Node (g, X) []
+  | otherwise =
+    Node (g, B) []
+minimax (Node g ts)
+  | turn g == O =
+    Node (g, minimum ps) ts'
+  | turn g == X =
+    Node (g, maximum ps) ts'
+  where
+    ts' =
+      map minimax ts
+
+    ps =
+      [p | Node (_, p) _ <- ts']
+
+
+type Estimate =
+  Int
+
+
+minimax' :: GTree Grid -> GTree (Grid, Estimate)
+minimax' =
+  undefined
+
+
+bestmove :: Estimate -> Grid -> Player -> Grid
+bestmove n g p =
+  head [g' | Node (g', p') _ <- ts, p' == best]
+  where
+    gtree =
+      prune n (gametree g p)
+
+    Node (_, best) ts =
+      minimax gtree
