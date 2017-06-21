@@ -1000,6 +1000,7 @@ optimal n dyn (GNode _ gts) =
 
 
 -- 9.7.3
+-- It should really be [Player]
 type Grid =
   [Char]
 
@@ -1047,8 +1048,8 @@ type PositionTTT =
 
 
 type Strategy =
+  -- (PositionTTT, GameTree PositionTTT) -> (PositionTTT, GameTree PositionTTT)
   PositionTTT -> PositionTTT
-  -- GameTree PositionTTT -> GameTree PositionTTT
 
 
 enemy :: Player -> Player
@@ -1089,7 +1090,7 @@ ticTacToe crosses noughts =
           map fst xs
 
         checkOutcome =
-          [xs | xss <- [diagonals g, rows g, columns g], xs <- xss, threeCrosses xs || threeNoughts xs]
+          [ys | yss <- [diagonals g, rows g, columns g], ys <- yss, threeCrosses ys || threeNoughts ys]
           where
             g =
               fst (head xs)
@@ -1116,10 +1117,10 @@ ticTacToe crosses noughts =
 
     gameEnded :: PositionTTT -> Bool
     gameEnded (g, _) =
-      fullGrid g || winner g
+      full g || winner g
 
-    fullGrid :: Grid -> Bool
-    fullGrid =
+    full :: Grid -> Bool
+    full =
       null . filter (=='\NUL')
 
     winner :: Grid -> Bool
