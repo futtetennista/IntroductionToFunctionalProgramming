@@ -888,5 +888,3 @@ include d (GNode x ts) =
         ts'
       | otherwise =
         concatMap (include' (d' - 1)) ts'
-
-
