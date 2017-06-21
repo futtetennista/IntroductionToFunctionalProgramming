@@ -174,32 +174,36 @@ full =
 data State
   = Win Player
   | Draw
-  | Playing Grid
+  | Playing (Grid, GTree (Grid, Player))
+
+
+mkEmptyState :: Player -> State
+mkEmptyState p =
+  Playing (empty, mkMinimaxGTree p)
 
 
 play :: State -> Player -> IO ()
 play Draw _ =
   do putStrLn "It's a draw!" ; tictactoe
 play (Win p') p =
-  do putStrLn $ "'" ++ show p' ++ "' wins!" ; play (Playing empty) (next p)
-play (Playing g) p = do
+  do putStrLn $ "'" ++ show p' ++ "' wins!" ; play (mkEmptyState p) (next p)
+play (Playing (g, gtree)) p = do
   putGrid g
-  g' <- play' p
-  play (gameState g') (next p)
+  pplay <- play' p
+  play (uncurry gameState pplay) (next p)
   where
-    play' :: Player -> IO Grid
+    play' :: Player -> IO (Grid, GTree (Grid, Player))
     play' X = do
-      return $ bestmove 9 g X
+      putStrLn ("It's '" ++ show X ++ "' turn...")
+      return (bestmove' 9 g gtree)
     play' O = do
-      putStr ("It's '" ++ show O ++ "' turn: ")
-      c <- getChar
-      putChar '\n'
+      putStr ("It's '" ++ show O ++ "' turn: ") ; c <- getChar ; putChar '\n'
       case toIdx g c of
         [] ->
-          do putStrLn $ show c ++ " is not a valid index" ; return g
+          do putStrLn $ show c ++ " is not a valid index" ; return (g, gtree)
 
         [i] ->
-          return (head . move g O $ i)
+          return (head (move g O i), gtree)
 
     toIdx :: Grid -> Char -> [Int]
     toIdx g' c =
@@ -207,8 +211,8 @@ play (Playing g) p = do
       then [read [c]]
       else []
 
-    gameState :: Grid -> State
-    gameState g'
+    gameState :: Grid -> GTree (Grid, Player) -> State
+    gameState g' gtree'
       | win g' O =
         Win O
       | win g' X =
@@ -216,19 +220,18 @@ play (Playing g) p = do
       | full g' =
         Draw
       | otherwise =
-        Playing g'
+        Playing (g', gtree')
 
 
 tictactoe :: IO ()
 tictactoe = do
-  putStrLn "Which player should start: 'X' or 'O' ?"
-  c <- getChar
+  putStr "Which player should start: 'X' or 'O' ? " ; c <- getChar ; putChar '\n'
   case toPlayer c of
     Nothing ->
       do putStrLn "Invalid player" ; tictactoe
 
     Just p ->
-      play (Playing empty) p
+      play (mkEmptyState p) p
   where
     toPlayer c
       | c `elem` "xX" =
@@ -258,6 +261,10 @@ gametree :: Grid -> Player -> GTree Grid
 gametree g p =
   Node g [gametree g' (next p) | g' <- moves g p]
 
+
+gametreeMaxDepth :: Int
+gametreeMaxDepth =
+  9
 
 prune :: Int -> GTree a -> GTree a
 prune 0 (Node x _) =
@@ -305,3 +312,25 @@ bestmove n g p =
 
     Node (_, best) ts =
       minimax gtree
+
+
+-- Ex. 11.4
+mkMinimaxGTree :: Player -> GTree (Grid, Player)
+mkMinimaxGTree p =
+  minimax . gametree empty $ p
+
+
+bestmove' :: Int -> Grid -> GTree (Grid, Player) -> (Grid, GTree (Grid, Player))
+bestmove' n g gtree =
+  (g', bestgtree)
+  where
+    bestgtree@(Node (g', _) _) =
+      head [node | node@(Node (_, p') _) <- ts', p' == best]
+
+    Node (_, best) ts' =
+      prune n (filtergtree (\(g'', _) -> g'' == g) gtree)
+
+    -- filtering doesn't work…why?!
+    filtergtree :: (a -> Bool) -> GTree a -> GTree a
+    filtergtree f (Node x ts) =
+      if f x then Node x ts else head $ map (filtergtree f) ts
