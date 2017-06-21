@@ -76,6 +76,7 @@ size =
   3
 
 
+-- it feels odd to have 'B' as a player
 data Player
   = O
   | B
