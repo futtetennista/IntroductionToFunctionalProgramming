@@ -1,4 +1,4 @@
-module TicTacToe (tictactoe)
+module TicTacToe
 
 where
 
@@ -221,7 +221,22 @@ play (Playing g) p = do
 
 tictactoe :: IO ()
 tictactoe = do
-  play (Playing empty) (turn empty)
+  putStrLn "Which player should start: 'X' or 'O' ?"
+  c <- getChar
+  case toPlayer c of
+    Nothing ->
+      do putStrLn "Invalid player" ; tictactoe
+
+    Just p ->
+      play (Playing empty) p
+  where
+    toPlayer c
+      | c `elem` "xX" =
+        Just X
+      | c `elem` "oO" =
+        Just O
+      | otherwise =
+        Nothing
 
 
 data GTree a =
@@ -281,7 +296,7 @@ minimax' =
   undefined
 
 
-bestmove :: Estimate -> Grid -> Player -> Grid
+bestmove :: Int -> Grid -> Player -> Grid
 bestmove n g p =
   head [g' | Node (g', p') _ <- ts, p' == best]
   where
