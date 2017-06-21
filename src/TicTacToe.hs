@@ -65,7 +65,7 @@ showGrid =
         content (i, B) =
           " " ++ show i ++ " "
         content (_, p) =
-          show p
+          " " ++ show p ++ " "
 
 
 empty :: Grid
@@ -88,11 +88,11 @@ data Player
 
 instance Show Player where
   show O =
-    " O "
+    "O"
   show B =
-    "   "
+    " "
   show X =
-    " X "
+    "X"
 
 
 next :: Player -> Player
