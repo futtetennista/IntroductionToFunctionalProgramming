@@ -891,12 +891,12 @@ include d (GNode x ts) =
 
 
 -- Game trees
-type Position =
+type Coords =
   (Int, Int)
 
 
 type Moves =
-  Position -> [Position]
+  Coords -> [Coords]
 
 
 type GameTree position =
@@ -908,13 +908,15 @@ gametree p =
   reptree movesTTT p
   where
     -- reptree :: (position -> [position]) -> position -> GameTree position
+    -- UHU?! : Each recursive step should generate a move for the other player but how is this possible if these funcs are declared this way?!
+    -- AHA! : `moves` should update position so that the next time it's invoked the input position has the next player
     reptree f x =
       GNode x (map (reptree f) (f x))
 
 
-moves :: position -> [position]
-moves =
-  undefined
+-- moves :: position -> [position]
+-- moves =
+--   undefined
 
 
 prune :: Int -> GTree a -> GTree a
@@ -1033,8 +1035,8 @@ showGrid grid =
       x
 
 
-positions :: [Position]
-positions =
+coords :: [Coords]
+coords =
   [(x, y) | x <- [0..2], y <- [0..2]]
 
 
@@ -1052,10 +1054,10 @@ type Strategy =
   PositionTTT -> PositionTTT
 
 
-enemy :: Player -> Player
-enemy Crosses =
+next :: Player -> Player
+next Crosses =
   Noughts
-enemy Noughts =
+next Noughts =
   Crosses
 
 
@@ -1149,6 +1151,7 @@ diagonals g =
 columns :: Grid -> [[Char]]
 columns g =
   [[g !! x, g !! (x + 3), g !! (x + 6)] | x <- [0..2]]
+  -- Data.List.transpose g
 
 
 rows :: Grid -> [[Char]]
@@ -1156,35 +1159,34 @@ rows g =
   [take 3 (drop x g) | x <- [0, 3, 6]]
 
 
-toIdx :: Position -> Int
-toIdx (r, c) =
-  3 * r + c
+toIdx :: Coords -> Int
+toIdx (row, col) =
+  3 * row + col
 
 
 movesTTT :: PositionTTT -> [PositionTTT]
 movesTTT (g, player) =
-  [(mkGrid p, player) | p <- positions, freePos p]
+  [(mkGrid cs, next player) | cs <- coords, freeCoord cs]
   where
-
-    freePos =
+    freeCoord =
       (g' !!) . toIdx
 
     g' =
       freeIdxs g
 
-    mkGrid p =
-      move g p (mark player)
+    mkGrid cs =
+      move g cs (mark player)
 
 
-move :: Grid -> Position -> Char -> Grid
-move grid p mark
+move :: Grid -> Coords -> Char -> Grid
+move grid cs pmark
   | grid !! idx == '\NUL' =
-    take idx grid ++ [mark] ++ drop (idx + 1) grid
+    take idx grid ++ [pmark] ++ drop (idx + 1) grid
   | otherwise =
-    error $ "Position '" ++ show p ++ "' is already marked"
+    error $ "Position '" ++ show cs ++ "' is already marked"
   where
     idx =
-      toIdx p
+      toIdx cs
 
 
 mark :: Player -> Char
@@ -1231,19 +1233,19 @@ score player xs
       3 == foldr (\x acc -> if x == thisPlayerMark then 1 + acc else acc) 0 xs
 
     block =
-      2 == length (filter (==otherPlayerMark) xs)
+      2 == length (filter (==nextPlayerMark) xs)
       && 1 == length (filter (==thisPlayerMark) xs)
 
     countGood =
       foldr (\x acc -> if x == thisPlayerMark
                        then 1 + acc
-                       else if x == otherPlayerMark
+                       else if x == nextPlayerMark
                             then 1 - acc
                             else acc) 0 xs
       -- length (filter (==thisPlayerMark) xs) - length (filter (==otherPlayerMark) xs)
 
-    otherPlayerMark =
-      mark (enemy player)
+    nextPlayerMark =
+      mark (next player)
 
     thisPlayerMark =
       mark player

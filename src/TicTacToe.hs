@@ -79,6 +79,7 @@ size =
 
 
 -- it feels odd to have 'B' as a player
+-- ordering is essential for the minimax algorithm to work correctly
 data Player
   = O
   | B
@@ -228,7 +229,7 @@ tictactoe = do
   putStr "Which player should start: 'X' or 'O' ? " ; c <- getChar ; putChar '\n'
   case toPlayer c of
     Nothing ->
-      do putStrLn "Invalid player" ; tictactoe
+      do putStrLn $ "Invalid player " ++ show c ; tictactoe
 
     Just p ->
       play (mkEmptyState p) p
@@ -265,6 +266,7 @@ gametree g p =
 gametreeMaxDepth :: Int
 gametreeMaxDepth =
   9
+
 
 prune :: Int -> GTree a -> GTree a
 prune 0 (Node x _) =
@@ -314,7 +316,6 @@ bestmove n g p =
       minimax gtree
 
 
--- Ex. 11.4
 mkMinimaxGTree :: Player -> GTree (Grid, Player)
 mkMinimaxGTree p =
   minimax . gametree empty $ p
