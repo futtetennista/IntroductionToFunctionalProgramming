@@ -184,8 +184,13 @@ verifyGameTreeCount =
 
     nodeCount :: Int
     nodeCount =
-      n where Node n _ = ncount gtree
+      label (ncount gtree)
       --length (nodes gtree)
+
+
+label :: GTree a -> a
+label (Node x _) =
+  x
 
 
 ncount :: GTree a -> GTree Int
@@ -198,7 +203,7 @@ ncount (Node _ ts) =
       map ncount ts
 
     n =
-      1 + foldr (\(Node x _) acc -> acc + x) 0 ts'
+      1 + foldr ((+) . label) 0 ts'
 
 
 depth :: GTree a -> Int
@@ -223,10 +228,10 @@ depth (Node _ ts) =
 -- Ex. 11.2
 bestmoveRandom :: Int -> Grid -> Player -> IO Grid
 bestmoveRandom n g p = do
-  n <- randomRIO (0, length bestmoves)
-  return (bestmoves !! n)
+  x <- randomRIO (0, length bestmvs)
+  return (bestmvs !! x)
   where
-    bestmoves =
+    bestmvs =
       [g' | Node (g', p') _ <- ts', p' == best]
 
     Node (_, best) ts' =
@@ -252,11 +257,17 @@ bestmoveQuickWin n g p =
       foldr1 minDepth xs
 
     minDepth :: GTree (Grid, Player, Int) -> GTree (Grid, Player, Int) -> GTree (Grid, Player, Int)
-    minDepth x@(Node (_, _, d) _) y@(Node (_, _, d') _)
+    minDepth gx gy
       | d <= d' =
-        x
+        gx
       | otherwise =
-        y
+        gy
+      where
+        (_, _, d) =
+          label gx
+
+        (_, _, d') =
+          label gy
 
 
 gtreeDepth :: GTree (a, b) -> GTree (a, b, Int)
