@@ -458,7 +458,8 @@ instance Functor ST where
   -- fmap :: (a -> b) -> ST a -> ST b
   fmap g st =
     -- do newSt <- st >>= (return . g) ; return newSt
-    st >>= (return . g)
+    do s <- st ; return (g s) -- st >>= (\s -> return (g s)) -- st >>= (return . g)
+    -- S (\s -> let (x, st') = app st s in (g x, st'))
 
 
 instance Applicative ST where
@@ -468,7 +469,8 @@ instance Applicative ST where
 
   -- (<*>) :: ST (a -> b) -> ST a -> ST b
   stf <*> stx =
-    do f <- stf ; x <- stx ; return (f x)
+    do f <- stf ; x <- stx ; return (f x) -- stf >>= (\f -> stx >>= (\x -> return (f x)))
+    -- S (\s -> let (f, st') = app stf s ; (x, st'') = app stx st' in (f x, st''))
 
 
 instance Monad ST where
