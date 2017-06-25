@@ -4,8 +4,13 @@ where
 
 import System.IO (hSetEcho, stdin)
 import Countdown
-import TicTacToe
+import TicTacToe hiding (State)
 import System.Random (randomRIO)
+import Control.Monad.State (StateT, State)
+import Data.Functor.Identity (Identity)
+import qualified Control.Monad.State as ST
+import Control.Monad (join)
+import Control.Applicative ((<$>))
 
 
 -- Ex. 9.2
@@ -290,3 +295,183 @@ bestmoves n g p =
   where
   Node (_, best) ts =
     minimax . prune n . gametree g $ p
+
+
+data BTree a
+  = Leaf a
+  | Bin (BTree a) (BTree a)
+  deriving Show
+
+
+index :: a -> State Int (a, Int)
+index x = do
+  n <- ST.get ; ST.put (n + 1) ; return (x, n)
+
+
+alabel :: BTree a -> State Int (BTree (a, Int))
+alabel (Leaf x) =
+  Leaf <$> index x
+alabel (Bin l r) =
+  Bin <$> alabel l <*> alabel r
+
+
+mlabel :: BTree a -> State Int (BTree (a, Int))
+mlabel (Leaf x) = do
+  x' <- index x ; return (Leaf x')
+mlabel (Bin l r) = do
+  l' <- mlabel l ; r' <- mlabel r ; return (Bin l' r')
+
+
+-- Ex. 11.1
+data LBTree a
+  = Leaf'
+  | Node' (LBTree a) a (LBTree a)
+  deriving Show
+
+
+instance Functor LBTree where
+  fmap _ (Leaf') =
+    Leaf'
+
+  fmap f (Node' l x r) =
+    Node' (fmap f l) (f x) (fmap f r)
+
+
+-- Ex. 11.2
+-- instance Functor ((->) a) where
+--   -- fmap :: (a -> b) -> f a -> f b
+--   -- f a :: ((->) t) t1
+--   -- fmap mf (f a) :: (t -> t2) -> (((->) t) t1) -> ((-> t1) t2)
+--   -- fmap mf (f a) :: (t -> t2) -> (t -> t1) -> (t -> t2) = (t1 -> t2) -> (t -> t1) -> t -> t2
+--   fmap f g =
+--     f . g -- fmap = (.)
+
+
+-- Ex. 11.3
+-- GOTCHA 1: f is ((->) a) !!! Do this substitution everywhere `f` appears
+-- GOTCHA 2: the importance of naming things !!! The `a` in `a -> f a` is not the same `a` as the one in `((->) a)`. Renaming one of two avoids confusion, i.e. pure :: t -> f t, (<*>) :: f (t1 -> t2) -> f t1 -> f t2
+-- GOTCHA 3: use this renaming when declaring instances for all types with more than one param
+-- GOTCHA 4: follow the types !!! Most of the times implementing an instance is trivial once you understand its type
+-- instance Applicative ((->) a) where
+--   -- pure :: t -> f t :: t -> (((->) a) t) :: t -> (a -> t) :: t -> a -> t
+--   pure = const
+--
+--   -- (<*>) :: f (t1 -> t2) -> f t1 -> f t2
+--   -- (<*>) :: (((->) a) -> (t1 -> t2)) -> (((->) a) t1) -> (((->) a) t2) :: (a -> t1 -> t2) -> (a -> t1) -> (a -> t2) :: (a -> t1 -> t2) -> (a -> t1) -> a -> t2
+--   (<*>) g h x =  g x (h x) -- or: g <*> h = \x -> g x (h x)
+
+
+-- Ex. 11.6
+-- instance Monad ((->) a) where
+--   -- (>>=) :: m t1 -> (t1 -> m t2) -> m t2 :: (((->) a) t1) -> (t1 -> (((->) a) t2)) -> (((->) a) t2) :: (a -> t1) -> (t1 -> a -> t2) -> (a -> t2) :: :: (a -> t1) -> (t1 -> a -> t2) -> a -> t2
+--   (>>=) g h x = h (g x) x -- or: g >>= h = \x -> h (g x) x
+
+
+-- Ex. 11.4
+newtype ZipList a =
+  Z [a] deriving Show
+
+
+instance Functor ZipList where
+  -- fmap :: (a -> b) -> ZipList a -> ZipList b
+  fmap g (Z xs) = Z (map g xs)
+
+
+instance Applicative ZipList where
+  -- pure :: a -> ZipList a
+  pure x = Z (repeat x)
+
+  -- (<*>) :: ZipList (a -> b) -> ZipList a -> ZipList b
+  (Z gs) <*> (Z xs) =
+    Z [g x | (g, x) <- zip gs xs]
+    -- Z (fmap (\(g, x) -> g x) (zip gs xs))
+    -- Z (go gs xs [])
+    -- where
+    --   go [] xs acc =
+    --     reverse acc
+    --   go (g:gs) (x:xs) acc =
+    --     go gs xs (g x : acc)
+
+
+-- Ex. 11.7
+data Expr' a
+  = Var' a
+  | Val' Int
+  | Add' (Expr' a) (Expr' a)
+  deriving Show
+
+
+instance Functor Expr' where
+  -- fmap :: (a -> b) -> a -> b :: (a -> b) -> Expr' a -> Expr' b
+  fmap f (Var' x) =
+    Var' (f x)
+  fmap _ (Val' x) =
+    Val' x
+  fmap f (Add' l r) =
+    Add' (fmap f l) (fmap f r)
+
+
+-- Ex: add prefix to all vars, i.e. ("x_"++) <$> (Add' (Var' "foo") (Add' (Val' 1) (Var' "bar")))
+--     map vars to a tuple name, name length, i.e. (\x -> (x, length x)) <$> Add' (Add' (Var' "x") (Var' "foobar")) (Val' 1)
+instance Applicative Expr' where
+  -- pure :: a -> f a :: a -> Expr' a
+  pure x =
+    Var' x
+
+  -- (<*>) :: f (a -> b) -> f a -> f b :: Expr' (a -> b) -> Expr' a -> Expr' b
+  Var' g <*> Var' x =
+    Var' (g x)
+  Var' _ <*> Val' x =
+    Val' x
+  Val' x <*> _ =
+    Val' x
+  -- which order is the correct one ?! Is there a correct one or does it depend on the specs ?!
+  g <*> Add' l r =
+    Add' (g <*> l) (g <*> r)
+  Add' lg rg <*> x =
+    Add' (lg <*> x) (rg <*> x)
+
+
+-- 3rd monad law:
+-- (Add' (Val' 1) (Var' "x") >>= (return . ("f_"++))) >>= (return . ("g_"++))
+-- Add' (Val' 1) (Var' "x") >>= (\x -> (return . ("f_"++)) x >>= (return . ("g_"++)))
+instance Monad Expr' where
+  -- (>>=) :: m a -> (a -> m b) -> m b :: Expr' a -> (a -> Expr' b) -> Expr' b
+  Var' x >>= g =
+    g x
+  Val' x >>= _ =
+    Val' x
+  Add' l r >>= g =
+    Add' (l >>= g) (r >>= g)
+
+
+-- Ex. 11.8
+type State' =
+  Int
+
+
+newtype ST a =
+  S { app :: State' -> (a, State') }
+
+
+instance Functor ST where
+  -- fmap :: (a -> b) -> ST a -> ST b
+  fmap g st =
+    -- do newSt <- st >>= (return . g) ; return newSt
+    st >>= (return . g)
+
+
+instance Applicative ST where
+  -- pure :: a -> ST a
+  pure x =
+    S (\s -> (x,s))
+
+  -- (<*>) :: ST (a -> b) -> ST a -> ST b
+  stf <*> stx =
+    do f <- stf ; x <- stx ; return (f x)
+
+
+instance Monad ST where
+  -- (>>=) :: ST a -> (a -> ST b) -> ST b
+  st >>= f =
+    S (\s -> let (x, s') = app st s in app (f x) s')
