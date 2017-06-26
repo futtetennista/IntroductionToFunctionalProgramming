@@ -201,7 +201,7 @@ play (Playing (g, gtree)) p = do
       putStr ("It's '" ++ show O ++ "' turn: ") ; c <- getChar ; putChar '\n'
       case toIdx g c of
         [] ->
-          do putStrLn $ show c ++ " is not a valid index" ; return (g, gtree)
+          do putStrLn $ show c ++ " is not a valid index" ; play' O
 
         [i] ->
           return (head (move g O i), gtree)
