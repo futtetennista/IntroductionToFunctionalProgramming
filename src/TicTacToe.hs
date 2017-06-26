@@ -252,6 +252,8 @@ moves :: Grid -> Player -> [Grid]
 moves g p
   | win g p =
     []
+  | win g (next p) =
+    []
   | full g =
     []
   | otherwise =
