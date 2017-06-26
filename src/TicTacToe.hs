@@ -331,9 +331,15 @@ bestmove' n g gtree =
       head [node | node@(Node (_, p') _) <- ts', p' == best]
 
     Node (_, best) ts' =
-      prune n (filtergtree (\(g'', _) -> g'' == g) gtree)
+      prune n (filtergtree ((==g) . fst) gtree)
 
-    -- filtering doesn't work…why?!
-    filtergtree :: (a -> Bool) -> GTree a -> GTree a
-    filtergtree f (Node x ts) =
-      if f x then Node x ts else head $ map (filtergtree f) ts
+
+filtergtree :: (a -> Bool) -> GTree a -> GTree a
+filtergtree f gtree =
+  head (filtergtree' gtree)
+  where
+    filtergtree' (Node x ts)
+      | f x =
+        [Node x ts]
+      | otherwise =
+        concat $ map filtergtree' ts
