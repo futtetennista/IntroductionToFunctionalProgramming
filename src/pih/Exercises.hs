@@ -4,13 +4,16 @@ where
 
 import System.IO (hSetEcho, stdin)
 import Countdown
+import Calculator
 import TicTacToe hiding (State)
 import System.Random (randomRIO)
 import Control.Monad.State (StateT, State)
 import Data.Functor.Identity (Identity)
-import qualified Control.Monad.State as ST
 import Control.Monad (join)
 import Control.Applicative ((<$>))
+import Data.Text (Text)
+import qualified Control.Monad.State as ST
+import qualified Data.Text as T
 
 
 -- Ex. 9.2
@@ -477,3 +480,18 @@ instance Monad ST where
   -- (>>=) :: ST a -> (a -> ST b) -> ST b
   st >>= f =
     S (\s -> let (x, s') = app st s in app (f x) s')
+
+
+-- Ex. 11.1
+parsec :: Parser ()
+parsec = do
+  _ <- sequence_ (replicate 2 (symbol "-")) -- or better: _ <- string "--"
+  comment
+  where
+    comment =
+      do _ <- many (mfilterp (/='\n')) ; _ <- char '\n' ; return ()
+
+
+comment :: Text
+comment =
+  "-- Parse comment\nfoo :: Int"
