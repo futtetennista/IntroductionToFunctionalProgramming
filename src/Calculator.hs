@@ -13,10 +13,10 @@ import qualified Data.Char as C
 data Expr
   = Const Int
   -- | Var a
-  | Add (Expr) (Expr)
-  | Sub (Expr) (Expr)
-  | Mul (Expr) (Expr)
-  | Div (Expr) (Expr)
+  | Add Expr Expr
+  | Sub Expr Expr
+  | Mul Expr Expr
+  | Div Expr Expr
   | Exp Expr Expr
   deriving (Eq, Show)
 
@@ -32,7 +32,7 @@ eval (Mul x y) =
   (*) <$> eval x <*> eval y
 eval (Div x y) = do
   y' <- eval y
-  if y' == 0 then Nothing else do x' <- eval x ; return $ x' `div` y'
+  if y' == 0 then Nothing else do x' <- eval x ; return (x' `div` y')
 eval (Exp x y) = do
   (^) <$> eval x <*> eval y
 
@@ -86,6 +86,7 @@ instance Alternative Parser where
     P (\xs -> case parse p1 xs of
                 [] ->
                   parse p2 xs
+
                 ys ->
                   ys)
 
@@ -335,20 +336,28 @@ displayWidth =
   13
 
 
-display :: Text -> IO ()
-display xs = do
+type ErrorMsg =
+  Text
+
+
+display :: Text -> ErrorMsg -> IO ()
+display xs msg = do
+  writeat (1, 15) $ if T.null msg then eraseln else ("Error: " `mappend` msg)
   writeat (3, 2) (T.replicate displayWidth " ")
   writeat (3, 2) (T.reverse displayWidthChars)
   where
     displayWidthChars =
       T.take displayWidth (T.reverse xs)
 
+    eraseln =
+      "\ESC[2K"
 
-calc :: Text -> IO ()
-calc xs = do
-  display xs
+
+calc :: Text -> ErrorMsg -> IO ()
+calc xs msg = do
+  display xs msg
   c <- getChar
-  maybe (do beep ; calc xs) (process xs) (T.find (==c) buttons)
+  maybe (do beep ; calc xs T.empty) (process xs) (T.find (==c) buttons)
   where
     process :: Text -> Char -> IO ()
     process ys c
@@ -359,36 +368,40 @@ calc xs = do
       | boolfind c "\BS\DELdD" =
         deletelast
       | c == '\n' =
-        maybe (calc "Error :-(") (calc . T.pack . show) (eval' ys)
+        case eval' ys of
+          Left msg' ->
+            calc ys msg'
+
+          Right x ->
+            calc (T.pack (show x)) T.empty
+      | c == ' ' =
+        calc ys T.empty
       | otherwise =
         press
       where
         quit =
           cls
 
-        clear =
-          calc T.empty
-
         press =
-          calc (xs `T.snoc` c)
+          calc (xs `T.snoc` c) T.empty
 
         deletelast =
-          calc (T.init ys)
+          calc (T.init ys) T.empty
 
 
-    eval' :: Text -> Maybe Int
+    eval' :: Text -> Either Text Int
     eval' ys = do
       case parse expr ys of
         [] ->
-          Nothing
+          Left "invalid input"
 
         [(e, zs)] ->
           case T.null zs of
             True ->
-              eval e
+              maybe (Left "division by zero") Right (eval e)
 
             False ->
-              Nothing
+              Left ("invalid input ^--- " `mappend` zs `mappend` " ---^")
 
 
     boolfind x ys =
@@ -399,6 +412,12 @@ calc xs = do
       putStr "\BEL"
 
 
+
+clear :: IO ()
+clear =
+  calc T.empty T.empty
+
+
 run :: IO ()
 run =
-  do cls ; showbox ; calc T.empty
+  do cls ; showbox ; clear
