@@ -191,7 +191,7 @@ play (Win p') p =
 play (Playing (g, gtree)) p = do
   putGrid g
   pplay <- play' p
-  play (uncurry gameState pplay) (next p)
+  play (uncurry state pplay) (next p)
   where
     play' :: Player -> IO (Grid, GTree (Grid, Player))
     play' X = do
@@ -207,13 +207,14 @@ play (Playing (g, gtree)) p = do
           return (head (move g O i), gtree)
 
     toIdx :: Grid -> Char -> [Int]
-    toIdx g' c =
-      if C.isDigit c && valid g' (read [c])
-      then [read [c]]
-      else []
+    toIdx g' c
+      | C.isDigit c && valid g' (read [c]) =
+        [read [c]]
+      | otherwise =
+        []
 
-    gameState :: Grid -> GTree (Grid, Player) -> State
-    gameState g' gtree'
+    state :: Grid -> GTree (Grid, Player) -> State
+    state g' gtree'
       | win g' O =
         Win O
       | win g' X =
@@ -298,15 +299,6 @@ minimax (Node g ts)
       [p | Node (_, p) _ <- ts']
 
 
-type Estimate =
-  Int
-
-
-minimax' :: GTree Grid -> GTree (Grid, Estimate)
-minimax' =
-  undefined
-
-
 bestmove :: Int -> Grid -> Player -> Grid
 bestmove n g p =
   head [g' | Node (g', p') _ <- ts, p' == best]
@@ -342,4 +334,23 @@ filtergtree f gtree =
       | f x =
         [Node x ts]
       | otherwise =
-        concat $ map filtergtree' ts
+        concat (map filtergtree' ts)
+
+
+-- alpha-beta pruning
+bmx :: Player -> Player -> GTree (Grid, Player) -> Player
+bmx a b (Node x []) =
+  a `max` snd x `min` b
+bmx a b (Node _ ts) =
+  cmx a b ts
+  where
+    cmx a _ [] =
+      a
+    cmx a b (t:ts')
+      | a' == b =
+        a'
+      | otherwise =
+        cmx a' b ts'
+      where
+        a' =
+          next (bmx (next b) (next a) t)

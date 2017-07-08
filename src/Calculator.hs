@@ -230,7 +230,7 @@ expr = do
 
 -- Ex. 13.8
 -- New grammar for left-associative expressions:
--- expr ::= (term + | term -) expr | term
+-- expr ::= ((term + | term -) expr | nil) | term
 -- expr ::= expr (+ term | - term | nil) | term
 expr' :: Parser Expr
 expr' =
