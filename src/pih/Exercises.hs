@@ -1,16 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Pih.Exercises
 
 where
 
 import System.IO (hSetEcho, stdin)
-import Countdown
-import Calculator
+import qualified Countdown as CD
+import qualified Calculator as Calc
 import TicTacToe hiding (State)
-import System.Random (randomRIO)
+import System.Random
 import Control.Monad.State (StateT, State)
-import Data.Functor.Identity (Identity)
-import Control.Monad (join)
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), many)
 import Data.Text (Text)
 import qualified Control.Monad.State as ST
 import qualified Data.Text as T
@@ -68,7 +67,7 @@ verifyEvalCount =
   else Left n
   where
     n =
-      evalCount eval
+      evalCount CD.eval
     -- evalCount = sum ms
 
     ms :: [Int]
@@ -81,16 +80,16 @@ verifyEvalCount =
 
     evalsss :: [[[Int]]]
     evalsss =
-      map (map eval) es
+      map (map CD.eval) es
 
 
-es :: [[Expr]]
+es :: [[CD.Expr]]
 es =
-  map exprs (choices [1, 3, 7, 10, 25, 50])
+  map CD.exprs (CD.choices [1, 3, 7, 10, 25, 50])
 
 
 type Evaluator =
-  Expr -> [Int]
+  CD.Expr -> [Int]
 
 
 evalCount :: Evaluator -> Int
@@ -110,14 +109,14 @@ verifyEvalCount' =
     n =
       evalCount eval'
 
-    eval' (Val x) =
+    eval' (CD.Val x) =
       [x]
-    eval' (App op x y) =
-      [apply op x' y' | x' <- eval' x
-                      , y' <- eval' y
-                      , valid'' op x' y']
+    eval' (CD.App op x y) =
+      [CD.apply op x' y' | x' <- eval' x
+                         , y' <- eval' y
+                         , valid'' op x' y']
 
-    valid'' Div x y =
+    valid'' CD.Div x y =
       y /= 0 && x `mod` y == 0
     valid'' _ _ _ =
       True
@@ -370,22 +369,48 @@ instance Functor LBTree where
 --   (>>=) g h x = h (g x) x -- or: g >>= h = \x -> h (g x) x
 
 
+bindList :: [a] -> (a -> [b]) -> [b]
+bindList xs g =
+  [y | x <- xs, y <- g x] -- concat [g x | x <- xs]
+
+bindList' :: [a] -> (a -> [b]) -> [b]
+bindList' xs f =
+  concat (fmap f xs)
+
+
+bindm :: Maybe a -> (a -> Maybe b) -> Maybe b
+bindm Nothing _ =
+  Nothing
+bindm (Just x) g =
+  g x
+
+bindm' :: Maybe a -> (a -> Maybe b) -> Maybe b
+bindm' m g =
+  joinm (fmap g m)
+  where
+    joinm Nothing = Nothing
+    joinm (Just mx) = mx
+
+
 -- Ex. 11.4
 newtype ZipList a =
-  Z [a] deriving Show
+  Z [a] deriving (Eq, Show)
 
 
 instance Functor ZipList where
   -- fmap :: (a -> b) -> ZipList a -> ZipList b
-  fmap g (Z xs) = Z (map g xs)
+  fmap f (Z xs) = Z (map f xs)
 
 
 instance Applicative ZipList where
   -- pure :: a -> ZipList a
   pure x = Z (repeat x)
+  -- Uhu?! How is pure x = Z [x] violating `fmap g x = pure g <*> x ?
+  -- Aha! fmap (*2) (Z [1,2,3]) /= pure (*2) <*> (Z [1,2,3]) ~~> Z [2,4,6] /= Z [2]
 
   -- (<*>) :: ZipList (a -> b) -> ZipList a -> ZipList b
   (Z gs) <*> (Z xs) =
+    -- Z $ zipWith ($) gs xs
     Z [g x | (g, x) <- zip gs xs]
     -- Z (fmap (\(g, x) -> g x) (zip gs xs))
     -- Z (go gs xs [])
@@ -394,6 +419,18 @@ instance Applicative ZipList where
     --     reverse acc
     --   go (g:gs) (x:xs) acc =
     --     go gs xs (g x : acc)
+
+
+-- ZipList isn't a monad:
+-- 1. [x] return x >>= g == g x
+--    return 1 >>= \x -> Z [x*2] < ~~> _|_ > /= (\x -> Z [x*2]) 1 < ~~> [2] >
+-- 2. [?] m >>= return == m
+-- 3. [?] (m >>= g) >>= h == m >>= (\x -> g x >>= h)
+-- instance Monad ZipList where
+  -- (>>=) :: ZipList a -> (a -> ZipList b) -> ZipList b
+  -- Z xs >>= g =
+    -- Uhu ?! why sequence [Z [1,2], Z [3,4]] == Z [[1,3],[2,4]] ?
+    -- let Z yss = sequence [g x | x <- xs] in Z (concat yss)
 
 
 -- Ex. 11.7
@@ -472,7 +509,9 @@ instance Applicative ST where
 
   -- (<*>) :: ST (a -> b) -> ST a -> ST b
   stf <*> stx =
-    do f <- stf ; x <- stx ; return (f x) -- stf >>= (\f -> stx >>= (\x -> return (f x)))
+    stf >>= \f -> stx >>= return . f
+    -- do f <- stf ; x <- stx ; return (f x)
+    -- stf >>= (\f -> stx >>= (\x -> return (f x)))
     -- S (\s -> let (f, st') = app stf s ; (x, st'') = app stx st' in (f x, st''))
 
 
@@ -483,15 +522,51 @@ instance Monad ST where
 
 
 -- Ex. 11.1
-parsec :: Parser ()
-parsec = do
-  _ <- sequence_ (replicate 2 (symbol "-")) -- or better: _ <- string "--"
-  comment
+parsecomm :: Calc.Parser ()
+parsecomm = do
+  _ <- sequence_ (replicate 2 (Calc.symbol "-")) -- or better: _ <- string "--"
+  comm
   where
-    comment =
-      do _ <- many (mfilterp (/='\n')) ; _ <- char '\n' ; return ()
+    comm =
+      do _ <- many (Calc.mfilterp (/='\n')) ; _ <- Calc.char '\n' ; return ()
 
 
-comment :: Text
-comment =
+sampleComment :: Text
+sampleComment =
   "-- Parse comment\nfoo :: Int"
+
+
+-- More exercises on monads & friends
+-- http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html
+-- RANDOM NUMBERS
+-- Ex. 8
+bindRandom :: RandomGen g => (a -> g -> (b, g)) -> (g -> (a, g)) -> g -> (b, g)
+bindRandom g h seed =
+  let (x, seed') = h seed in g x seed'
+
+
+-- Ex. 9
+unitRandom  :: RandomGen g => a -> g -> (a, g)
+unitRandom =
+  (,)
+
+
+addDigit :: (RandomGen g, ST.MonadState g m) => Int -> m Int
+addDigit x = do
+  seed <- ST.get
+  let (y, seed') = randomR (0, 9) seed
+  ST.put seed'
+  return (x + y)
+
+
+randomSum :: (RandomGen g, ST.MonadState g m) => Int -> m Int
+randomSum =
+  -- (*10) <$> addDigit z0 >>= addDigit
+  -- ST.liftM (*10) (addDigit z0) >>= addDigit
+  -- addDigit z0 >>= return . (*10) >>= addDigit
+  addDigit ST.>=> return . (*10) ST.>=> addDigit
+
+
+runRandomSumZero :: RandomGen g => g -> (Int, g)
+runRandomSumZero =
+  ST.runState (randomSum 0)

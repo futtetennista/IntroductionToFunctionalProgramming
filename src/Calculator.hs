@@ -211,7 +211,7 @@ Grammar:
 --------
 expr ::= term (+ exp | - exp | nil)
 term ::= exp (* term | / term | nil)
-exp  ::= fact (^ exp | nil)
+exp  ::= fact (^ expr | nil)
 fact ::= (expr) | int
 int  ::= … | -1 | 0 | 1 | …
 

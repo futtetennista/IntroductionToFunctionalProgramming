@@ -235,10 +235,11 @@ tictactoe = do
     Just p ->
       play (mkEmptyState p) p
   where
+    toPlayer :: Char -> Maybe Player
     toPlayer c
-      | c `elem` "xX" =
+      | c == 'x' || c == 'X' =
         Just X
-      | c `elem` "oO" =
+      | c == 'o' || c == 'O' =
         Just O
       | otherwise =
         Nothing
