@@ -307,10 +307,13 @@ eval4 (Var x) = do
       MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
 eval4 (Add e1 e2) = do
   tick
-  x <- intValOrFail e1
-  y <- intValOrFail e2
-  return $ IntVal (x + y)
+  IntVal <$> ((+) <$> intValOrFail e1 <*> intValOrFail e2)
+  -- intValOrFail e1 >>= \x -> intValOrFail e2 >>= return . IntVal . (x+)
+  -- x <- intValOrFail e1
+  -- y <- intValOrFail e2
+  -- return $ IntVal (x + y)
   where
+    intValOrFail :: Exp -> Eval4 Int
     intValOrFail x = do
       res <- eval4 x
       case res of
