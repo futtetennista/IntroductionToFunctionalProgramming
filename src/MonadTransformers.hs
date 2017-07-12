@@ -228,6 +228,8 @@ eval3 (Var x) = do
   mexp <- MR.asks (Map.lookup x)
   case mexp of
     Nothing ->
+      -- The mtl machinery makes it so that lift-ing is done under the hood:
+      -- MR.lift $ MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
       MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
 
     Just e ->
@@ -263,11 +265,13 @@ eval3 (App e1 e2) = do
           MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
 
 
--- Add some state
+-- STATE
+-- Don't keep track of the state if a failure occurres
 type Eval4 a =
   MR.ReaderT Env (MS.StateT Int (MEx.ExceptT T.Text MId.Identity)) a
 
 
+-- Keep track of the state even if a failure occures
 type Eval4' a =
   MR.ReaderT Env (MEx.ExceptT T.Text (MS.StateT State MId.Identity)) a
 
@@ -297,12 +301,10 @@ eval4 (Lit i) =
 eval4 (Var x) = do
   tick
   mexp <- MR.asks (Map.lookup x)
-  case mexp of
-    Nothing ->
+  maybe throwError return mexp
+  where
+    throwError =
       MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
-
-    Just e ->
-      return e
 eval4 (Add e1 e2) = do
   tick
   x <- intValOrFail e1
