@@ -1,6 +1,6 @@
 name:                IntroductionToFunctionalProgramming
 version:             0.1.0.0
-synopsis:            Solutions to the exercises in the book "Introduction to Functional Programming" by Richard Bird and Philip Wadler
+synopsis:            Originally this project contained only solutions to the exercises in the book "Introduction to Functional Programming" by Richard Bird and Philip Wadler. Over time I used it to solve exercises of other books and online resources.
 description:         Please see README.md
 homepage:            https://github.com/futtetennista/IntroductionToFunctionalProgramming#readme
 license:             MIT
@@ -28,6 +28,7 @@ library
                      , TicTacToe
                      , Calculator
                      , MonadTransformers
+                     , Monads
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2

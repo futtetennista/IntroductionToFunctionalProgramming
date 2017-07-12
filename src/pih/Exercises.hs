@@ -534,39 +534,3 @@ parsecomm = do
 sampleComment :: Text
 sampleComment =
   "-- Parse comment\nfoo :: Int"
-
-
--- More exercises on monads & friends
--- http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html
--- RANDOM NUMBERS
--- Ex. 8
-bindRandom :: RandomGen g => (a -> g -> (b, g)) -> (g -> (a, g)) -> g -> (b, g)
-bindRandom g h seed =
-  let (x, seed') = h seed in g x seed'
-
-
--- Ex. 9
-unitRandom  :: RandomGen g => a -> g -> (a, g)
-unitRandom =
-  (,)
-
-
-addDigit :: (RandomGen g, ST.MonadState g m) => Int -> m Int
-addDigit x = do
-  seed <- ST.get
-  let (y, seed') = randomR (0, 9) seed
-  ST.put seed'
-  return (x + y)
-
-
-randomSum :: (RandomGen g, ST.MonadState g m) => Int -> m Int
-randomSum =
-  -- (*10) <$> addDigit z0 >>= addDigit
-  -- ST.liftM (*10) (addDigit z0) >>= addDigit
-  -- addDigit z0 >>= return . (*10) >>= addDigit
-  addDigit ST.>=> return . (*10) ST.>=> addDigit
-
-
-runRandomSumZero :: RandomGen g => g -> (Int, g)
-runRandomSumZero =
-  ST.runState (randomSum 0)
