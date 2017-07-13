@@ -190,30 +190,71 @@ coerce binp x y
     y
 
 
-findNth :: Int -> BTree a -> Maybe a
-findNth n =
-  find' ((==n) . fst) . btree'
-  where
-    -- Party pooper i.e. for BTree Int
-    find :: Monoid a => ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a
-    find p =
-      foldMap (\x -> if p x then Just (snd x) else Nothing)
+findNth :: Int -> BTree a -> [a]
+findNth n btree =
+  case S.evalState (mfind' btree) 1 of
+    Right _ ->
+      []
 
-    find' :: ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a
-    find' _ Empty =
+    Left x ->
+      [x]
+  -- find'' ((==n) . fst) . btree'
+  where
+    -- Finding stuff this way doesn't seem to be a good fit for monads since computation stops when a "failure" is encountered.
+    mfind :: BTree a -> S.State Int (Maybe a)
+    mfind Empty =
+      return Nothing
+    mfind (Leaf x) = do
+      i <- S.get
+      if i == n then return $ Just x else do S.put (i + 1) ; return Nothing
+    mfind (Node l x r) = do
+      ml <- mfind l
+      maybe (do i <- S.get
+                if i == n then return $ Just x else do S.put (i + 1) ; mfind r)
+        (return . Just) ml
+
+    -- This actually works but it's kind of a hack since the Either type is used semantically in the opposite way wrt conventions.
+    mfind' :: BTree a -> S.State Int (Either a a)
+    mfind' Empty =
+      undefined
+    mfind' (Leaf x) = do
+      i <- S.get
+      if i == n then return (Left x) else do S.put (i + 1) ; return (Right x)
+    mfind' (Node l x r) = do
+      my <- mfind' l
+      case my of
+        Right _ ->
+          do i <- S.get
+             if i == n then return (Left x) else do S.put (i + 1) ; mfind' r
+
+        res ->
+          return res
+
+    -- Applicative style doesn't seem a good fit for this problem either because the computation isn't fixed (think the iffy function in "Applicative programming with effects").
+    afind :: BTree a -> S.State Int [a]
+    afind =
+      undefined
+
+    -- First try `find'' :: ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a` was a party pooper cause of the monoid constraint (i.e. for BTree Int) if the return type is Maybe. Solution: use [] instead of Maybe!
+    find'' :: ((Int, a) -> Bool) -> BTree (Int, a) -> [a]
+    find'' p =
+      foldMap (\x -> if p x then [snd x] else [])
+
+    find :: ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a
+    find _ Empty =
       Nothing
-    find' p (Leaf x)
+    find p (Leaf x)
       | p x =
         Just (snd x)
       | otherwise =
         Nothing
-    find' p (Node l x r)
-      | maybe False (const True) (find' p l) =
-        find' p l
+    find p (Node l x r)
+      | maybe False (const True) (find p l) =
+        find p l
       | p x =
         Just (snd x)
-      | maybe False (const True) (find' p r) =
-        find' p r
+      | maybe False (const True) (find p r) =
+        find p r
       | otherwise =
         Nothing
 
