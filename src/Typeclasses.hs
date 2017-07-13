@@ -2,40 +2,111 @@
 module Typeclasses
 where
 
-import Control.Applicative (many)
+import Control.Applicative ((<|>), many, some)
 import Control.Monad.State ((>=>))
+import qualified Data.Foldable as F
 import qualified System.Random as R
 import qualified Control.Monad.State as S
 import qualified Data.Monoid as M
 import qualified Calculator as P
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TLB
+import qualified Data.List as L
 
 
-
-mkBTree :: Bool -> T.Text -> BTree a
-mkBTree bst =
-  head . until singleton combine . trees
+mkBTree' :: Bool -> [Int] -> BTree Int
+mkBTree' bst =
+  mkBTree bst . text
+  -- foldr T.append T.empty . L.intersperse " " . fmap (T.pack . show)
   where
-    singleton :: [a] -> Bool
-    singleton =
-      undefined
+    text =
+      TL.toStrict . TLB.toLazyText . foldr buildText mempty
 
-    combine :: [BTree a] -> [BTree a]
-    combine =
-      undefined
+    buildText x builder =
+      builder `mappend` (TLB.fromString $ show x)
 
-    trees :: T.Text -> [BTree a]
+
+mkBTree :: Bool -> T.Text -> BTree Int
+mkBTree bst =
+  combine . fmap Leaf . condOrd . trees
+  where
+    condOrd =
+      if bst then qsort else id
+
+    qsort :: Ord a => [a] -> [a]
+    qsort [] =
+      []
+    qsort (x:xs) =
+      qsort [y | y <- xs, y <= x] ++ [x] ++ qsort [y | y <- xs, y > x]
+
+    combine :: [BTree Int] -> BTree Int
+    combine xs
+      | not bst =
+        L.foldl' mkBTree Empty xs
+      | otherwise =
+        mkBSTree xs
+      where
+        mkBSTree [] =
+          Empty
+        mkBSTree ys@(_:_) =
+          case (mkBSTree lts, mkBSTree rts) of
+            (Empty, Empty) ->
+              midt
+
+            (lt, rt) ->
+              Node lt midx rt
+          where
+            size =
+              length ys
+
+            midt@(Leaf midx) =
+              ys !! (size `div` 2)
+
+            (lts, rts) =
+              case splitAt (size `div` 2) ys of
+                (lts', (_:rts')) ->
+                  (lts', rts')
+
+                x ->
+                  x
+
+        mkBTree Empty t =
+          t
+        mkBTree t1@(Leaf _) (Leaf x) =
+          Node t1 x Empty
+        mkBTree (Node t1 x Empty) t2 =
+          Node t1 x t2
+        mkBTree t1 (Leaf x) =
+          Node t1 x Empty
+
+    trees :: T.Text -> [Int]
     trees xs =
-      case P.parse (many tree) xs of
+      case P.parse (many $ P.natural) xs of
         [(bts, "")] ->
           bts
+
+        [(_, ts)] ->
+          error $ "Invalid input: " ++ T.unpack ts ++ ". Valid input example: \"1 2 3 4\""
 
         _ ->
           []
 
-    tree :: P.Parser (BTree a)
-    tree =
-      undefined
+
+bstree :: Ord a => BTree a -> Bool
+bstree (Node lt x rt) =
+  all (==True) [ comparelabel (>=) x lt
+               , comparelabel (<) x rt
+               , bstree lt
+               , bstree rt
+               ]
+  where
+    comparelabel f y (Node _ z _ ) =
+      f y z
+    comparelabel f y (Leaf z) =
+      f y z
+bstree _ =
+  True
 
 
 --MONADS
@@ -79,9 +150,9 @@ runRandomSumZero =
 -- MONOIDS
 -- http://blog.sigfpe.com/2009/01/haskell-monoids-and-their-uses.html
 data BTree a
-  = Leaf a
+  = Empty
+  | Leaf a
   | Node (BTree a) a (BTree a)
-  | Empty
   deriving (Eq, Show)
 
 
@@ -110,8 +181,6 @@ instance Foldable BTree where
 
 instance Traversable BTree where
   -- traverse :: (Applicative f) => (a -> f b) -> BTree a -> f (BTree b)
-  traverse g (Leaf x) =
-    undefined
 
 
 -- http://blog.sigfpe.com/2009/01/haskell-monoids-and-their-uses.html
@@ -192,13 +261,13 @@ coerce binp x y
 
 findNth :: Int -> BTree a -> [a]
 findNth n btree =
-  case S.evalState (mfind' btree) 1 of
-    Right _ ->
-      []
-
-    Left x ->
-      [x]
-  -- find'' ((==n) . fst) . btree'
+  S.evalState (mfind'' btree) 1
+  -- case S.runState (mfind' btree) 1 of
+  --   Right _ ->
+  --     []
+  --   Left x ->
+  --     [x]
+  -- find'' ((==n) . fst) (btree' btree)
   where
     -- Finding stuff this way doesn't seem to be a good fit for monads since computation stops when a "failure" is encountered.
     mfind :: BTree a -> S.State Int (Maybe a)
@@ -230,33 +299,46 @@ findNth n btree =
         res ->
           return res
 
+    -- Best solution so far: no hacky use of predefined types, no need to build and traverse a 2nd tree and being lazy evaluation stops whenever a (the) result is found!
+    mfind'' :: BTree a -> S.State Int [a]
+    mfind'' =
+      F.foldlM find []
+      where
+        find :: [a] -> a -> S.State Int [a]
+        find [x] _ =
+          return [x]
+        find [] x = do
+          i <- S.get
+          if i == n then return [x] else do S.put (i + 1) ; return []
+
     -- Applicative style doesn't seem a good fit for this problem either because the computation isn't fixed (think the iffy function in "Applicative programming with effects").
     afind :: BTree a -> S.State Int [a]
     afind =
       undefined
 
     -- First try `find'' :: ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a` was a party pooper cause of the monoid constraint (i.e. for BTree Int) if the return type is Maybe. Solution: use [] instead of Maybe!
+    -- Massively inefficient since the whole tree must be traversed twice
     find'' :: ((Int, a) -> Bool) -> BTree (Int, a) -> [a]
     find'' p =
       foldMap (\x -> if p x then [snd x] else [])
 
-    find :: ((Int, a) -> Bool) -> BTree (Int, a) -> Maybe a
+    find :: ((Int, a) -> Bool) -> BTree (Int, a) -> [a]
     find _ Empty =
-      Nothing
+      []
     find p (Leaf x)
       | p x =
-        Just (snd x)
+        [snd x]
       | otherwise =
-        Nothing
+        []
     find p (Node l x r)
-      | maybe False (const True) (find p l) =
+      | length (find p l) == 1 =
         find p l
       | p x =
-        Just (snd x)
-      | maybe False (const True) (find p r) =
+        [snd x]
+      | length (find p r) == 1 =
         find p r
       | otherwise =
-        Nothing
+        []
 
     btree' :: BTree a -> BTree (Int, a)
     btree' t =
