@@ -363,7 +363,8 @@ findNth n btree =
 -- TMR Issue 11: MonadPlus: What a Super Monad!
 splits :: Eq a => [a] -> [(a, [a])]
 splits xs =
-  xs >>= \x -> return (x, L.delete x xs)
+  -- xs >>= \x -> return (x, L.delete x xs)
+  [(x, L.delete x xs) | x <- xs]
 
 
 -- memoize the choosen number so that successive choices won't contain it using monad trans…cool!
