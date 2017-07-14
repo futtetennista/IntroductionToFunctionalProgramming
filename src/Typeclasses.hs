@@ -27,9 +27,10 @@ mkBTree' bst =
       builder `mappend` (TLB.fromString $ show x)
 
 
+-- TODO: use smth more performant than lists
 mkBTree :: Bool -> T.Text -> BTree Int
 mkBTree bst =
-  combine . fmap Leaf . condOrd . trees
+  combineTrees . fmap Leaf . condOrd . trees
   where
     condOrd =
       if bst then qsort else id
@@ -40,8 +41,8 @@ mkBTree bst =
     qsort (x:xs) =
       qsort [y | y <- xs, y <= x] ++ [x] ++ qsort [y | y <- xs, y > x]
 
-    combine :: [BTree Int] -> BTree Int
-    combine xs
+    combineTrees :: [BTree Int] -> BTree Int
+    combineTrees xs
       | not bst =
         L.foldl' mkBTree Empty xs
       | otherwise =
@@ -170,6 +171,7 @@ instance Functor BTree where
     Node (fmap f l) (f x) (fmap f r)
 
 
+-- a must be Foldable, that's the key to understand why [] can be more useful than Maybe when accumulating results
 instance Foldable BTree where
   foldMap _ Empty =
     mempty
@@ -230,12 +232,15 @@ newtype MaxN a =
   deriving (Eq, Show)
 
 
+-- 1. (MaxN minBound) `max` x = x
+-- 2. x `max` (MaxN minBound) = x
+-- 3. (x `max` y) `max` z = x `max` (y `max` z)
 instance (Bounded a, Ord a, Num a) => Monoid (MaxN a) where
   mempty =
-    MaxN maxBound -- Not sure about this instance
+    MaxN minBound
 
   (MaxN x) `mappend` (MaxN y) =
-    MaxN $ coerce (>=) x y
+    MaxN (max x y)
 
 
 newtype MinN a =
@@ -243,20 +248,15 @@ newtype MinN a =
   deriving (Eq, Show)
 
 
+-- 1. (MinN maxBound) `min` x = x
+-- 2. x `min` (MinN maxBound) = x
+-- 3. (x `min` y) `min` z = x `min` (y `min` z)
 instance (Bounded a, Num a, Ord a) => Monoid (MinN a) where
   mempty =
-    MinN minBound -- Not sure about this instance
+    MinN maxBound
 
   (MinN x) `mappend` (MinN y) =
-    MinN $ coerce (<=) x y
-
-
-coerce :: Ord a => (a -> a -> Bool) -> a -> a -> a
-coerce binp x y
-  | binp x y =
-    x
-  | otherwise =
-    y
+    MinN (min x y)
 
 
 findNth :: Int -> BTree a -> [a]
