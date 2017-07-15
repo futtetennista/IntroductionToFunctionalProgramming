@@ -325,6 +325,7 @@ mlabel (Bin l r) = do
 
 
 -- Ex. 11.1
+-- Labelled binary tree
 data LBTree a
   = Leaf'
   | Node' (LBTree a) a (LBTree a)
@@ -534,3 +535,47 @@ parsecomm = do
 sampleComment :: Text
 sampleComment =
   "-- Parse comment\nfoo :: Int"
+
+
+-- 14.1
+-- instance (Monoid a, Monoid b) => Monoid (a, b) where
+--   -- mempty :: (a, b)
+--   mempty =
+--     (mempty, mempty)
+--   -- mappend :: (a, b) -> (a, b) -> (a, b)
+--   (x1, y1) `mappend` (x2, y2) =
+--     (x1 `mappend` x2, y1 `mappend` y2)
+
+
+-- 14.2
+-- instance (Monoid b) => Monoid ((->) a b) where
+--   -- mempty :: Monoid b => a -> b
+--   mempty =
+--     const mempty
+
+--   -- mappend :: Monoid b => (a -> b) -> (a -> b) -> (a -> b)
+--   f `mappend` g =
+--     \x -> f x `mappend` g x
+
+
+-- 14.4
+instance Foldable LBTree where
+  -- foldMap :: (Monoid m, Foldable t) => (a -> m) -> LBTree a -> m
+  foldMap _ Leaf' =
+    mempty
+  foldMap f (Node' l x r) =
+    foldMap f l `mappend` f x `mappend` foldMap f r
+
+
+instance Traversable LBTree where
+  -- traverse :: (Applicative f, Traversable t) => (a -> f b) -> LBTree a -> f (LBTree b)
+  traverse _ Leaf' =
+    pure Leaf'
+  traverse g (Node' l x r) =
+    Node' <$> traverse g l <*> g x <*> traverse g r
+
+
+-- 14.5
+filterF :: Foldable t => (a -> Bool) -> t a -> [a]
+filterF p =
+  foldMap (\x -> if p x then [x] else [])
