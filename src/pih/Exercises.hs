@@ -12,7 +12,6 @@ import Control.Monad.State (StateT, State)
 import Control.Applicative ((<$>), many)
 import Data.Text (Text)
 import qualified Control.Monad.State as ST
-import qualified Data.Text as T
 
 
 -- Ex. 9.2
@@ -341,13 +340,17 @@ instance Functor LBTree where
 
 
 -- Ex. 11.2
--- instance Functor ((->) a) where
---   -- fmap :: (a -> b) -> f a -> f b
---   -- f a :: ((->) t) t1
---   -- fmap mf (f a) :: (t -> t2) -> (((->) t) t1) -> ((-> t1) t2)
---   -- fmap mf (f a) :: (t -> t2) -> (t -> t1) -> (t -> t2) = (t1 -> t2) -> (t -> t1) -> t -> t2
---   fmap f g =
---     f . g -- fmap = (.)
+type Func a =
+  (->) a
+
+-- instance Functor Func where
+  -- fmap :: (a -> b) -> f a -> f b
+  -- f a :: ((->) t) t1
+  -- fmap mf (f a) :: (t -> t2) -> (((->) t) t1) -> ((-> t1) t2)
+  -- fmap mf (f a) :: (t -> t2) -> (t -> t1) -> (t -> t2) = (t1 -> t2) -> (t -> t1) -> t -> t2
+fmap' :: Func b c -> Func a b -> a -> c
+fmap' f g =
+  f . g -- fmap = (.)
 
 
 -- Ex. 11.3
@@ -357,17 +360,24 @@ instance Functor LBTree where
 -- GOTCHA 4: follow the types !!! Most of the times implementing an instance is trivial once you understand its type
 -- instance Applicative ((->) a) where
 --   -- pure :: t -> f t :: t -> (((->) a) t) :: t -> (a -> t) :: t -> a -> t
---   pure = const
+pure' :: Func a c -> b -> Func a c
+pure' =
+  const
 --
 --   -- (<*>) :: f (t1 -> t2) -> f t1 -> f t2
 --   -- (<*>) :: (((->) a) -> (t1 -> t2)) -> (((->) a) t1) -> (((->) a) t2) :: (a -> t1 -> t2) -> (a -> t1) -> (a -> t2) :: (a -> t1 -> t2) -> (a -> t1) -> a -> t2
---   (<*>) g h x =  g x (h x) -- or: g <*> h = \x -> g x (h x)
+ap' :: (Func a (Func b c)) -> (Func a b) -> a -> c
+ap' g h x =
+  g x (h x) -- or: g <*> h = \x -> g x (h x)
 
 
 -- Ex. 11.6
 -- instance Monad ((->) a) where
 --   -- (>>=) :: m t1 -> (t1 -> m t2) -> m t2 :: (((->) a) t1) -> (t1 -> (((->) a) t2)) -> (((->) a) t2) :: (a -> t1) -> (t1 -> a -> t2) -> (a -> t2) :: :: (a -> t1) -> (t1 -> a -> t2) -> a -> t2
 --   (>>=) g h x = h (g x) x -- or: g >>= h = \x -> h (g x) x
+bind' :: Func a b -> (Func b (Func a c)) -> Func a c
+bind' g h =
+  \x -> h (g x) x
 
 
 bindList :: [a] -> (a -> [b]) -> [b]
@@ -539,23 +549,27 @@ sampleComment =
 
 -- 14.1
 -- instance (Monoid a, Monoid b) => Monoid (a, b) where
---   -- mempty :: (a, b)
---   mempty =
---     (mempty, mempty)
---   -- mappend :: (a, b) -> (a, b) -> (a, b)
---   (x1, y1) `mappend` (x2, y2) =
---     (x1 `mappend` x2, y1 `mappend` y2)
+type Tuple a b =
+  (,) a b
+
+mempty'' :: (Monoid a, Monoid b) => Tuple a b
+mempty'' =
+  (mempty, mempty)
+
+mappend'' :: (Monoid a, Monoid b) => Tuple a b -> Tuple a b -> Tuple a b
+(x1, y1) `mappend''` (x2, y2) =
+  (x1 `mappend` x2, y1 `mappend` y2)
 
 
 -- 14.2
 -- instance (Monoid b) => Monoid ((->) a b) where
---   -- mempty :: Monoid b => a -> b
---   mempty =
---     const mempty
+mempty' :: Monoid b => Func a b
+mempty' =
+  const mempty
 
---   -- mappend :: Monoid b => (a -> b) -> (a -> b) -> (a -> b)
---   f `mappend` g =
---     \x -> f x `mappend` g x
+mappend' :: Monoid b => Func a b -> Func a b -> Func a b
+f `mappend'` g =
+  \x -> f x `mappend` g x
 
 
 -- 14.4

@@ -6,6 +6,7 @@ import Control.Applicative ((<|>), many, some)
 import Control.Monad.State ((>=>))
 import qualified Data.Foldable as F
 import qualified System.Random as R
+import qualified Control.Monad.Identity as MId
 import qualified Control.Monad.State as S
 import qualified Control.Monad.State.Strict as SS
 import qualified Data.Monoid as M
@@ -14,6 +15,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Data.List as L
+import qualified Data.Functor.Const as C
+
 
 
 mkBTree' :: Bool -> [Int] -> BTree Int
@@ -48,39 +51,39 @@ mkBTree bst =
         L.foldl' mkBTree Empty xs
       | otherwise =
         mkBSTree xs
+
+    mkBSTree [] =
+      Empty
+    mkBSTree ys@(_:_) =
+      case (mkBSTree lts, mkBSTree rts) of
+        (Empty, Empty) ->
+          midt
+
+        (lt, rt) ->
+          Node lt midx rt
       where
-        mkBSTree [] =
-          Empty
-        mkBSTree ys@(_:_) =
-          case (mkBSTree lts, mkBSTree rts) of
-            (Empty, Empty) ->
-              midt
+        size =
+          length ys
 
-            (lt, rt) ->
-              Node lt midx rt
-          where
-            size =
-              length ys
+        midt@(Leaf midx) =
+          ys !! (size `div` 2)
 
-            midt@(Leaf midx) =
-              ys !! (size `div` 2)
+        (lts, rts) =
+          case splitAt (size `div` 2) ys of
+            (lts', (_:rts')) ->
+              (lts', rts')
 
-            (lts, rts) =
-              case splitAt (size `div` 2) ys of
-                (lts', (_:rts')) ->
-                  (lts', rts')
+            x ->
+              x
 
-                x ->
-                  x
-
-        mkBTree Empty t =
-          t
-        mkBTree t1@(Leaf _) (Leaf x) =
-          Node t1 x Empty
-        mkBTree (Node t1 x Empty) t2 =
-          Node t1 x t2
-        mkBTree t1 (Leaf x) =
-          Node t1 x Empty
+    mkBTree Empty t =
+      t
+    mkBTree t1@(Leaf _) (Leaf x) =
+      Node t1 x Empty
+    mkBTree (Node t1 x Empty) t2 =
+      Node t1 x t2
+      mkBTree t1 (Leaf x) =
+      Node t1 x Empty
 
     trees :: T.Text -> [Int]
     trees xs =
@@ -377,6 +380,7 @@ choose =
 sendmoney' :: S.StateT [Int] [] [(Char, Int)]
 sendmoney' = do
   s <- choose
+  -- S.StateT is an Alternative, for s <= 7: guard False ~~> empty ~~> [] >>= … = []
   S.guard (s > 7)
   e <- choose ; n <- choose ; d <- choose ; r <- choose ; y <- choose
   S.guard $ num [s, e, n, d] + num [m, o, r, e] == num [m, o, n, e, y]
@@ -386,4 +390,23 @@ sendmoney' = do
       (1, 0)
 
     num =
-      foldl ((+) . (*10)) 0
+      L.foldl' ((+) . (*10)) 0
+
+
+-- MONADFIX
+
+-- MONOID
+
+
+-- TRAVERSABLE
+-- traverse :: (Applicative f, Traversable t) => (a -> f b) -> t a -> f (t b)
+-- Intuition: t_fmap needs a way to unwrap the applicative
+fmapt :: Traversable t => (a -> b) -> t a -> t b
+fmapt f =
+  MId.runIdentity . traverse (MId.Identity . f)
+
+
+-- t_foldMap needs to take a func that returns a into
+foldMapt :: (Monoid m, Traversable t) => (a -> m) -> t a -> m
+foldMapt g =
+  C.getConst . traverse (C.Const . g)
