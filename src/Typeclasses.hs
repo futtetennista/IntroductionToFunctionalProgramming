@@ -7,6 +7,7 @@ import Control.Monad.State ((>=>))
 import qualified Data.Foldable as F
 import qualified System.Random as R
 import qualified Control.Monad.State as S
+import qualified Control.Monad.State.Strict as SS
 import qualified Data.Monoid as M
 import qualified Calculator as P
 import qualified Data.Text as T
@@ -261,7 +262,7 @@ instance (Bounded a, Num a, Ord a) => Monoid (MinN a) where
 
 findNth :: Int -> BTree a -> [a]
 findNth n btree =
-  S.evalState (mfind'' btree) 1
+  SS.evalState (mfind'' btree) 1
   -- case S.runState (mfind' btree) 1 of
   --   Right _ ->
   --     []
@@ -282,10 +283,10 @@ findNth n btree =
                 if i == n then return $ Just x else do S.put (i + 1) ; mfind r)
         (return . Just) ml
 
-    -- This actually works but it's kind of a hack since the Either type is used semantically in the opposite way wrt conventions. The worst thing it's that mfind' is a partial function, this is even worst considering it returns smth of type Either a b.
+    -- This actually kinda works but it's a hack since the Either type is used semantically in the opposite way wrt conventions. The worst thing it's that mfind' is a partial function, this is even worst considering it returns smth of type Either a b.
     mfind' :: BTree a -> S.State Int (Either a a)
     mfind' Empty =
-      undefined -- well…
+      undefined -- well 😒
     mfind' (Leaf x) = do
       i <- S.get
       if i == n then return (Left x) else do S.put (i + 1) ; return (Right x)
@@ -300,16 +301,16 @@ findNth n btree =
           return res
 
     -- Best solution so far: no hacky use of predefined types, no need to build and traverse a 2nd tree and being lazy evaluation stops whenever a (the) result is found! Keys: leverage foldable and lists to represent success.
-    mfind'' :: BTree a -> S.State Int [a]
+    mfind'' :: BTree a -> SS.State Int [a]
     mfind'' =
       F.foldlM find []
       where
-        find :: [a] -> a -> S.State Int [a]
+        find :: [a] -> a -> SS.State Int [a]
         find [x] _ =
           return [x]
         find [] x = do
-          i <- S.get
-          if i == n then return [x] else S.put (i + 1) >> return []
+          i <- SS.get
+          if i == n then return [x] else SS.put (i + 1) >> return []
 
     -- Applicative style doesn't seem a good fit for this problem either because the computation isn't fixed (think the iffy function in "Applicative programming with effects").
     afind :: BTree a -> S.State Int [a]
