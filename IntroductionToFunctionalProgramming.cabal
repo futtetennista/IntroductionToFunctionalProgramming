@@ -32,6 +32,10 @@ library
                      , MonadTransformers
                      , Typeclasses
                      , Pih.Compiler
+                     , RWH.Ch15.Supply
+                     , RWH.Ch15.SupplyClass
+                     , RWH.Ch15.HandleIO
+                     , RWH.Ch15.HandleClass
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2
