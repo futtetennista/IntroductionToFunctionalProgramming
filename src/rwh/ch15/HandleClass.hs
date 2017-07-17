@@ -54,19 +54,19 @@ newtype WriterIO a =
 -- UHU ?! The book claims this instance is not needed but without ghci complains: `No instance for (MonadHandle WriterIO h0) arising from a use of ‘safeHello`…how can the compiler know how to handle the different actions for WriterIO if they're not specified ?!
 instance (MonadHandle WriterIO) String where
   openFile p m =
-    do W.tell [Open p m]; return p
+    W.tell [Open p m] >> return p
 
   hClose h =
-    do W.tell [Close h]; return ()
+    W.tell [Close h] >> return ()
 
   hPutStr h xs =
-    do W.tell [Put h xs]; return ()
+    W.tell [Put h xs] >> return ()
 
   hGetContents h =
-    do W.tell [GetContents h] ; return h
+    W.tell [GetContents h] >> return h
 
   hPutStrLn h xs =
-    do W.tell [Put h xs] ; return ()
+    W.tell [Put h xs] >> return ()
 
 
 runWriterIO :: WriterIO a -> (a, [Event])
