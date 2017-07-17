@@ -82,7 +82,7 @@ mkBTree bst =
       Node t1 x Empty
     mkBTree (Node t1 x Empty) t2 =
       Node t1 x t2
-      mkBTree t1 (Leaf x) =
+    mkBTree t1 (Leaf x) =
       Node t1 x Empty
 
     trees :: T.Text -> [Int]
