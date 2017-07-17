@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module MonadTransformers
 where
 
@@ -157,17 +157,23 @@ eval1 env (App e1 e2) = do
   eval1 (Map.insert var val env') bodyexp
 
 
-type EvalFail =
-  MEx.ExceptT T.Text MId.Identity
+newtype EvalFail a =
+  EvalFail (MEx.ExceptT T.Text MId.Identity a)
+  deriving (Functor, Applicative, Monad, MEx.MonadError T.Text)
 
 
 type Eval2 a =
   EvalFail a
 
 
+unwrapEvalFail :: EvalFail a -> MEx.ExceptT T.Text MId.Identity a
+unwrapEvalFail (EvalFail x) =
+  x
+
+
 runEval2 :: Eval2 a -> Either T.Text a
 runEval2 x =
-  MId.runIdentity (MEx.runExceptT x)
+  MId.runIdentity . MEx.runExceptT $ unwrapEvalFail x
 
 
 eval2 :: Env -> Exp -> Eval2 Value
@@ -212,13 +218,19 @@ eval2 env (App e1 e2) = do
 
 
 -- Hide the environment
-type Eval3 a =
-  MR.ReaderT Env EvalFail a
+newtype Eval3 a =
+  Eval3 (MR.ReaderT Env EvalFail a)
+  deriving (Functor, Applicative, Monad, MEx.MonadError T.Text, MR.MonadReader Env)
+
+
+unwrapEval3 :: Eval3 a -> MR.ReaderT Env EvalFail a
+unwrapEval3 (Eval3 x) =
+  x
 
 
 runEval3 :: Env -> Eval3 a -> Either T.Text a
 runEval3 env x =
-  MId.runIdentity (MEx.runExceptT (MR.runReaderT x env))
+  MId.runIdentity . MEx.runExceptT . unwrapEvalFail $ MR.runReaderT (unwrapEval3 x) env
 
 
 eval3 :: Exp -> Eval3 Value
