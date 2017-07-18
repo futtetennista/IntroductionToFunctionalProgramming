@@ -125,10 +125,10 @@ sign =
 
 
 -- Try to swap monads
-type Parser' a =
-  S.StateT B.ByteString (E.Except ParseError) a
+type Parser' =
+  S.StateT B.ByteString (E.Except ParseError)
   -- P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
-  -- deriving (Functor, Applicative, Monad, E.MonadError ParseError)
+  -- deriving (Functor, Applicative, Monad, E.MonadError ParseError, S.MonadState B.ByteString)
 
 
 runParser' :: Parser' a -> B.ByteString
