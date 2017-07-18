@@ -124,38 +124,59 @@ sign =
   flip Bits.shiftR 64
 
 
--- Try to swap monads
-type Parser' =
-  S.StateT B.ByteString (E.Except ParseError)
-  -- P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
-  -- deriving (Functor, Applicative, Monad, E.MonadError ParseError, S.MonadState B.ByteString)
+-- Try to swap monads to simplify running the parser
+-- newtype Parser' = S.StateT B.ByteString (E.Except ParseError)
+newtype Parser' a =
+  P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
+  deriving (Functor, Applicative, Monad, E.MonadError ParseError)
 
 
 runParser' :: Parser' a -> B.ByteString
            -> Either ParseError (a, B.ByteString)
 runParser' p =
-  E.runExcept . S.runStateT (p)
+  E.runExcept . S.runStateT (runP' p)
+
+
+instance A.Alternative Parser' where
+  -- empty :: Parser a
+  empty =
+    P' $ E.throwError (Chatty "empty")
+
+  -- (<*>) :: Parser a -> Parser a -> Parser a
+  px <|> py =
+    E.catchError px tryRecover
+    where
+      tryRecover (Chatty _) =
+        py
+      tryRecover e =
+        E.throwError e
+
+
+liftP' :: S.StateT B.ByteString (E.Except ParseError) a -> Parser' a
+liftP' mst =
+  P' mst
 
 
 satisfy' :: (Char -> Bool) -> Parser' Char
 satisfy' p = do
-  st <- S.get
+  st <- liftP' S.get
   case B.uncons st of
     Nothing ->
       E.throwError EndOfInput
 
     Just (c, st')
       | p c ->
-          S.put st' >> return c
+          liftP' (S.put st') >> return c
       | otherwise ->
           E.throwError $ Chatty ("invalid character: " ++ show (B.head st))
 
 
 many' :: Parser' a -> Parser' [a]
 many' p =
-  do s <- S.get ; if B.null s then return [] else (:) <$> p <*> many' p
+  do s <- liftP' S.get ; if B.null s then return [] else (:) <$> p <*> many' p
 
 
+-- TODO: extend ParseError to append multiple errors ?
 instance Monoid ParseError where
   mempty =
     Chatty "empty"
@@ -166,9 +187,9 @@ instance Monoid ParseError where
     pe
 
 
--- ƛ: runParser int "-9223372036854775808" :: Right (-9223372036854775808,"")
--- ƛ: runParser int "-9223372036854775809" :: Left NumericOverflow
--- ƛ: runParser int "9223372036854775808"  :: Left (Chatty "invalid character: '9'") ?!?! possibly the implementation of Alternative for StateT tries the first monad, then the 2nd but if both fails it returns the 1st error (how do I find the implementation ?!! No links on this page: https://www.stackage.org/haddock/lts-8.6/mtl-2.2.1/Control-Monad-State-Lazy.html)
+-- ƛ: runParser' int' "-9223372036854775808" :: Right (-9223372036854775808,"")
+-- ƛ: runParser' int' "-9223372036854775809" :: Left NumericOverflow
+-- ƛ: runParser' int' "9223372036854775808"  :: Left NumericOverflow
 -- ƛ: runParser int "9223372036854775807"  :: Right (9223372036854775807,"")
 int' :: Parser' Int
 int' =
