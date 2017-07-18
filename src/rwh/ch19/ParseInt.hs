@@ -122,3 +122,57 @@ safeBuildInt f acc x
 sign :: Int -> Int
 sign =
   flip Bits.shiftR 64
+
+
+-- Try to swap monads
+type Parser' a =
+  S.StateT B.ByteString (E.Except ParseError) a
+  -- P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
+  -- deriving (Functor, Applicative, Monad, E.MonadError ParseError)
+
+
+runParser' :: Parser' a -> B.ByteString
+           -> Either ParseError (a, B.ByteString)
+runParser' p =
+  E.runExcept . S.runStateT (p)
+
+
+satisfy' :: (Char -> Bool) -> Parser' Char
+satisfy' p = do
+  st <- S.get
+  case B.uncons st of
+    Nothing ->
+      E.throwError EndOfInput
+
+    Just (c, st')
+      | p c ->
+          S.put st' >> return c
+      | otherwise ->
+          E.throwError $ Chatty ("invalid character: " ++ show (B.head st))
+
+
+many' :: Parser' a -> Parser' [a]
+many' p =
+  do s <- S.get ; if B.null s then return [] else (:) <$> p <*> many' p
+
+
+instance Monoid ParseError where
+  mempty =
+    Chatty "empty"
+
+  (Chatty "empty") `mappend` pe =
+    pe
+  pe `mappend` _ =
+    pe
+
+
+-- ƛ: runParser int "-9223372036854775808" :: Right (-9223372036854775808,"")
+-- ƛ: runParser int "-9223372036854775809" :: Left NumericOverflow
+-- ƛ: runParser int "9223372036854775808"  :: Left (Chatty "invalid character: '9'") ?!?! possibly the implementation of Alternative for StateT tries the first monad, then the 2nd but if both fails it returns the 1st error (how do I find the implementation ?!! No links on this page: https://www.stackage.org/haddock/lts-8.6/mtl-2.2.1/Control-Monad-State-Lazy.html)
+-- ƛ: runParser int "9223372036854775807"  :: Right (9223372036854775807,"")
+int' :: Parser' Int
+int' =
+  (satisfy' (=='-') >> digits'(-)) A.<|> digits' (+)
+  where
+    digits' f =
+      many' (satisfy' C.isDigit) >>= maybe (E.throwError NumericOverflow) return . toInt f
