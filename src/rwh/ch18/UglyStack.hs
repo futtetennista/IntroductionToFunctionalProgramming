@@ -42,7 +42,7 @@ runApp app maxDepth =
 
 -- Ex. 3
 -- constrainedCount :: Int -> FilePath -> App [(FilePath, Int)]
-constrainedCount :: Int -> FilePath -> App ()
+constrainedCount :: Int -> FilePath -> MyApp ()
 constrainedCount curDepth path = do
   contents <- IO.liftIO . D.listDirectory $ path
   W.tell $ Seq.singleton (path, length contents)
@@ -60,13 +60,17 @@ constrainedCount curDepth path = do
   return () -- return $ (path, length contents) : concat rest
 
 
+type Log =
+  Seq.Seq (String, Int)
+
+
 newtype MyApp a =
-  MyA { runA :: R.ReaderT AppConfig (S.StateT AppState IO) a }
-  deriving (Functor, Applicative, Monad, IO.MonadIO, R.MonadReader AppConfig, S.MonadState AppState)
+  MyA { runA :: R.ReaderT AppConfig (W.WriterT Log (S.StateT AppState IO)) a }
+  deriving (Functor, Applicative, Monad, IO.MonadIO, R.MonadReader AppConfig, S.MonadState AppState, W.MonadWriter Log)
 
 
-runMyApp :: MyApp a -> Int -> IO (a, AppState)
-runMyApp k maxDepth =
-    let config = AppConfig maxDepth
-        state = AppState 0
-    in S.runStateT (R.runReaderT (runA k) config) state
+runMyApp :: MyApp a -> Int -> IO ((a, Log), AppState)
+runMyApp app maxDepth =
+  let config = AppConfig maxDepth
+      state = AppState 0
+  in S.runStateT (W.runWriterT . R.runReaderT (runA app) $ config) state

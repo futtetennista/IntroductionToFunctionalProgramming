@@ -18,7 +18,7 @@ newtype MaybeT m a
 instance Functor m => Functor (MaybeT m) where
   -- fmap :: (a -> b) -> (MaybeT m) a -> (MaybeT m) b
   fmap f m =
-   MaybeT $ fmap (maybe Nothing (Just . f)) (runMaybeT m)
+    MaybeT $ fmap (maybe Nothing (Just . f)) (runMaybeT m)
 
 
 instance (Functor m, Monad m) => Applicative (MaybeT m) where
