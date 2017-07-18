@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -26,11 +25,6 @@ newtype Parser a =
   deriving (Functor, Applicative, Monad, E.MonadError ParseError)
 
 
-newtype Parser' a =
-  P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
-  deriving (Functor, Applicative, Monad, E.MonadError ParseError)
-
-
 instance A.Alternative Parser where
   -- empty :: Parser a
   empty =
@@ -38,7 +32,12 @@ instance A.Alternative Parser where
 
   -- (<*>) :: Parser a -> Parser a -> Parser a
   px <|> py =
-    E.catchError px (const py)
+    E.catchError px tryRecover
+    where
+      tryRecover (Chatty _) =
+        py
+      tryRecover e =
+        E.throwError e
 
 
 -- class (S.MonadState s m) => ParserState m s a where
@@ -84,34 +83,18 @@ runParser p xs =
       Right (x, ys)
 
 
-runParser' :: Parser' a -> B.ByteString
-           -> Either ParseError (a, B.ByteString)
-runParser' p =
-  E.runExcept . S.runStateT (runP' p)
-
-
 many :: Parser a -> Parser [a]
 many p = do
-  c <- p
   st <- liftP S.get
-  if B.null st then return [c] else do (:) <$> pure c <*> many p
+  if B.null st then return [] else (:) <$> p <*> many p
 
 
--- ƛ: runParser int "-9223372036854775808" :: Right (-9223372036854775808,"")
--- ƛ: runParser int "-9223372036854775809" :: Left EndOfInput ==> WHY !?
--- ƛ: runParser int "9223372036854775808"  :: Left NumericOverflow
--- ƛ: runParser int "9223372036854775807"  :: Right (9223372036854775807,"")
 int :: Parser Int
 int =
   (satisfy (=='-') >> digits (-)) A.<|> digits (+)
   where
     digits f =
-      many (satisfy C.isDigit) >>= returnOrThrow . toInt f
-
-    returnOrThrow Nothing =
-      E.throwError NumericOverflow
-    returnOrThrow (Just x) =
-      return x
+      many (satisfy C.isDigit) >>= maybe (E.throwError NumericOverflow) return . toInt f
 
 
 toInt :: (Int -> Int -> Int) -> [Char] -> Maybe Int
@@ -125,10 +108,11 @@ fromAscii =
 
 
 safeBuildInt :: (Int -> Int -> Int) -> Int -> Int -> Maybe Int
-safeBuildInt f 0 x =
-  Just (0 `f` x)
-safeBuildInt f acc x =
-  if sign newAcc == sign acc then Just newAcc else Nothing -- overflow detected
+safeBuildInt f acc x
+  | acc == 0 =
+    Just (0 `f` x)
+  | otherwise  =
+    if sign newAcc == sign acc then Just newAcc else Nothing -- overflow detected
   where
     newAcc =
       (acc * 10) `f` x
