@@ -4,6 +4,7 @@
 module RWH.Ch19.ParseInt
 where
 
+import Data.Functor.Identity (Identity)
 import qualified Data.Char as C
 import qualified Data.Bits as Bits
 import qualified Control.Applicative as A
@@ -40,20 +41,31 @@ instance A.Alternative Parser where
         E.throwError e
 
 
--- class (S.MonadState s m) => ParserState m s a where
---   lift :: m s -> p a
+-- class ParserClass a where
+--   parse :: a -> b -> c
 
--- instance ParserState Parser where
---   lift =
---     undefined
+
+-- instance ParserClass (Parser a) where
+--   parse app st =
+--     runParser app st
+
+
+-- class ParserState m where
+--   liftPS :: (S.MonadState s m) => m s -> p
+
+-- -- instance ParserState Parser where
+-- --   lift =
+-- --     undefined
 
 -- instance ParserState Parser' where
---   lift =
---     undefined
+--   -- liftPS :: S.StateT s m a -> Parser' a
+--   liftPS m =
+--      P' m
 
 
 -- state monad not exposed -> we want to get a hold of it somehow though
-liftP :: S.State B.ByteString a -> Parser a
+-- liftP' :: S.StateT B.ByteString (E.Except ParseError) a -> Parser' a
+liftP :: S.StateT B.ByteString Identity a -> Parser a
 liftP m =
   P (S.lift m)
 

@@ -60,16 +60,16 @@ constrainedCount curDepth path = do
   return () -- return $ (path, length contents) : concat rest
 
 
-type Log =
+type AppLog =
   Seq.Seq (String, Int)
 
 
 newtype MyApp a =
-  MyA { runA :: R.ReaderT AppConfig (W.WriterT Log (S.StateT AppState IO)) a }
-  deriving (Functor, Applicative, Monad, IO.MonadIO, R.MonadReader AppConfig, S.MonadState AppState, W.MonadWriter Log)
+  MyA { runA :: R.ReaderT AppConfig (W.WriterT AppLog (S.StateT AppState IO)) a }
+  deriving (Functor, Applicative, Monad, IO.MonadIO, R.MonadReader AppConfig, S.MonadState AppState, W.MonadWriter AppLog)
 
 
-runMyApp :: MyApp a -> Int -> IO ((a, Log), AppState)
+runMyApp :: MyApp a -> Int -> IO ((a, AppLog), AppState)
 runMyApp app maxDepth =
   let config = AppConfig maxDepth
       state = AppState 0
