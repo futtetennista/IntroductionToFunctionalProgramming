@@ -7,11 +7,13 @@ import System.IO (hSetEcho, stdin)
 import qualified Countdown as CD
 import qualified Calculator as Calc
 import TicTacToe hiding (State)
-import System.Random
+import qualified System.Random as R
 import Control.Monad.State (StateT, State)
 import Control.Applicative ((<$>), many)
-import Data.Text (Text)
-import qualified Control.Monad.State as ST
+import qualified Data.Text as T (Text)
+import qualified Control.Monad.State as S
+
+default (T.Text)
 
 
 -- Ex. 9.2
@@ -234,7 +236,7 @@ depth (Node _ ts) =
 -- Ex. 11.2
 bestmoveRandom :: Int -> Grid -> Player -> IO Grid
 bestmoveRandom n g p = do
-  x <- randomRIO (0, length bestmvs)
+  x <- R.randomRIO (0, length bestmvs)
   return (bestmvs !! x)
   where
     bestmvs =
@@ -306,7 +308,7 @@ data BTree a
 
 index :: a -> State Int (a, Int)
 index x = do
-  n <- ST.get ; ST.put (n + 1) ; return (x, n)
+  n <- S.get ; S.put (n + 1) ; return (x, n)
 
 
 alabel :: BTree a -> State Int (BTree (a, Int))
@@ -542,7 +544,7 @@ parsecomm = do
       do _ <- many (Calc.mfilterp (/='\n')) ; _ <- Calc.char '\n' ; return ()
 
 
-sampleComment :: Text
+sampleComment :: T.Text
 sampleComment =
   "-- Parse comment\nfoo :: Int"
 
@@ -568,7 +570,7 @@ mempty' =
   const mempty
 
 mappend' :: Monoid b => Func a b -> Func a b -> Func a b
-f `mappend'` g =
+mappend' f g =
   \x -> f x `mappend` g x
 
 
