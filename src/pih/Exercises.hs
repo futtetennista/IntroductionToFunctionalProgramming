@@ -6,7 +6,7 @@ where
 import System.IO (hSetEcho, stdin)
 import qualified Countdown as CD
 import qualified Calculator as Calc
-import TicTacToe hiding (State)
+import TicTacToe hiding (State, next)
 import qualified System.Random as R
 import Control.Monad.State (StateT, State)
 import Control.Applicative ((<$>), many)
@@ -595,3 +595,52 @@ instance Traversable LBTree where
 filterF :: Foldable t => (a -> Bool) -> t a -> [a]
 filterF p =
   foldMap (\x -> if p x then [x] else [])
+
+
+-- 15.4
+-- ƛ: Chapter7.fasterfib 500000
+-- (21.66 secs, 11,241,527,416 bytes)
+-- ƛ: head . drop 500000 $ lazyfibs
+-- (8.61 secs, 11,204,292,392 bytes)
+-- Why is this SO MUCH quicker than using cyclic structures ?!
+-- Might it be because it doesn't have to traverse the list until the n-th position to get the value needed ? ==> Nope that doesn't seem plausible
+lazyfibs :: [Integer]
+lazyfibs =
+  0 : 1 : [curr + next | (curr, next) <- zip lazyfibs (tail lazyfibs)]
+
+
+fib :: Int -> Integer
+fib n =
+  head (drop n lazyfibs)
+
+
+-- 15.5
+data BTree' a
+  = Nil
+  | Bin' (BTree' a) a (BTree' a)
+
+
+instance Show a => Show (BTree' a) where
+  show Nil =
+    ""
+  show (Bin' l x r) =
+    "{" ++ show l ++ "." ++ show x ++ "." ++ show r ++ "}"
+
+
+repeatBTree' :: a -> BTree' a
+repeatBTree' x =
+  Bin' (repeatBTree' x) x (repeatBTree' x)
+
+
+takeBTree' :: Int -> BTree' a -> BTree' a
+takeBTree' _ Nil =
+  Nil
+takeBTree' 0 _ =
+  Nil
+takeBTree' n (Bin' l x r) =
+  Bin' (takeBTree' (n - 1) l) x (takeBTree' (n - 1) r)
+
+
+replicateBTree' :: Int -> a -> BTree' a
+replicateBTree' n =
+  takeBTree' n . repeatBTree'
