@@ -25,6 +25,7 @@ library
                      , Countdown
                      , Life
                      , Pih.Exercises
+                     , Pih.Chapter8
                      , TicTacToe
                      , Calculator
                      , MonadTransformers
