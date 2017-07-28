@@ -56,6 +56,7 @@ data Expr
   = Val Int
   | Add Expr Expr
   | Mul Expr Expr
+  | Div Expr Expr
   deriving Show
 
 
@@ -210,31 +211,34 @@ type Cont =
 
 
 data Op
-  = EVALA Expr
+  = EVAL (Int -> Op) Expr
   | ADD Int
-  | EVALM Expr
   | MUL Int
-  deriving Show
+  | DIV Int
 
 
 evale' :: Expr -> Cont -> Int
 evale' (Val n) c =
   exece c n
 evale' (Add x y) c =
-  evale' x ((EVALA y) : c) -- eval left to right
+  evale' x ((EVAL ADD y) : c) -- eval left to right
   -- evale' y ((EVALA x) : c) -- eval right to left
 evale' (Mul x y) c =
-  evale' x ((EVALM y) : c)
+  evale' x ((EVAL MUL y) : c)
+evale' (Div x y) c =
+  evale' x ((EVAL DIV y) : c)
+  -- [GOTCHA] change also: exece (DIV n : c) m = exece c (m `div` n)
+  -- evale' y ((EVALD x) : c)
 
 
 exece :: Cont -> Int -> Int
 exece [] n =
   n
-exece (EVALA x : c) m =
-  evale' x ((ADD m) : c)
-exece (EVALM x : c) m =
-  evale' x ((MUL m) : c)
+exece (EVAL op x : c) m =
+  evale' x ((op m) : c)
 exece (ADD n : c) m =
   exece c (n + m)
 exece (MUL n : c) m =
   exece c (n * m)
+exece (DIV n : c) m =
+  exece c (n `div` m)
