@@ -26,6 +26,7 @@ library
                      , Life
                      , Pih.Exercises
                      , Pih.Chapter8
+                     , Pih.Chapter9
                      , TicTacToe
                      , Calculator
                      , MonadTransformers
