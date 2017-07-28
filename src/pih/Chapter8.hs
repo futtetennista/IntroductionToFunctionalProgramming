@@ -6,6 +6,7 @@ where
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+
 default (T.Text)
 
 
@@ -172,7 +173,9 @@ bools :: Int -> [[Bool]]
 bools 0 =
   [[]]
 bools n =
-  map (True:) (bools (n - 1)) ++ map (False:) (bools (n - 1))
+  -- map (True:) (bools (n - 1)) ++ map (False:) (bools (n - 1))
+  -- concat . map (\xs -> [True:xs, False:xs]) $ bools (n - 1)
+  concat [[True:xs, False:xs] | xs <- bools (n - 1)]
 
 
 substs :: Prop -> [Subst]

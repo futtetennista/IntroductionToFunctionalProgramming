@@ -187,7 +187,7 @@ verifyGameTreeCount =
       gametree empty X
 
     nodes :: GTree a -> [GTree a]
-    nodes node@(Node x ts) =
+    nodes node@(Node _ ts) =
       node : concat (map nodes ts)
 
     nodeCount :: Int
