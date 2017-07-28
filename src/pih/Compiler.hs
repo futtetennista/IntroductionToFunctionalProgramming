@@ -3,11 +3,10 @@ where
 
 import Control.Applicative ((<|>))
 
+
 data Expr
   = Val Int
   | Add Expr Expr
-  | Throw
-  | Catch Expr Expr
   deriving Show
 
 
@@ -66,13 +65,14 @@ type Cont =
 
 
 -- eval'' e c st = c (eval e st)
+-- Expanding the type makes it a bit easier to understand the signature
 -- eval' :: Expr -> (Stack -> Stack) -> (Stack -> Stack) :: Expr -> (Stack -> Stack) -> Stack -> Stack
 eval' :: Expr -> Cont -> Cont
 eval' (Val n) c st =
   c (push n st)
 eval' (Add x y) c st =
-  -- c (add (eval' y c (eval' x c st)))
-  eval' x (eval' y (add . c)) st
+  -- c (add (eval' y c (eval' x c st))) -- complete non-sense
+  eval' x (eval' y (c . add)) st
 
 
 -- 3. Defunctionalisation
@@ -80,9 +80,10 @@ haltC :: Cont
 haltC =
   id
 
+
 pushC :: Int -> Cont -> Cont
-pushC n c =
-  c . push n
+pushC n c st =
+  c (push n st)
 
 
 addC :: Cont -> Cont
@@ -94,7 +95,7 @@ eval'' :: Expr -> Cont -> Cont
 eval'' (Val n) c =
   pushC n c
 eval'' (Add x y) c =
-  -- addC c (eval'' y c (eval'' x c st))
+  -- addC c (eval'' y c (eval'' x c st)) -- complete non-sense
   eval'' x (eval'' y (addC c))
 
 
@@ -135,10 +136,35 @@ comp' e =
 
 
 -- Ex. 1
-meval :: Expr -> Maybe Int
-meval (Val n) =
+data Expr'
+  = Val' Int
+  | Add' Expr' Expr'
+  | Throw
+  | Catch Expr' Expr'
+  deriving Show
+
+
+data VMCode'
+  = HALT'
+  | PUSH' Int VMCode'
+  | ADD' VMCode'
+  | THROW VMCode'
+  | CATCH VMCode'
+  deriving Show
+
+
+type Stack' =
+  [Result]
+
+
+type Result =
+  Maybe Int
+
+
+meval :: Expr' -> Result
+meval (Val' n) =
   Just n
-meval (Add x y) =
+meval (Add' x y) =
   (+) <$> meval x <*> meval y
 meval Throw =
   Nothing
@@ -146,6 +172,28 @@ meval (Catch x h) =
   meval x <|> meval h
 
 
-compV2 :: Expr -> VMCode
-compV2 =
-  undefined
+comp'' :: Expr' -> VMCode'
+comp'' e =
+  compHelp e HALT'
+  where
+    compHelp :: Expr' -> VMCode' -> VMCode'
+    compHelp (Val' n) c =
+      PUSH' n c
+    compHelp (Add' e1 e2) c =
+      compHelp e1 (compHelp e2 (ADD' c))
+    compHelp Throw c =
+      THROW c
+    compHelp (Catch e' h) c =
+      compHelp e' (compHelp h (CATCH c))
+
+exec'' :: VMCode' -> Stack' -> Stack'
+exec'' HALT' st =
+  st
+exec'' (PUSH' n c) st =
+  exec'' c (Just n : st)
+exec'' (ADD' c) (x:y:st) =
+  exec'' c (((+) <$> x <*> y) : st)
+exec'' (THROW c) st =
+  exec'' c (Nothing : st)
+exec'' (CATCH c) (e:h:st) =
+  exec'' c ((e <|> h) : st)
