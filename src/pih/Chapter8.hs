@@ -204,6 +204,8 @@ value (Add x y) =
   value x + value y
 value (Mul x y) =
   value x * value y
+value (Div x y) =
+  value x `div` value y
 
 
 type Cont =
@@ -222,13 +224,13 @@ evale' (Val n) c =
   exece c n
 evale' (Add x y) c =
   evale' x ((EVAL ADD y) : c) -- eval left to right
-  -- evale' y ((EVALA x) : c) -- eval right to left
+  -- evale' y ((EVAL ADD x) : c) -- eval right to left
 evale' (Mul x y) c =
   evale' x ((EVAL MUL y) : c)
 evale' (Div x y) c =
   evale' x ((EVAL DIV y) : c)
   -- [GOTCHA] change also: exece (DIV n : c) m = exece c (m `div` n)
-  -- evale' y ((EVALD x) : c)
+  -- evale' y ((EVAL DIV x) : c)
 
 
 exece :: Cont -> Int -> Int

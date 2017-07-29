@@ -91,9 +91,7 @@ evalCount f =
 -- Ex. 9.5
 verifyEvalCount' :: Either Int Int
 verifyEvalCount' =
-  if n == 10839369
-  then Right n
-  else Left n
+  if n == 10839369 then Right n else Left n
   where
     n =
       evalCount eval'
