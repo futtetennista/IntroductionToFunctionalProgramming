@@ -3,17 +3,15 @@ module RWH.Ch8.Glob ( namesMatching )
 where
 
 
-import Control.Applicative ((<|>))
-import System.Directory (doesDirectoryExist, doesFileExist, getCurrentDirectory, getDirectoryContents)
+import System.Directory (doesDirectoryExist, getCurrentDirectory, getDirectoryContents)
 import System.FilePath (dropTrailingPathSeparator, splitFileName, (</>), pathSeparator)
 import System.Posix.Files (getFileStatus, fileExist, isDirectory)
 import Control.Exception (IOException, handle)
-import Control.Monad (forM)
-import RWH.Ch8.GlobRegex (matchesGlob')
-import Data.Foldable
-import qualified Data.ByteString as B (ByteString, unpack)
+import RWH.Ch8.GlobRegex (ErrorMsg, matchesGlob')
+import Data.Foldable (foldrM)
+import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as C8 (pack, unpack)
-import qualified Data.List as L
+import qualified Data.Either as E (either)
 
 
 isPattern :: String -> Bool
@@ -21,10 +19,10 @@ isPattern =
   any (`elem` ("[*?" :: String))
 
 
-namesMatching :: String -> IO [String]
+namesMatching :: String -> IO (Either ErrorMsg [String])
 namesMatching pat
   | not (isPattern pat) =
-    (\flg -> if flg then [pat] else []) <$> doesNameExist pat
+    (\flg -> if flg then Right [pat] else Right []) <$> doesNameExist pat
   | otherwise =
       case splitFileName pat of
         ("", baseName) -> do
@@ -32,17 +30,26 @@ namesMatching pat
           listMatches curDir baseName
 
         (dirName, baseName) -> do
-          dirs <- if isPattern dirName
-                  then namesMatching (dropTrailingPathSeparator dirName)
-                  else return [dirName]
+          edirs <- if isPattern dirName
+                   then namesMatching (dropTrailingPathSeparator dirName)
+                   else return $ Right [dirName]
+          case edirs of
+            Left err ->
+              return (Left err)
+
+            Right dirs ->
+              foldrM (nameMatches baseName) (Right []) dirs
+      where
+        nameMatches baseName dir ematches =
           let listDir =
                 if isPattern baseName then listMatches else listPlain
-          -- pathNames <- forM dirs $ \dir -> do baseNames <- listDir dir baseName
-          --                                     return (map (dir </>) baseNames)
-          -- return (concat pathNames)
-          foldrM (\dir matches -> do baseNames <- listDir dir baseName
-                                     return $ baseNames ++ matches)
-            [] dirs
+          in
+            case ematches of
+              Left err ->
+                return (Left err)
+
+              Right matches ->
+                listDir dir baseName >>= return . E.either Left (Right . (++matches))
 
 
 -- Ex. 2
@@ -52,46 +59,55 @@ doesNameExist =
   -- doesDirectoryExist xs <|> doesFileExist xs
 
 
-listMatches :: FilePath -> String -> IO [String]
+listMatches :: FilePath -> String -> IO (Either ErrorMsg [String])
 listMatches dirName pat = do
   dirName' <- if null dirName then getCurrentDirectory else return dirName
   handle emptyResults (listMatches' dirName' (C8.pack pat))
 
 
-emptyResults :: IOException -> IO [String]
+emptyResults :: IOException -> IO (Either ErrorMsg [String])
 emptyResults =
-  const (return [])
+  return . Left . show
 
 
-listMatches' :: FilePath -> B.ByteString -> IO [String]
+listMatches' :: FilePath -> B.ByteString -> IO (Either ErrorMsg [String])
 listMatches' dirName' pat' = do
   names <- getDirectoryContents dirName'
   let names' =
         filter ((if isHidden (C8.unpack pat') then id else not) . isHidden) names
-  foldrM allMatches [] names'
+  foldrM allMatchesWithError (Right []) names'
   where
     -- Ex. 1
     isWindows =
       pathSeparator ==  '\\'
 
+    allMatchesWithError :: FilePath -> Either ErrorMsg [String] -> IO (Either ErrorMsg [String])
+    allMatchesWithError name ematches =
+      case ematches of
+        Left err ->
+          return (Left err)
+
+        Right matches ->
+          matchesGlob' name pat' (not isWindows) >>= E.either (return . Left) (allMatches name matches)
+
     -- Ex. 3
-    allMatches name matches = do
-      (match, rec') <- matchesGlob' name pat' (not isWindows)
+    allMatches :: FilePath -> [String] -> (Bool, Bool) -> IO (Either ErrorMsg [String])
+    allMatches name matches (match, rec') = do
       dir <- isDirectory' fullName
       case (match, rec', dir) of
-        (True, True, True) -> do
-          matches' <- handle emptyResults (listMatches' fullName pat')
-          return (fullName : matches' ++ matches)
+        (True, True, True) ->
+          listMatches' fullName pat' >>=
+            return . E.either Left (Right . (++matches) . (fullName:))
 
-        (False, True, True) -> do
-          matches' <- handle emptyResults (listMatches' fullName pat')
-          return (matches' ++ matches)
+        (False, True, True) ->
+          listMatches' fullName pat' >>=
+            return . E.either Left (Right . (++matches))
 
         (False, _, _) ->
-          return matches
+          return (Right matches)
 
         (True, _, _) ->
-          return (fullName : matches)
+          return $ Right (fullName : matches)
         where
           fullName =
             dirName' </> name
@@ -117,9 +133,9 @@ isHidden _ =
   False
 
 
-listPlain :: FilePath -> String -> IO [String]
+listPlain :: FilePath -> String -> IO (Either ErrorMsg [String])
 listPlain dirName baseName = do
   exists <- if null baseName
             then doesDirectoryExist dirName
             else doesNameExist (dirName </> baseName)
-  return (if exists then [baseName] else [])
+  return (if exists then Right [baseName] else Right [])
