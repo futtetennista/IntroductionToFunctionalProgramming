@@ -1,5 +1,4 @@
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections, OverloadedStrings #-}
 module RWH.Ch8.GlobRegex ( ErrorMsg
                          , globToRegex
                          , matchesGlob
@@ -35,8 +34,8 @@ type Match =
   Bool
 
 
-type Result a =
-  StateT Recursive (Except String) a
+type Result =
+  StateT Recursive (Except String)
 
 
 globToRegex :: B.ByteString -> Either ErrorMsg (B.ByteString, Recursive)
@@ -109,21 +108,26 @@ matchesGlob' fileName pat csFlg =
     Left err ->
       return (Left err)
 
-    Right (regex, rec') -> do
-      eCompRegex <- R.compile compOpt R.execBlank regex
-      E.either returnErrorAsString (execRegex rec') eCompRegex
+    Right (regex, rec') ->
+      E.either returnErrorAsString (execRegex rec') =<< compileRegex regex
   where
+    compileRegex =
+      R.compile compOpt R.execBlank
+
     returnErrorAsString =
       return . Left . show . snd
 
     compOpt =
       if csFlg
       then R.compExtended  .|. R.compNewline
-      else R.compIgnoreCase .|. R.compExtended  .|. R.compNewline
+      else R.compExtended  .|. R.compNewline .|. R.compIgnoreCase
 
-    execRegex rec' compRegex = do
-      res <- R.regexec compRegex (C8.pack fileName)
-      return $ E.either (Left . show . snd) (Right . (, rec') . matches) res
-
-    matches =
-     maybe False (const True)
+    execRegex rec' compRegex =
+      let rightF =
+            Right . (, rec') . matches
+          leftF =
+            Left . show . snd
+          matches =
+            maybe False (const True)
+      in
+        return . E.either leftF rightF =<< R.regexec compRegex (C8.pack fileName)

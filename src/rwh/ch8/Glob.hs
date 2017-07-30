@@ -2,7 +2,6 @@
 module RWH.Ch8.Glob ( namesMatching )
 where
 
-
 import System.Directory (doesDirectoryExist, getCurrentDirectory, getDirectoryContents)
 import System.FilePath (dropTrailingPathSeparator, splitFileName, (</>), pathSeparator)
 import System.Posix.Files (getFileStatus, fileExist, isDirectory)
@@ -32,7 +31,7 @@ namesMatching pat
         (dirName, baseName) -> do
           edirs <- if isPattern dirName
                    then namesMatching (dropTrailingPathSeparator dirName)
-                   else return $ Right [dirName]
+                   else return (Right [dirName])
           case edirs of
             Left err ->
               return (Left err)
@@ -49,7 +48,7 @@ namesMatching pat
                 return (Left err)
 
               Right matches ->
-                listDir dir baseName >>= return . E.either Left (Right . (++matches))
+                return . E.either Left (Right . (++matches)) =<< listDir dir baseName
 
 
 -- Ex. 2
@@ -78,7 +77,7 @@ listMatches' dirName' pat' = do
   foldrM allMatchesWithError (Right []) names'
   where
     -- Ex. 1
-    isWindows =
+    win =
       pathSeparator ==  '\\'
 
     allMatchesWithError :: FilePath -> Either ErrorMsg [String] -> IO (Either ErrorMsg [String])
@@ -88,7 +87,7 @@ listMatches' dirName' pat' = do
           return (Left err)
 
         Right matches ->
-          matchesGlob' name pat' (not isWindows) >>= E.either (return . Left) (allMatches name matches)
+          E.either (return . Left) (allMatches name matches) =<< matchesGlob' name pat' (not win)
 
     -- Ex. 3
     allMatches :: FilePath -> [String] -> (Bool, Bool) -> IO (Either ErrorMsg [String])
@@ -96,12 +95,10 @@ listMatches' dirName' pat' = do
       dir <- isDirectory' fullName
       case (match, rec', dir) of
         (True, True, True) ->
-          listMatches' fullName pat' >>=
-            return . E.either Left (Right . (++matches) . (fullName:))
+          return . E.either Left (Right . (++matches) . (fullName:)) =<< listMatches' fullName pat'
 
         (False, True, True) ->
-          listMatches' fullName pat' >>=
-            return . E.either Left (Right . (++matches))
+          return . E.either Left (Right . (++matches)) =<< listMatches' fullName pat'
 
         (False, _, _) ->
           return (Right matches)
@@ -113,7 +110,7 @@ listMatches' dirName' pat' = do
             dirName' </> name
 
           isDirectory' fileName =
-            getFileStatus fileName >>= return . isDirectory
+            return . isDirectory =<< getFileStatus fileName
 
 
  -- filterMatch pat' matches'
