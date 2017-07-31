@@ -41,28 +41,6 @@ instance A.Alternative Parser where
         E.throwError e
 
 
--- class ParserClass a where
---   parse :: a -> b -> c
-
-
--- instance ParserClass (Parser a) where
---   parse app st =
---     runParser app st
-
-
--- class ParserState m where
---   liftPS :: (S.MonadState s m) => m s -> p
-
--- -- instance ParserState Parser where
--- --   lift =
--- --     undefined
-
--- instance ParserState Parser' where
---   -- liftPS :: S.StateT s m a -> Parser' a
---   liftPS m =
---      P' m
-
-
 -- state monad not exposed -> we want to get a hold of it somehow though
 -- liftP' :: S.StateT B.ByteString (E.Except ParseError) a -> Parser' a
 liftP :: S.StateT B.ByteString Identity a -> Parser a
@@ -136,7 +114,7 @@ sign =
   flip Bits.shiftR 64
 
 
--- Try to swap monads to simplify running the parser
+-- Try to swap monads in the monad transformer to simplify running the parser
 -- newtype Parser' = S.StateT B.ByteString (E.Except ParseError)
 newtype Parser' a =
   P' { runP' :: S.StateT B.ByteString (E.Except ParseError) a }
@@ -209,3 +187,24 @@ int' =
   where
     digits' f =
       many' (satisfy' C.isDigit) >>= maybe (E.throwError NumericOverflow) return . toInt f
+
+
+-- TODO: create a type class that generalises Parser and Parser'
+class S.MonadState s m => ParserClass s m where
+  liftp :: S.StateT B.ByteString m a -> p
+
+
+-- First unsuccessful try
+-- newtype Parser'' s m a =
+--   P'' { runP'' :: S.StateT s m a }
+--   deriving (Functor, Applicative, Monad)
+
+
+-- instance ParserClass (Parser'' B.ByteString (E.Except ParseError)) where
+--   liftp = liftP''
+
+
+-- liftP'' :: S.StateT B.ByteString (E.Except ParseError) a
+--         -> Parser'' B.ByteString (E.Except ParseError) a
+-- liftP'' mst =
+--   P'' mst

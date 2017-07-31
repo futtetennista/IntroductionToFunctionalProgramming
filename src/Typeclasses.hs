@@ -236,6 +236,7 @@ newtype MaxN a =
   deriving (Eq, Show)
 
 
+-- Monoid laws:
 -- 1. (MaxN minBound) `max` x = x
 -- 2. x `max` (MaxN minBound) = x
 -- 3. (x `max` y) `max` z = x `max` (y `max` z)
@@ -252,6 +253,7 @@ newtype MinN a =
   deriving (Eq, Show)
 
 
+-- Monoid laws:
 -- 1. (MinN maxBound) `min` x = x
 -- 2. x `min` (MinN maxBound) = x
 -- 3. (x `min` y) `min` z = x `min` (y `min` z)
@@ -377,8 +379,8 @@ choose =
   S.StateT splits
 
 
-sendmoney' :: S.StateT [Int] [] [(Char, Int)]
-sendmoney' = do
+sendmoney :: S.StateT [Int] [] [(Char, Int)]
+sendmoney = do
   s <- choose
   -- S.StateT is an Alternative, for s <= 7: guard False ~~> empty ~~> [] >>= … = []
   S.guard (s > 7)
