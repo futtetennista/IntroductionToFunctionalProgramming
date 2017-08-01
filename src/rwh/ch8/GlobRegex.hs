@@ -7,11 +7,11 @@ module RWH.Ch8.GlobRegex ( ErrorMsg
 where
 
 import Text.Regex.Posix ((=~))
-import Data.Monoid ((<>))
+import Data.Monoid (Any(..), (<>))
 import Data.Bits ((.|.))
-import Control.Monad.State (StateT, put, runStateT)
+import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.Except
-import Control.Arrow (first)
+import Control.Arrow ((***), first, second)
 import Data.Char (isUpper, toLower, toUpper)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
@@ -36,16 +36,19 @@ type Match =
 
 
 type Result =
-  StateT Recursive (Except String)
+  WriterT Any (Except String)
 
 
 globToRegex :: B.ByteString -> Either ErrorMsg (B.ByteString, Recursive)
 globToRegex cs =
-  E.either Left (Right . first (('^' `C8.cons`) . (`C8.snoc` '$'))) eRegex
+  E.either Left (Right . (***) entireInput getAny) eRegex
   where
-    eRegex :: Either ErrorMsg (B.ByteString, Recursive)
+    entireInput =
+      ('^' `C8.cons`) . (`C8.snoc` '$')
+
+    eRegex :: Either ErrorMsg (B.ByteString, Any)
     eRegex =
-      runExcept (runStateT (globToRegex' cs) False)
+      runExcept $ runWriterT (globToRegex' cs)
 
 
 globToRegex' :: B.ByteString -> Result B.ByteString
@@ -53,7 +56,7 @@ globToRegex' cs
   | B.null cs =
     return ""
   | B.take 2 cs == "**" =
-    put True >> globToRegex' cs'
+    tell (Any True) >> globToRegex' cs'
   | headEqualTo '*' cs =
     (".*" <>) <$> globToRegex' cs'
   | headEqualTo '?' cs =
@@ -150,7 +153,10 @@ type GlobPat =
 
 runToGlobPat :: B.ByteString -> Either ErrorMsg (GlobPat, Recursive)
 runToGlobPat xs =
-  runExcept (runStateT (toGlobPat xs) False)
+  E.either Left (Right . second getAny) epair
+  where
+    epair =
+      runExcept $ runWriterT (toGlobPat xs)
 
 
 toGlobPat :: B.ByteString -> Result GlobPat
@@ -158,7 +164,7 @@ toGlobPat xs
   | C8.null xs =
     return []
   | C8.take 2 xs == "**" =
-    put True >> toGlobPat (C8.drop 2 xs)
+    tell (Any True) >> toGlobPat (C8.drop 2 xs)
   | C8.head xs == '*' =
     (Anything:) <$> toGlobPat (C8.tail xs)
   | C8.head xs == '?' =

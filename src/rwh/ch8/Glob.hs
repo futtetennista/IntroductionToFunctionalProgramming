@@ -81,18 +81,15 @@ listMatches' dirName' pat' = do
       pathSeparator ==  '\\'
 
     allMatchesWithError :: FilePath -> Either ErrorMsg [String] -> IO (Either ErrorMsg [String])
-    allMatchesWithError name ematches =
-      case ematches of
-        Left err ->
-          return (Left err)
-
-        Right matches ->
-          E.either (return . Left) (allMatches name matches) =<< matchesGlob' name pat' (not win)
+    allMatchesWithError _ (Left err) =
+      return (Left err)
+    allMatchesWithError name (Right matches) =
+      E.either (return . Left) (allMatches name matches) =<< matchesGlob' name pat' (not win)
 
     -- Ex. 3
     allMatches :: FilePath -> [String] -> (Bool, Bool) -> IO (Either ErrorMsg [String])
     allMatches name matches (match, rec') = do
-      dir <- isDirectory' fullName
+      dir <- doesDirectoryExist fullName
       case (match, rec', dir) of
         (True, True, True) ->
           return . E.either Left (Right . (++matches) . (fullName:)) =<< listMatches' fullName pat'
@@ -108,10 +105,6 @@ listMatches' dirName' pat' = do
         where
           fullName =
             dirName' </> name
-
-          isDirectory' fileName =
-            return . isDirectory =<< getFileStatus fileName
-
 
  -- filterMatch pat' matches'
 
