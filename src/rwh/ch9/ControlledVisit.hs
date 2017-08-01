@@ -8,6 +8,8 @@ module RWH.Ch9.ControlledVisit ( Info(..)
                                , getUsefulContents
                                , getInfo
                                , isDirectory
+                               , postOrder
+                               , preOrder
                                )
 where
 
@@ -89,20 +91,30 @@ reverseAlphabeticOrder =
       EQ
 
 
-traversePreOrder :: FilePath -> IO [Info]
-traversePreOrder =
-  traverse id
+preOrder :: TraverseOrder
+preOrder =
+  id
 
 
-traversePostOrder :: FilePath -> IO [Info]
-traversePostOrder =
-  traverse $ sortBy (\x -> uncurry compare . infoPermss x)
+postOrder :: TraverseOrder
+postOrder =
+  sortBy (\x -> uncurry compare . infoPermss x)
   where
     infoPermss x y =
       (msearchable *** msearchable) (infoPerms x, infoPerms y)
 
     msearchable =
       maybe False searchable
+
+
+traversePreOrder :: FilePath -> IO [Info]
+traversePreOrder =
+  traverse preOrder
+
+
+traversePostOrder :: FilePath -> IO [Info]
+traversePostOrder =
+  traverse postOrder
 
 
 -- Ex: sieveTraverse (not . Data.List.isSuffixOf "foo" . infoPath) id "./tmp/" (filters out all files called "foo" in the "tmp" directory)

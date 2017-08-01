@@ -3,54 +3,69 @@ where
 
 import Data.Char (toLower)
 import System.FilePath ((</>), takeFileName, takeExtension)
-import RWH.Ch9.ControlledVisit (Info(..), TraverseOrder, getUsefulContents, getInfo, isDirectory)
+import RWH.Ch9.ControlledVisit (Info(..), TraverseOrder, getUsefulContents, getInfo, isDirectory, preOrder, postOrder)
 
 
 data Iterate seed
   = Done     { unwrap :: seed }
   | Skip     { unwrap :: seed }
   | Continue { unwrap :: seed }
-  deriving (Show)
+  deriving Show
 
 
 type Iterator seed =
   seed -> Info -> Iterate seed
 
 
-foldTree :: Iterator a -> TraverseOrder -> a -> FilePath -> IO a
-foldTree iter order initSeed path = do
-  endSeed <- fold initSeed path
-  return (unwrap endSeed)
+foldTree :: TraverseOrder -> Iterator a -> a -> FilePath -> IO a
+foldTree order iter initSeed path = -- do
+  -- endSeed <- fold initSeed path
+  -- return (unwrap endSeed)
+  (return . unwrap) =<< fold initSeed path
   where
     fold seed subpath =
-      walk seed =<< getUsefulContents subpath
+      walk seed =<< orderedContents subpath
 
-    walk seed (name:names) = do
-      let fullPath = path </> name
-      info <- getInfo fullPath
+    orderedContents subpath = do
+      names <- getUsefulContents subpath
+      contents <- mapM getInfo (map (subpath </>) names)
+      return (order contents)
+
+    walk seed (info:infos) =
       case iter seed info of
         done@(Done _) ->
           return done
 
         Skip seed' ->
-          walk seed' names
+          walk seed' infos
 
         Continue seed'
           | isDirectory info -> do
-              next <- fold seed' fullPath
+              next <- fold seed' path
               case next of
                 done@(Done _) ->
                   return done
 
                 seed'' ->
-                  walk (unwrap seed'') names
+                  walk (unwrap seed'') infos
           | otherwise ->
-            walk seed' names
+            walk seed' infos
     walk seed _ =
       return (Continue seed)
 
 
-atMostThreePictures :: [FilePath] -> Info -> Iterate [FilePath]
+foldTreePreOrder :: Iterator a -> a -> FilePath -> IO a
+foldTreePreOrder =
+  foldTree preOrder
+
+
+foldTreePostOrder :: Iterator a -> a -> FilePath -> IO a
+foldTreePostOrder =
+  foldTree postOrder
+
+
+-- ITERATORS
+atMostThreePictures :: Iterator [FilePath]
 atMostThreePictures paths info
   | length paths == 3 =
     Done paths
@@ -66,3 +81,8 @@ atMostThreePictures paths info
 
     path =
       infoPath info
+
+
+countDirectories :: Iterator Int
+countDirectories n info =
+  Continue (if isDirectory info then n + 1 else n)
