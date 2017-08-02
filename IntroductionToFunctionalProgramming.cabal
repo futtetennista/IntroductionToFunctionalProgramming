@@ -36,6 +36,7 @@ library
                      , RWH.Ch8.Glob
                      , RWH.Ch9.Controlledvisit
                      , RWH.Ch9.FoldDir
+                     , RWH.Ch9.BetterPredicate
                      , RWH.Ch15.Supply
                      , RWH.Ch15.SupplyClass
                      , RWH.Ch15.HandleIO
