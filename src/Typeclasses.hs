@@ -265,9 +265,40 @@ instance (Bounded a, Num a, Ord a) => Monoid (MinN a) where
     MinN (min x y)
 
 
-findNth :: Int -> BTree a -> [a]
+type Iterator seed a =
+  seed -> a -> Iterate seed
+
+
+data Iterate seed
+  = Done { unwrap :: seed }
+  | Continue { unwrap :: seed }
+
+
+itfindNth :: Int -> BTree a -> Maybe a
+itfindNth n  =
+  fst . unwrap . walk (Nothing, 1)
+  where
+    iter (_, m) x
+      | m == n =
+        Done (Just x, m)
+      | otherwise =
+        Continue (Nothing, m + 1)
+
+    walk seed (Leaf x) =
+      iter seed x
+    walk seed (Node l x r) =
+      case walk seed l of
+        done@(Done _) -> done
+        Continue seed' -> case iter seed' x of
+                            done@(Done _) -> done
+                            Continue seed'' -> walk seed'' r
+    walk seed Empty =
+      Continue seed
+
+
+findNth :: Show a => Int -> BTree a -> IO [a]
 findNth n btree =
-  SS.evalState (mfind'' btree) 1
+  SS.evalStateT (mfind'' btree) 1
   -- case S.runState (mfind' btree) 1 of
   --   Right _ ->
   --     []
@@ -305,15 +336,16 @@ findNth n btree =
         res ->
           return res
 
-    -- Best solution so far: no hacky use of predefined types, no need to build and traverse a 2nd tree and being lazy evaluation stops whenever a (the) result is found! Keys: leverage foldable and lists to represent success.
-    mfind'' :: BTree a -> SS.State Int [a]
+    -- Best solution so far: no hacky use of predefined types, no need to build and traverse a 2nd tree and being lazy evaluation stops whenever a (the) result is found => This is **not** true!!! It keeps visiting all remaining subtrees (prints are the proof) ! Keys: leverage foldable and lists to represent success.
+    mfind'' :: Show a => BTree a -> SS.StateT Int IO [a]
     mfind'' =
       F.foldlM find []
       where
-        find :: [a] -> a -> SS.State Int [a]
-        find [x] _ =
-          return [x]
+        find :: Show a => [a] -> a -> SS.StateT Int IO [a]
+        find [x] y =
+          SS.liftIO $ putStrLn ("visited: " ++ show y) >> return [x]
         find [] x = do
+          SS.liftIO $ putStrLn ("visited: " ++ show x)
           i <- SS.get
           if i == n then return [x] else SS.put (i + 1) >> return []
 
