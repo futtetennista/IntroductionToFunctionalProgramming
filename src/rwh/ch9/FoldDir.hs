@@ -13,11 +13,11 @@ data Iterate seed
   deriving Show
 
 
-type Iterator seed =
-  seed -> Info -> Iterate seed
+type Iterator seed a =
+  seed -> a -> Iterate seed
 
 
-foldTree :: TraverseOrder -> Iterator a -> a -> FilePath -> IO a
+foldTree :: TraverseOrder -> Iterator a Info -> a -> FilePath -> IO a
 foldTree order iter initSeed path = -- do
   -- endSeed <- fold initSeed path
   -- return (unwrap endSeed)
@@ -26,11 +26,13 @@ foldTree order iter initSeed path = -- do
     fold seed subpath =
       walk seed =<< orderedContents subpath
 
+    orderedContents :: FilePath -> IO [Info]
     orderedContents subpath = do
       names <- getUsefulContents subpath
       contents <- mapM getInfo (map (subpath </>) names)
       return (order contents)
 
+    -- walk :: a -> [Info] -> IO (Iterate a)
     walk seed (info:infos) =
       case iter seed info of
         done@(Done _) ->
@@ -54,18 +56,18 @@ foldTree order iter initSeed path = -- do
       return (Continue seed)
 
 
-foldTreePreOrder :: Iterator a -> a -> FilePath -> IO a
+foldTreePreOrder :: Iterator a Info -> a -> FilePath -> IO a
 foldTreePreOrder =
   foldTree preOrder
 
 
-foldTreePostOrder :: Iterator a -> a -> FilePath -> IO a
+foldTreePostOrder :: Iterator a Info -> a -> FilePath -> IO a
 foldTreePostOrder =
   foldTree postOrder
 
 
 -- ITERATORS
-atMostThreePictures :: Iterator [FilePath]
+atMostThreePictures :: Iterator [FilePath] Info
 atMostThreePictures paths info
   | length paths == 3 =
     Done paths
@@ -83,6 +85,6 @@ atMostThreePictures paths info
       infoPath info
 
 
-countDirectories :: Iterator Int
+countDirectories :: Iterator Int Info
 countDirectories n info =
   Continue (if isDirectory info then n + 1 else n)
