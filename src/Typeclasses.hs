@@ -28,7 +28,7 @@ mkBTree' bst =
       TL.toStrict . TLB.toLazyText . foldr buildText mempty
 
     buildText x builder =
-      builder `mappend` (TLB.fromString $ show x)
+      builder `mappend` (TLB.fromString $ ' ' : show x)
 
 
 -- TODO: use smth more performant than lists
