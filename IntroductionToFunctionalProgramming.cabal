@@ -37,6 +37,7 @@ library
                      , RWH.Ch9.ControlledVisit
                      , RWH.Ch9.FoldDir
                      , RWH.Ch9.BetterPredicate
+                     , RWH.Ch11.Prettify2
                      , RWH.Ch15.Supply
                      , RWH.Ch15.SupplyClass
                      , RWH.Ch15.HandleIO

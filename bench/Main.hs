@@ -12,12 +12,13 @@ import Data.List (foldl')
 
 main :: IO ()
 main =
-  mainWith (do -- subsets
-               -- foldsStrictF'
-               -- foldsStrictF
-               -- foldsNonStrictF
-               -- primeNums
-               hammingNums)
+  return ()
+  -- mainWith $ do -- subsets
+  -- foldsStrictF'
+  -- foldsStrictF
+  -- foldsNonStrictF
+  -- primeNums
+  -- hammingNums
 
 
 hammingNums :: Weigh ()
