@@ -12,9 +12,19 @@ data Doc
   deriving (Show, Eq)
 
 
-empty :: Doc
-empty =
-  Empty
+-- Bogus
+instance Monoid Doc where
+  --mempty :: Doc
+  mempty =
+    Empty
+
+  -- mappend  :: Doc -> Doc -> Doc
+  Empty `mappend` y =
+    y
+  x `mappend` Empty =
+    x
+  x `mappend` y =
+    Concat x y
 
 
 char :: Char -> Doc
@@ -31,15 +41,7 @@ line :: Doc
 line =
   Line
 
-(<>)  :: Doc -> Doc -> Doc
-Empty <> y =
-  y
-x <> Empty =
-  x
-x <> y =
-  Concat x y
-
 
 fold :: (Doc -> Doc -> Doc) -> [Doc] -> Doc
 fold f =
-  foldr f empty
+  foldr f mempty

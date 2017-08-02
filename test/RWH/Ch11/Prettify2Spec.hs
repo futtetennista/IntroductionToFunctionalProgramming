@@ -8,9 +8,9 @@ import RWH.Ch11.Prettify2
 
 spec :: Spec
 spec =
-  describe "empty" $ do
-    it "should not change the doc when ap- or pre-prending to empty doc" $
-      property (prop_empty_id)
+  describe "doc" $ do
+    it "should obey the first monoid law" $ property (prop_mempty_id)
+    it "should obey the second monoid law" $ property (prop_mappend_assoc)
 
 
 instance Arbitrary Doc where
@@ -42,9 +42,14 @@ instance Arbitrary Doc where
     --   6 ->
     --     Union ($) arbitrary <*> arbitrary
 
+prop_mempty_id :: Doc -> Bool
+prop_mempty_id x =
+  mempty `mappend` x == x && x `mappend` mempty == x
 
-prop_empty_id x =
-  empty <> x == x && x <> empty == x
+
+prop_mappend_assoc :: Doc -> Doc -> Doc -> Bool
+prop_mappend_assoc x y z =
+  (x `mappend` y) `mappend` z == x `mappend` (y `mappend` z)
 
 
 prop_char c =
