@@ -41,7 +41,7 @@ type Result =
 
 globToRegex :: B.ByteString -> Either ErrorMsg (B.ByteString, Recursive)
 globToRegex cs =
-  E.either Left (Right . (***) entireInput getAny) eRegex
+  E.either Left (Right . (entireInput *** getAny)) eRegex
   where
     entireInput =
       ('^' `C8.cons`) . (`C8.snoc` '$')
