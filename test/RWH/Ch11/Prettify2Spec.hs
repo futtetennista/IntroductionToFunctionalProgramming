@@ -22,6 +22,7 @@ instance Arbitrary Doc where
           , Concat <$> arbitrary <*> arbitrary
           , Union <$> arbitrary <*> arbitrary
           ]
+    -- do
     -- n <- choose (1,6) :: Gen Int
     -- case n of
     --   1 ->

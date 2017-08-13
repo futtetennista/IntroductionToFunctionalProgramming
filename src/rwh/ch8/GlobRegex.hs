@@ -216,7 +216,7 @@ matchesGlobNative :: FilePath -> B.ByteString -> CaseSensitive -> Either ErrorMs
 matchesGlobNative [] _ _ =
   Left "Empty file path"
 matchesGlobNative xs pat csFlg =
-  -- I didn't think about this before: even if `runToGlobPat` fails, the pattern matching will *not* fail because of how >>= works. Interesting!
+  -- I didn't think about this before: even if `runToGlobPat` fails, the pattern matching will *not* fail because of how >>= works. Interesting! Also check out: https://www.fpcomplete.com/blog/2017/03/partial-patterns-do-blocks
   -- do (pat', rec') <- runToGlobPat pat ; return $ (C8.pack xs `matches` pat', rec')
   E.either Left (Right . first (C8.pack xs `matches`)) (runToGlobPat pat)
   where

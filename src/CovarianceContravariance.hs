@@ -50,21 +50,37 @@ instance Contravariant E5 where
     -- E5 $ \h -> g (\() () -> f (h () ()))
     E5 $ \h -> g (\x y -> f (h x y))
 
-
--- invariant
+{-
+(() -> (a -> a)) -> (): a in both + and - positions
+==> E6 is invariant
+-}
 newtype E6 a =
   E6 ((() -> a -> a) -> ())
 
 
--- invariant
+{-
+(() -> a): a in + position
+((() -> () -> a) -> a): ((() -> () -> a)) in - position
+Multiplication rule: + * - = -
+((() -> () -> a) -> a): a in + position
+==> E7 is invariant
+-}
 newtype E7 a =
   E7 ((() -> () -> a) -> a)
 
 
--- invariant
+{-
+(a -> ()) : a in - position
+(() -> (a -> ())) : (a -> ()) in + position
+(() -> (a -> ())) -> a : () -> (a -> ()) in - position
+Multiplication rule: - * + * - = +
+(() -> (a -> ())) -> a : a in + position
+==> E8 is covariant (both a's are in positive positions)
+-}
 newtype E8 a =
   -- E8 ((() -> (a -> ())) -> a)
   E8 ((() -> a -> ()) -> a)
+  deriving Functor
 
 
 newtype E9 a =
