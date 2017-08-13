@@ -99,7 +99,7 @@ item =
       | T.null xs =
         []
       | otherwise =
-          [(T.head xs, T.tail xs)]
+        [(T.head xs, T.tail xs)]
 
 
 mfilterp :: (Char -> Bool) -> Parser Char
