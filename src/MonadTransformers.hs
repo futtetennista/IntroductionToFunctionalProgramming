@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module MonadTransformers
+module MonadTransformers ( Exp(..)
+                         , Value(..)
+                         , Eval2
+                         , Env
+                         , unwrapEvalFail
+                         )
 where
 
 import Prelude hiding (abs, exp)
@@ -55,6 +60,12 @@ nat  ::= … | -1 | 0 | 1 | …
 sampleInput :: T.Text
 sampleInput =
   "12 + ((\\x -> x) (4 + 2))"
+
+
+sampleExp :: Exp
+sampleExp =
+  fst . head $ P.parse exp sampleInput
+
 
 fact :: P.Parser Exp
 fact =
@@ -172,8 +183,8 @@ unwrapEvalFail (EvalFail x) =
 
 
 runEval2 :: Eval2 a -> Either T.Text a
-runEval2 x =
-  MId.runIdentity . MEx.runExceptT $ unwrapEvalFail x
+runEval2 =
+  MId.runIdentity . MEx.runExceptT . unwrapEvalFail
 
 
 eval2 :: Env -> Exp -> Eval2 Value
@@ -205,7 +216,7 @@ eval2 env (Abs x e) =
 eval2 env (App e1 e2) = do
   (var, bodyexp, env') <- evalFunOrFail
   val <- eval2 env e2
-  eval1 (Map.insert var val env') bodyexp
+  eval2 (Map.insert var val env') bodyexp
   where
     evalFunOrFail = do
       res <- eval2 env e1
@@ -215,6 +226,11 @@ eval2 env (App e1 e2) = do
 
         _ ->
           MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+
+
+sampleRunEval2 :: Either T.Text Value
+sampleRunEval2 =
+  runEval2 (eval2 Map.empty sampleExp)
 
 
 -- Hide the environment
