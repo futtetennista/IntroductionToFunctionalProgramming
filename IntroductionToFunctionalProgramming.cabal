@@ -46,6 +46,8 @@ library
                      , RWH.Ch15.SupplyClass
                      , RWH.Ch15.HandleIO
                      , RWH.Ch15.HandleClass
+                     , RWH.Ch16.Csv
+                     , RWH.Ch16.HttpRequestParser
                      , RWH.Ch18.UglyStack
                      , RWH.Ch19.ParseInt
   build-depends:       base >= 4.7 && < 5
@@ -61,6 +63,7 @@ library
                      , time >= 1.6.0.1 && < 1.6.0.2
                      , array >= 0.5.1.1 && < 0.5.1.2
                      , contravariant >= 1.4 && < 1.5
+                     , parsec >= 3.1.11 && < 3.1.12
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
