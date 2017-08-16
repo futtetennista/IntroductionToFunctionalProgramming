@@ -29,7 +29,9 @@ spec =
               "GET /foo HTTP/1.1\r\nContent-Length: foobar\r\n\r\n"
         parseHeaders req `shouldSatisfy` isLeft
 
-      it "should fail if header line is too long" $ property prop_dos
+      it "should fail if header is too long" $ property prop_dos_header
+
+      it "should succeed if header is not too long" $ property prop_valid_header
 
 
 parseHeaders :: String -> Either ParseError HttpRequest
@@ -41,14 +43,21 @@ parseHeaders =
       p_request
 
 
-prop_dos :: VeryLongString -> Bool
-prop_dos (VeryLongString xs) =
+prop_dos_header :: VeryLongString -> Bool
+prop_dos_header (VeryLongString xs) =
   let req =
         "GET /foo HTTP/1.1\r\nIf-Match: " ++ xs ++ "\r\n\r\n"
 
       expectedErrorMessage =
         Message "Header line too big"
   in either (elem expectedErrorMessage . errorMessages) (const False) (parseHeaders req)
+
+
+prop_valid_header :: LongString -> Bool
+prop_valid_header (LongString xs) =
+  let req =
+        "GET /foo HTTP/1.1\r\nIf-Match: " ++ xs ++ "\r\n\r\n"
+  in either (const False) (const True) (parseHeaders req)
 
 
 newtype VeryLongString =
@@ -60,6 +69,17 @@ instance Arbitrary VeryLongString where
   arbitrary =
     -- length "If-Match: " == 10
     VeryLongString <$> vectorOf 4087 (arbitrary `suchThat` isAlphaNum)
+
+
+newtype LongString =
+  LongString String
+  deriving Show
+
+
+instance Arbitrary LongString where
+  arbitrary =
+    -- length "If-Match: " == 10 (just within the allowed limit)
+    LongString <$> vectorOf 4086 (arbitrary `suchThat` isAlphaNum)
 
 
 -- instance Arbitrary Method where

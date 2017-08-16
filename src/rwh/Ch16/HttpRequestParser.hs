@@ -10,12 +10,7 @@ where
 
 import Data.Char (toLower)
 import Control.Applicative (liftA2)
-import Control.Monad.IO.Class
-import Numeric (readHex)
-import System.IO (Handle)
 import Text.Parsec
-import Text.Parsec.Char
-import Text.Parsec.Prim (Parsec)
 
 
 data Method
@@ -68,7 +63,7 @@ p_headers =
     header :: Monad m => ParsecT String Int m Header
     header = do
       fname <- fieldName
-      _ <- statefulParse (char ':')
+      _ <- statefulParser (char ':')
       fcontents <- fieldContents (contentParser fname)
       return (fname, fcontents)
       where
@@ -77,37 +72,29 @@ p_headers =
 
     fieldName :: Monad m => ParsecT String Int m String
     fieldName =
-      (:) <$> statefulParse letter <*> boundedMany fieldChar
+      (:) <$> statefulParser letter <*> nameTail
+      where
+        nameTail =
+          (many . statefulParser) (letter <|> digit <|> oneOf "-_")
 
-    boundedMany1 :: Monad m => ParsecT s Int m a -> ParsecT s Int m [a]
-    boundedMany1 p = do
-      n <- getState
-      if n < 4096
-        then (:) <$> statefulParse p <*> boundedMany p
-        else parserFail "Header line too big"
-
-    statefulParse :: Monad m => ParsecT s Int m a -> ParsecT s Int m a
-    statefulParse p = do
-      xs <- p
+    statefulParser :: Monad m => ParsecT s Int m a -> ParsecT s Int m a
+    statefulParser p = do
+      xs <- boundedParser
       modifyState (+1)
       return xs
-
-    boundedMany :: Monad m => ParsecT s Int m a -> ParsecT s Int m [a]
-    boundedMany p =
-      boundedMany1 p <|> pure []
-
-    fieldChar :: Monad m => ParsecT String a m Char
-    fieldChar =
-      letter <|> digit <|> oneOf "-_"
+      where
+        boundedParser = do
+          headerLength <- getState
+          if headerLength < 4096 then p else parserFail "Header line too big"
 
     fieldContents :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
     fieldContents contentParser =
-      boundedMany space *> contents contentParser
+      (many . statefulParser) space *> (contents . statefulParser) contentParser
 
     contents :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
-    contents parser =
-      liftA2 (++) (boundedMany1 parser <* crlf) (continuation parser <|> pure [])
+    contents p =
+      liftA2 (++) (many1 p <* crlf) (continuation p <|> pure [])
 
     continuation :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
-    continuation parser =
-      liftA2 (:) (' ' <$ boundedMany1 (oneOf " \t")) (contents parser)
+    continuation p =
+      liftA2 (:) (' ' <$ many1 (statefulParser . oneOf $ " \t")) (contents p)
