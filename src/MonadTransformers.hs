@@ -10,12 +10,12 @@ where
 
 import Prelude hiding (abs, exp)
 import Control.Applicative ((<|>))
-import qualified Control.Monad.Identity as MId
+import Control.Monad.Identity (Identity, runIdentity)
 -- import qualified Control.Monad.Trans.Except as ME
-import qualified Control.Monad.Except as MEx
-import qualified Control.Monad.Reader as MR
-import qualified Control.Monad.State as MS
-import qualified Control.Monad.Writer as MW
+import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
+import Control.Monad.Reader (MonadReader, ReaderT, ask, asks, local, runReaderT)
+import Control.Monad.State (MonadState, StateT, get, put, runStateT)
+import Control.Monad.Writer (WriterT, tell, runWriterT)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Data.Maybe as M
@@ -118,15 +118,15 @@ eval0 :: Env -> Exp -> Value
 eval0 _ (Lit i) =
   IntVal i
 eval0 env (Var x) =
-  M.fromJust (Map.lookup x env) -- can 💥
+  M.fromJust (Map.lookup x env) -- can fail
 eval0 env (Add e1 e2) =
   IntVal (x + y)
   where
     IntVal x =
-      eval0 env e1 -- can 💥
+      eval0 env e1 -- can fail
 
     IntVal y =
-      eval0 env e2 -- can 💥
+      eval0 env e2 -- can fail
 eval0 env (Abs x e) =
   FunVal env x e
 eval0 env (App e1 e2) =
@@ -136,19 +136,19 @@ eval0 env (App e1 e2) =
       Map.insert var val env'
 
     FunVal env' var bodyexp =
-      eval0 env e1 -- can 💥
+      eval0 env e1 -- can fail
 
     val =
       eval0 env e2
 
 
 type Eval1 a =
-  MId.Identity a
+  Identity a
 
 
 runEval1 :: Eval1 a -> a
 runEval1 =
-  MId.runIdentity
+  runIdentity
 
 
 eval1 :: Monad m => Env -> Exp -> m Value
@@ -169,22 +169,22 @@ eval1 env (App e1 e2) = do
 
 
 newtype EvalFail a =
-  EvalFail (MEx.ExceptT T.Text MId.Identity a)
-  deriving (Functor, Applicative, Monad, MEx.MonadError T.Text)
+  EvalFail (ExceptT T.Text Identity a)
+  deriving (Functor, Applicative, Monad, MonadError T.Text)
 
 
 type Eval2 a =
   EvalFail a
 
 
-unwrapEvalFail :: EvalFail a -> MEx.ExceptT T.Text MId.Identity a
+unwrapEvalFail :: EvalFail a -> ExceptT T.Text Identity a
 unwrapEvalFail (EvalFail x) =
   x
 
 
 runEval2 :: Eval2 a -> Either T.Text a
 runEval2 =
-  MId.runIdentity . MEx.runExceptT . unwrapEvalFail
+  runIdentity . runExceptT . unwrapEvalFail
 
 
 eval2 :: Env -> Exp -> Eval2 Value
@@ -193,7 +193,7 @@ eval2 _ (Lit i) =
 eval2 env (Var x) = do
   case Map.lookup x env of
     Nothing ->
-      MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
+      throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
       -- throwUnboundVarError x
 
     Just e ->
@@ -210,7 +210,7 @@ eval2 env (Add e1 e2) = do
           return y
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
+          throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
 eval2 env (Abs x e) =
   return $ FunVal env x e
 eval2 env (App e1 e2) = do
@@ -225,7 +225,7 @@ eval2 env (App e1 e2) = do
           return (var, bodyexp, env')
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+          throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
 
 
 sampleRunEval2 :: Either T.Text Value
@@ -235,30 +235,30 @@ sampleRunEval2 =
 
 -- Hide the environment
 newtype Eval3 a =
-  Eval3 (MR.ReaderT Env EvalFail a)
-  deriving (Functor, Applicative, Monad, MEx.MonadError T.Text, MR.MonadReader Env)
+  Eval3 (ReaderT Env EvalFail a)
+  deriving (Functor, Applicative, Monad, MonadError T.Text, MonadReader Env)
 
 
-unwrapEval3 :: Eval3 a -> MR.ReaderT Env EvalFail a
+unwrapEval3 :: Eval3 a -> ReaderT Env EvalFail a
 unwrapEval3 (Eval3 x) =
   x
 
 
 runEval3 :: Env -> Eval3 a -> Either T.Text a
 runEval3 env x =
-  MId.runIdentity . MEx.runExceptT . unwrapEvalFail $ MR.runReaderT (unwrapEval3 x) env
+  runIdentity . runExceptT . unwrapEvalFail $ runReaderT (unwrapEval3 x) env
 
 
 eval3 :: Exp -> Eval3 Value
 eval3 (Lit i) =
   return $ IntVal i
 eval3 (Var x) = do
-  mexp <- MR.asks (Map.lookup x)
+  mexp <- asks (Map.lookup x)
   case mexp of
     Nothing ->
       -- The mtl machinery makes it so that lift-ing is done under the hood:
-      -- MR.lift $ MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
-      MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
+      -- lift $ throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
+      throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
 
     Just e ->
       return e
@@ -274,14 +274,14 @@ eval3 (Add e1 e2) = do
           return y
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
+          throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
 eval3 (Abs x e) =
-  do env <- MR.ask ; return $ FunVal env x e
+  do env <- ask ; return $ FunVal env x e
 eval3 (App e1 e2) = do
   (var, bodyexp, env') <- evalFunOrFail
   val <- eval3 e2
   let env'' = Map.insert var val env'
-  MR.local (const env'') (eval3 bodyexp)
+  local (const env'') (eval3 bodyexp)
   where
     evalFunOrFail = do
       res <- eval3 e1
@@ -290,18 +290,23 @@ eval3 (App e1 e2) = do
           return (var, bodyexp, env')
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+          throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+
+
+sampleRunEval3 :: Either T.Text Value
+sampleRunEval3 =
+  runEval3 Map.empty (eval3 sampleExp)
 
 
 -- STATE
 -- Don't keep track of the state if a failure occurres
 type Eval4 a =
-  MR.ReaderT Env (MS.StateT Int (MEx.ExceptT T.Text MId.Identity)) a
+  ReaderT Env (StateT Int (ExceptT T.Text Identity)) a
 
 
 -- Keep track of the state even if a failure occures
 type Eval4' a =
-  MR.ReaderT Env (MEx.ExceptT T.Text (MS.StateT State MId.Identity)) a
+  ReaderT Env (ExceptT T.Text (StateT State Identity)) a
 
 
 type State =
@@ -310,32 +315,31 @@ type State =
 
 runEval4 :: Env -> State -> Eval4 a -> Either T.Text (a, Int)
 runEval4 env st x =
-  MId.runIdentity . MEx.runExceptT . MS.runStateT (MR.runReaderT x env) $ st
+  runIdentity . runExceptT . runStateT (runReaderT x env) $ st
 
 
 runEval4' :: Env -> State -> Eval4' a -> (Either T.Text a, Int)
 runEval4' env st x =
-  MId.runIdentity . MS.runStateT (MEx.runExceptT (MR.runReaderT x env)) $ st
+  runIdentity . runStateT (runExceptT (runReaderT x env)) $ st
 
 
-tick :: (Num a, MS.MonadState a m) => m ()
+tick :: (Num a, MonadState a m) => m ()
 tick =
-  do n <- MS.get ; MS.put (n + 1)
+  do n <- get ; put (n + 1)
 
 
 eval4 :: Exp -> Eval4 Value
 eval4 (Lit i) =
-  do tick ; return $ IntVal i
+  tick >> return (IntVal i)
 eval4 (Var x) = do
   tick
-  mexp <- MR.asks (Map.lookup x)
-  maybe throwError return mexp
+  mexp <- asks (Map.lookup x)
+  maybe mthrow return mexp
   where
-    throwError =
-      MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
-eval4 (Add e1 e2) = do
-  tick
-  IntVal <$> ((+) <$> intValOrFail e1 <*> intValOrFail e2)
+    mthrow =
+      throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
+eval4 (Add e1 e2) =
+  tick >> IntVal <$> ((+) <$> intValOrFail e1 <*> intValOrFail e2)
   -- intValOrFail e1 >>= \x -> intValOrFail e2 >>= return . IntVal . (x+)
   -- x <- intValOrFail e1
   -- y <- intValOrFail e2
@@ -349,15 +353,15 @@ eval4 (Add e1 e2) = do
           return y
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
+          throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
 eval4 (Abs x e) =
-  do tick ; env <- MR.ask ; return $ FunVal env x e
+  do tick ; env <- ask ; return $ FunVal env x e
 eval4 (App e1 e2) = do
   tick
   (var, bodyexp, env') <- evalFunOrFail
   val <- eval4 e2
   let env'' = Map.insert var val env'
-  MR.local (const env'') (eval4 bodyexp)
+  local (const env'') (eval4 bodyexp)
   where
     evalFunOrFail = do
       res <- eval4 e1
@@ -366,54 +370,63 @@ eval4 (App e1 e2) = do
           return (var, bodyexp, env')
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+          throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
 
 
 -- Add some logging
 type Eval5 a =
-  MR.ReaderT Env (MW.WriterT [T.Text] (MS.StateT Int (MEx.ExceptT T.Text MId.Identity))) a
+  ReaderT Env (WriterT [T.Text] (StateT Int (ExceptT T.Text Identity))) a
 
 
 type Eval5' a =
-  MR.ReaderT Env (MEx.ExceptT T.Text (MW.WriterT [T.Text] (MS.StateT Int MId.Identity))) a
+  ReaderT Env (ExceptT T.Text (WriterT [T.Text] (StateT Int Identity))) a
 
 
 type Eval5'' a =
-  MR.ReaderT Env (MEx.ExceptT T.Text (MS.StateT Int (MW.WriterT [T.Text] MId.Identity))) a
+  ReaderT Env (ExceptT T.Text (StateT Int (WriterT [T.Text] Identity))) a
+
+
+type Eval5''' =
+  ReaderT Env (StateT Int (WriterT [T.Text] (ExceptT T.Text Identity)))
 
 
 runEval5 :: Env -> State -> Eval5 a -> Either T.Text ((a, [T.Text]), Int)
-runEval5 env st x =
-  MId.runIdentity . MEx.runExceptT . MS.runStateT (MW.runWriterT (MR.runReaderT x env)) $ st
+runEval5 env st evl =
+  runIdentity . runExceptT . runStateT (runWriterT (runReaderT evl env)) $ st
 
 
 runEval5' :: Env -> State -> Eval5' a -> ((Either T.Text a, [T.Text]), Int)
-runEval5' env st x =
-  MId.runIdentity (MS.runStateT (MW.runWriterT . MEx.runExceptT $ MR.runReaderT x env) st)
+runEval5' env st evl =
+  runIdentity (runStateT (runWriterT . runExceptT $ runReaderT evl env) st)
 
 
 runEval5'' :: Env -> State -> Eval5'' a -> ((Either T.Text a, Int), [T.Text])
-runEval5'' env st x =
-  MId.runIdentity . MW.runWriterT . MS.runStateT (MEx.runExceptT (MR.runReaderT x env)) $ st
+runEval5'' env st evl =
+  runIdentity . runWriterT . runStateT (runExceptT (runReaderT evl env)) $ st
+
+
+runEval5''' :: Env -> State -> Eval5''' a -> Either T.Text ((a, Int), [T.Text])
+runEval5''' env st evl =
+  runIdentity . runExceptT . runWriterT . runStateT (runReaderT evl env) $ st
 
 
 eval5 :: Exp -> Eval5 Value
 eval5 (Lit i) =
-  do tick ; MW.tell [T.pack ("lit " ++ show i)] ; return $ IntVal i
+  do tick ; tell [T.pack ("lit " ++ show i)] ; return $ IntVal i
 eval5 (Var x) = do
   tick
-  mexp <- MR.asks (Map.lookup x)
+  mexp <- asks (Map.lookup x)
   case mexp of
     Nothing ->
-      MEx.throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
+      throwError (T.pack  $ "Unbound variable '" ++ show x ++ "'")
 
     Just e ->
-      do MW.tell [T.pack ("var " ++ show x ++ "=" ++ show e)] ; return e
+      do tell [T.pack ("var " ++ show x ++ "=" ++ show e)] ; return e
 eval5 (Add e1 e2) = do
   tick
   x <- intValOrFail e1
   y <- intValOrFail e2
-  MW.tell [T.pack ("add: " ++ show x ++ " " ++ show y)]
+  tell [T.pack ("add: " ++ show x ++ " " ++ show y)]
   return $ IntVal (x + y)
   where
     intValOrFail x = do
@@ -423,16 +436,16 @@ eval5 (Add e1 e2) = do
           return y
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
+          throwError (T.pack $ "'" ++ show x ++ "' should have type int" )
 eval5 (Abs x e) =
-  do tick ; MW.tell [T.pack ("lambda abs")] ; env <- MR.ask ; return $ FunVal env x e
+  do tick ; tell [T.pack ("lambda abs")] ; env <- ask ; return $ FunVal env x e
 eval5 (App e1 e2) = do
   tick
   (var, bodyexp, env') <- evalFunOrFail
   val <- eval5 e2
   let env'' = Map.insert var val env'
-  MW.tell [T.pack ("fun app: " ++ show var ++ " " ++ show val)]
-  MR.local (const env'') (eval5 bodyexp)
+  tell [T.pack ("fun app: " ++ show var ++ " " ++ show val)]
+  local (const env'') (eval5 bodyexp)
   where
     evalFunOrFail = do
       res <- eval5 e1
@@ -441,4 +454,4 @@ eval5 (App e1 e2) = do
           return (var, bodyexp, env')
 
         _ ->
-          MEx.throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
+          throwError (T.pack $ "'" ++ show res ++ "' should have type fun")
