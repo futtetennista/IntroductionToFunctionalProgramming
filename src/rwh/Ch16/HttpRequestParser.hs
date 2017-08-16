@@ -6,6 +6,7 @@ module HttpRequestParser ( HttpRequest(..)
 where
 
 
+import Data.Char (toLower)
 import Control.Applicative (liftA2)
 import Numeric (readHex)
 import Control.Monad (liftM4)
@@ -59,7 +60,10 @@ p_headers =
   header `manyTill` crlf
   where
     header = do
-      liftA2 (,) fieldName (char ':' *> spaces *> contents)
+      fname <- fieldName
+      let contentParser =
+            if fmap toLower fname == "content-length" then digit else notEOL
+      liftA2 (,) fieldName (char ':' *> spaces *> contents contentParser)
 
     fieldName =
       (:) <$> letter <*> many fieldChar
@@ -67,8 +71,10 @@ p_headers =
     fieldChar =
       letter <|> digit <|> oneOf "-_"
 
-    contents =
-      liftA2 (++) (many1 notEOL <* crlf) (continuation <|> pure [])
+    contents :: Parsec String a Char -> Parsec String a String
+    contents parser =
+      liftA2 (++) (many1 parser <* crlf) (continuation parser <|> pure [])
 
-    continuation =
-      liftA2 (:) (' ' <$ many1 (oneOf " \t")) (contents)
+    continuation :: Parsec String a Char -> Parsec String a String
+    continuation parser =
+      liftA2 (:) (' ' <$ many1 (oneOf " \t")) (contents parser)
