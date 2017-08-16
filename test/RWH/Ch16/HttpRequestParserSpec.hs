@@ -8,12 +8,11 @@ import Test.Hspec
 import Test.QuickCheck
 import Data.Char (isAlphaNum)
 import Control.Applicative (liftA2)
-import Control.Monad.Identity
+import Control.Monad.Identity (Identity, runIdentity)
 import Data.Either (either, isLeft, isRight)
 import RWH.Ch16.HttpRequestParser
-import Text.Parsec
-import Text.Parsec.Error
-import System.IO.Unsafe (unsafePerformIO)
+import Text.Parsec (ParsecT, runParserT)
+import Text.Parsec.Error (Message(..), ParseError, errorMessages)
 
 
 spec :: Spec
@@ -35,17 +34,22 @@ spec =
 
 parseHeaders :: String -> Either ParseError HttpRequest
 parseHeaders =
-  runIdentity . runParserT (p_request :: ParsecT String Int Identity HttpRequest) 0 "HTTP GET"
+  runIdentity . runParserT p 0 "HTTP GET"
+  where
+    p :: ParsecT String Int Identity HttpRequest
+    p =
+      p_request
 
 
 prop_dos :: VeryLongString -> Bool
 prop_dos (VeryLongString xs) =
   let req =
         "GET /foo HTTP/1.1\r\nIf-Match: " ++ xs ++ "\r\n\r\n"
+
       expectedErrorMessage =
         Message "Header line too big"
-      eres = parseHeaders req
-  in either (elem expectedErrorMessage . errorMessages) (const False) eres
+  in either (elem expectedErrorMessage . errorMessages) (const False) (parseHeaders req)
+
 
 newtype VeryLongString =
   VeryLongString String
@@ -58,11 +62,11 @@ instance Arbitrary VeryLongString where
     VeryLongString <$> vectorOf 4087 (arbitrary `suchThat` isAlphaNum)
 
 
-instance Arbitrary Method where
-  arbitrary =
-    oneof (fmap pure [Get, Post])
+-- instance Arbitrary Method where
+--   arbitrary =
+--     oneof (fmap pure [Get, Post])
 
 
-instance Arbitrary HttpRequest where
-  arbitrary =
-    HttpRequest <$> arbitrary <*> arbitrary <*> pure [] <*> pure Nothing
+-- instance Arbitrary HttpRequest where
+--   arbitrary =
+--     HttpRequest <$> arbitrary <*> arbitrary <*> pure [] <*> pure Nothing

@@ -68,11 +68,12 @@ p_headers =
     header :: Monad m => ParsecT String Int m Header
     header = do
       fname <- fieldName
-      let contentParser =
-            if fmap toLower fname == "content-length" then digit else notEOL
       _ <- statefulParse (char ':')
-      fcontents <- fieldContents contentParser
+      fcontents <- fieldContents (contentParser fname)
       return (fname, fcontents)
+      where
+        contentParser name =
+          if fmap toLower name == "content-length" then digit else notEOL
 
     fieldName :: Monad m => ParsecT String Int m String
     fieldName =
