@@ -2,11 +2,9 @@
 module RWH.Ch16.Csv
 where
 
-import Control.Applicative (empty)
 import Text.Parsec
 import Text.Parsec.Prim (Parsec)
 import Control.Exception (catch)
-import Numeric
 import qualified Data.ByteString.Char8 as C8
 
 

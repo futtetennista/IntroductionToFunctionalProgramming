@@ -1,19 +1,21 @@
-module HttpRequestParser ( HttpRequest(..)
-                         , Method(..)
-                         , p_request
-                         --, p_query
-                         )
+module RWH.Ch16.HttpRequestParser ( HttpRequest(..)
+                                  , Method(..)
+                                  , Header
+                                  , p_request
+                                  , p_headers
+                                  --, p_query
+                                  )
 where
 
 
 import Data.Char (toLower)
 import Control.Applicative (liftA2)
+import Control.Monad.IO.Class
 import Numeric (readHex)
-import Control.Monad (liftM4)
 import System.IO (Handle)
 import Text.Parsec
 import Text.Parsec.Char
-import Text.Parsec.Prim
+import Text.Parsec.Prim (Parsec)
 
 
 data Method
@@ -22,59 +24,89 @@ data Method
   deriving (Eq, Ord, Show)
 
 
+type Header =
+  (String, String)
+
+
 data HttpRequest =
   HttpRequest { reqMethod :: Method
               , reqURL :: String
-              , reqHeaders :: [(String, String)]
+              , reqHeaders :: [Header]
               , reqBody :: Maybe String
               }
   deriving (Eq, Show)
 
 
-p_request :: Parsec String () HttpRequest
+p_request :: Monad m => ParsecT String Int m HttpRequest
 p_request =
   q "GET" Get (pure Nothing)
   <|> q "POST" Post (Just <$> many anyChar)
   where
-    q :: String -> Method -> Parsec [Char] a (Maybe String) -> Parsec [Char] a HttpRequest
+    q :: Monad m => String -> Method -> ParsecT [Char] Int m (Maybe String) -> ParsecT [Char] Int m HttpRequest
     q name ctor body =
-      liftM4 HttpRequest req url p_headers body
+      HttpRequest <$> req <*> url <*> p_headers <*> body
       where
         req =
           ctor <$ string name <* char ' '
 
-    url :: Parsec [Char] a String
+    url :: Monad m => ParsecT [Char] a m String
     url =
       optional (char '/')
       *> manyTill notEOL (try $ string " HTTP/1." <* oneOf "01")
       <* crlf
 
 
-notEOL :: Parsec String a Char
+notEOL :: Monad m => ParsecT String a m Char
 notEOL =
   noneOf "\r\n"
 
 
-p_headers :: Parsec String a [(String, String)]
+p_headers :: Monad m => ParsecT String Int m [Header]
 p_headers =
   header `manyTill` crlf
   where
+    header :: Monad m => ParsecT String Int m Header
     header = do
       fname <- fieldName
       let contentParser =
             if fmap toLower fname == "content-length" then digit else notEOL
-      liftA2 (,) fieldName (char ':' *> spaces *> contents contentParser)
+      _ <- statefulParse (char ':')
+      fcontents <- fieldContents contentParser
+      return (fname, fcontents)
 
+    fieldName :: Monad m => ParsecT String Int m String
     fieldName =
-      (:) <$> letter <*> many fieldChar
+      (:) <$> statefulParse letter <*> boundedMany fieldChar
 
+    boundedMany1 :: Monad m => ParsecT s Int m a -> ParsecT s Int m [a]
+    boundedMany1 p = do
+      n <- getState
+      if n < 4096
+        then (:) <$> statefulParse p <*> boundedMany p
+        else parserFail "Header line too big"
+
+    statefulParse :: Monad m => ParsecT s Int m a -> ParsecT s Int m a
+    statefulParse p = do
+      xs <- p
+      modifyState (+1)
+      return xs
+
+    boundedMany :: Monad m => ParsecT s Int m a -> ParsecT s Int m [a]
+    boundedMany p =
+      boundedMany1 p <|> pure []
+
+    fieldChar :: Monad m => ParsecT String a m Char
     fieldChar =
       letter <|> digit <|> oneOf "-_"
 
-    contents :: Parsec String a Char -> Parsec String a String
-    contents parser =
-      liftA2 (++) (many1 parser <* crlf) (continuation parser <|> pure [])
+    fieldContents :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
+    fieldContents contentParser =
+      boundedMany space *> contents contentParser
 
-    continuation :: Parsec String a Char -> Parsec String a String
+    contents :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
+    contents parser =
+      liftA2 (++) (boundedMany1 parser <* crlf) (continuation parser <|> pure [])
+
+    continuation :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
     continuation parser =
-      liftA2 (:) (' ' <$ many1 (oneOf " \t")) (contents parser)
+      liftA2 (:) (' ' <$ boundedMany1 (oneOf " \t")) (contents parser)
