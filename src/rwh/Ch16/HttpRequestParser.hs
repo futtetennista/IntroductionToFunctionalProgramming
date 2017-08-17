@@ -8,9 +8,11 @@ module RWH.Ch16.HttpRequestParser ( HttpRequest(..)
 where
 
 
-import Data.Char (toLower)
-import Control.Applicative (liftA2)
+import Data.Char (chr, toLower)
+import Control.Applicative (liftA, liftA2, liftA3)
+import Control.Arrow
 import Text.Parsec
+import Numeric
 
 
 data Method
@@ -34,12 +36,21 @@ data HttpRequest =
 
 p_request :: Monad m => ParsecT String Int m HttpRequest
 p_request =
-  q "GET" Get (pure Nothing)
-  <|> q "POST" Post (Just <$> many anyChar)
+  q "GET" Get (pure (Nothing, []))
+  <|> q "POST" Post (p_chunkedBody <|> p_body)
   where
-    q :: Monad m => String -> Method -> ParsecT [Char] Int m (Maybe String) -> ParsecT [Char] Int m HttpRequest
-    q name ctor body =
-      HttpRequest <$> req <*> url <*> p_headers <*> body
+    q :: Monad m
+      => String
+      -> Method
+      -> ParsecT String Int m ((Maybe String, [Header]))
+      -> ParsecT String Int m HttpRequest
+    q name ctor body = do
+      r <- req
+      u <- url
+      hs <- p_headers
+      (mb, hs') <- body
+      return $ HttpRequest r u (hs' ++ hs) mb
+      -- HttpRequest <$> req <*> url <*> p_headers <*> body
       where
         req =
           ctor <$ string name <* char ' '
@@ -49,6 +60,129 @@ p_request =
       optional (char '/')
       *> manyTill notEOL (try $ string " HTTP/1." <* oneOf "01")
       <* crlf
+
+
+p_body :: Monad m => ParsecT String Int m ((Maybe String, [Header]))
+p_body =
+  liftBody (many anyChar) (pure [])
+
+
+liftBody :: Applicative f => f a -> f b -> f (Maybe a, b)
+liftBody x y =
+  first Just <$> liftA2 (,) x y
+
+
+-- data Chunk =
+--   Chunk { csize :: Int
+--         , cext :: [(String, Maybe String)]
+--         , cdata :: String
+--         }
+--   deriving Show
+
+
+p_chunkedBody :: Monad m => ParsecT String Int m ((Maybe String, [Header]))
+p_chunkedBody =
+  liftBody cdata cheaders
+  where
+    cdata =
+      fmap concat (chunk `manyTill` lastChunk)
+
+    cheaders =
+      trailer <* crlf
+
+    chunk :: Monad m => ParsecT String Int m String
+    chunk = do
+      x <- chunkSize
+      _exts <- chunkExt
+      _ <- crlf
+      maybe failData readData (toSize x)
+      where
+        failData =
+          parserFail "chunk size is not a valid hex number"
+
+        readData n = do
+          -- setState n -- OMG is this "shared state" among funcs!?
+          d <- chunkData n
+          _ <- crlf
+          return d
+
+        toSize x =
+          case readHex x of
+            [(n,[])] ->
+              Just n
+
+            _ ->
+              Nothing
+
+        chunkSize =
+          many1 hexDigit
+
+        chunkData :: Monad m => Int -> ParsecT String Int m String
+        chunkData n =
+          -- n <- getState
+          count n anyChar
+
+    chunkExt :: Monad m => ParsecT String Int m [(String, Maybe String)]
+    chunkExt =
+      ((:) <$> ext <*> many ext) <|> pure []
+      where
+        -- ext :: Monad m => ParsecT String Int m (String, Maybe String)
+        ext =
+          char ';' *> liftA2 (,) name (optionMaybe $ char '=' *> val)
+
+        name =
+          httpToken
+
+        val =
+          qdstring <|> httpToken
+
+    lastChunk :: Monad m => ParsecT String Int m Char
+    lastChunk =
+      char '0' <* optional chunkExt <* crlf
+
+    trailer :: Monad m => ParsecT String Int m [Header]
+    trailer =
+      p_headers
+
+
+-- token          = 1*<any CHAR except CTLs or separators>
+httpToken :: Monad m => ParsecT String Int m String
+httpToken =
+  many1 tchar
+  where
+    tchar =
+      satisfy (not . (`elem` (separators ++ ctls)))
+
+
+separators :: String
+separators =
+  "()<>@,;:\\/[]?={} \t"
+
+
+ctls :: String
+ctls =
+  fmap chr [0..31]
+
+
+-- quoted-string  = ( <"> *(qdtext | quoted-pair ) <"> )
+qdstring :: Monad m => ParsecT String Int m String
+qdstring =
+  between (char '"') (char '"') (qdtext <|> qdpair)
+  where
+    -- qdtext         = <any TEXT except <">>
+    qdtext =
+      anyChar `manyTill` choice noqdtext
+
+    -- TEXT           = <any OCTET except CTLs, but including LWS>
+    noqdtext =
+      fmap char (['"', '\DEL'] ++ ctls)
+
+    -- quoted-pair    = "\" CHAR
+    qdpair =
+      char '\\' *> liftA singleton anyChar
+      where
+        singleton x =
+          [x]
 
 
 notEOL :: Monad m => ParsecT String a m Char
