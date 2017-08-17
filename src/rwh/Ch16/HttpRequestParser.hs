@@ -2,7 +2,6 @@ module RWH.Ch16.HttpRequestParser ( HttpRequest(..)
                                   , Method(..)
                                   , Header
                                   , p_request
-                                  , p_headers
                                   --, p_query
                                   )
 where
@@ -36,39 +35,45 @@ data HttpRequest =
 
 p_request :: Monad m => ParsecT String Int m HttpRequest
 p_request =
-  q "GET" Get (pure (Nothing, []))
-  <|> q "POST" Post (p_chunkedBody <|> p_body)
+  q "GET" Get (\_ -> pure (Nothing, []))
+  <|> q "POST" Post (\eol -> try p_chunkedBody <|> p_body eol)
   where
     q :: Monad m
       => String
       -> Method
-      -> ParsecT String Int m ((Maybe String, [Header]))
+      -> (ParsecT String Int m () -> ParsecT String Int m ((Maybe String, [Header])))
       -> ParsecT String Int m HttpRequest
     q name ctor body = do
       r <- req
       u <- url
       hs <- p_headers
-      (mb, hs') <- body
+      (mb, hs') <- body (mediaTypeEol hs)
       return $ HttpRequest r u (hs' ++ hs) mb
-      -- HttpRequest <$> req <*> url <*> p_headers <*> body
       where
         req =
           ctor <$ string name <* char ' '
 
+    -- TODO
+    mediaTypeEol :: Monad m => [Header] -> ParsecT String Int m ()
+    mediaTypeEol _ =
+      eof
+
     url :: Monad m => ParsecT [Char] a m String
     url =
       optional (char '/')
-      *> manyTill notEOL (try $ string " HTTP/1." <* oneOf "01")
+      *> notEOL `manyTill` (try $ string " HTTP/1." <* oneOf "01")
       <* crlf
 
 
-p_body :: Monad m => ParsecT String Int m ((Maybe String, [Header]))
-p_body =
-  liftBody (many anyChar) (pure [])
+p_body :: Monad m
+       => ParsecT String Int m ()
+       -> ParsecT String Int m ((Maybe String, [Header]))
+p_body p_eof =
+  mapLiftBody (anyChar `manyTill` p_eof) (pure [])
 
 
-liftBody :: Applicative f => f a -> f b -> f (Maybe a, b)
-liftBody x y =
+mapLiftBody :: Applicative f => f a -> f b -> f (Maybe a, b)
+mapLiftBody x y =
   first Just <$> liftA2 (,) x y
 
 
@@ -82,33 +87,28 @@ liftBody x y =
 
 p_chunkedBody :: Monad m => ParsecT String Int m ((Maybe String, [Header]))
 p_chunkedBody =
-  liftBody cdata cheaders
+  mapLiftBody cdata cheaders
   where
     cdata =
       fmap concat (chunk `manyTill` lastChunk)
 
     cheaders =
-      trailer <* crlf
+      --[] <$ crlf
+      p_headers <* optional crlf
 
     chunk :: Monad m => ParsecT String Int m String
     chunk = do
       x <- chunkSize
       _exts <- chunkExt
       _ <- crlf
-      maybe failData readData (toSize x)
+      maybe failData chunkData (toSize x)
       where
         failData =
           parserFail "chunk size is not a valid hex number"
 
-        readData n = do
-          -- setState n -- OMG is this "shared state" among funcs!?
-          d <- chunkData n
-          _ <- crlf
-          return d
-
         toSize x =
           case readHex x of
-            [(n,[])] ->
+            [(n, [])] ->
               Just n
 
             _ ->
@@ -118,40 +118,45 @@ p_chunkedBody =
           many1 hexDigit
 
         chunkData :: Monad m => Int -> ParsecT String Int m String
-        chunkData n =
+        chunkData size =
+          -- setState n -- OMG is this "shared state" among funcs!?
           -- n <- getState
-          count n anyChar
+          count size notEOL <* crlf
 
     chunkExt :: Monad m => ParsecT String Int m [(String, Maybe String)]
     chunkExt =
-      ((:) <$> ext <*> many ext) <|> pure []
+      exts <|> pure []
       where
+        exts =
+          (:) <$> ext <*> many ext
+
         -- ext :: Monad m => ParsecT String Int m (String, Maybe String)
         ext =
           char ';' *> liftA2 (,) name (optionMaybe $ char '=' *> val)
 
         name =
-          httpToken
+          httpToken (id :: ParsecT String Int m Char -> ParsecT String Int m Char)
 
         val =
-          qdstring <|> httpToken
+          qdstring <|> httpToken (id :: ParsecT String Int m Char -> ParsecT String Int m Char)
 
-    lastChunk :: Monad m => ParsecT String Int m Char
+    lastChunk :: Monad m => ParsecT String Int m ()
     lastChunk =
-      char '0' <* optional chunkExt <* crlf
-
-    trailer :: Monad m => ParsecT String Int m [Header]
-    trailer =
-      p_headers
+      () <$ char '0' <* chunkExt <* crlf
 
 
 -- token          = 1*<any CHAR except CTLs or separators>
-httpToken :: Monad m => ParsecT String Int m String
-httpToken =
-  many1 tchar
+httpToken :: Monad m
+          => (ParsecT String Int m Char -> ParsecT String Int m Char)
+          -> ParsecT String Int m [Char]
+httpToken p =
+  -- (:) <$> statefulParser letter <*> (many . statefulParser) (letter <|> digit <|> oneOf "-_")
+  many1 (p tchar)
   where
+    -- tchar :: Monad m => ParsecT String Int m String -> ParsecT String Int m String
     tchar =
-      satisfy (not . (`elem` (separators ++ ctls)))
+      noneOf (separators ++ ctls)
+      -- satisfy (not . (`elem` (separators ++ ctls)))
 
 
 separators :: String
@@ -162,6 +167,11 @@ separators =
 ctls :: String
 ctls =
   fmap chr [0..31]
+
+
+lws :: Monad m => ParsecT String Int m ()
+lws =
+  () <$ optional crlf <* many1 (oneOf " \t")
 
 
 -- quoted-string  = ( <"> *(qdtext | quoted-pair ) <"> )
@@ -206,20 +216,7 @@ p_headers =
 
     fieldName :: Monad m => ParsecT String Int m String
     fieldName =
-      (:) <$> statefulParser letter <*> nameTail
-      where
-        nameTail =
-          (many . statefulParser) (letter <|> digit <|> oneOf "-_")
-
-    statefulParser :: Monad m => ParsecT s Int m a -> ParsecT s Int m a
-    statefulParser p = do
-      xs <- boundedParser
-      modifyState (+1)
-      return xs
-      where
-        boundedParser = do
-          headerLength <- getState
-          if headerLength < 4096 then p else parserFail "Header line too big"
+      httpToken statefulParser
 
     fieldContents :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
     fieldContents contentParser =
@@ -231,4 +228,14 @@ p_headers =
 
     continuation :: Monad m => ParsecT String Int m Char -> ParsecT String Int m String
     continuation p =
-      liftA2 (:) (' ' <$ many1 (statefulParser . oneOf $ " \t")) (contents p)
+      liftA2 (:) (' ' <$ many1 ((statefulParser . oneOf) " \t")) (contents p)
+
+    statefulParser :: Monad m => ParsecT s Int m a -> ParsecT s Int m a
+    statefulParser p = do
+      xs <- boundedParser
+      modifyState (+1)
+      return xs
+        where
+          boundedParser = do
+            headerLength <- getState
+            if headerLength < 4096 then p else parserFail "Header line too big"
