@@ -35,6 +35,14 @@ data HttpRequest =
 
 p_request :: Monad m => ParsecT String Int m HttpRequest
 p_request =
+{-
+could `try` be a performance bottleneck? If yes, this can refactored to smth like:
+q name ctor body = do
+  ...
+  where chooseBodyParser headers = ...
+
+and probably use `Map String String` instead of [Header]
+-}
   q "GET" Get (\_ -> pure (Nothing, []))
   <|> q "POST" Post (\eol -> try p_chunkedBody <|> p_body eol)
   where
