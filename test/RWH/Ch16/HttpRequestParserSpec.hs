@@ -45,14 +45,7 @@ spec =
       it "should succeed if header is not too long" $ property propValidHeader
 
     describe "parse no transfer encoding" $ do
-      it "should parse simple body" $ do
-        let req =
-              "POST /foo HTTP/1.1\r\nMedia-Type: text/plain\r\nContent-Length: 12\r\n\r\nHello there!"
-
-            expectedReq =
-              HttpRequest Post "foo" [("Media-Type", "text/plain"), ("Content-Length", "12")] (Just "Hello there!")
-
-        parseHttpRequest req `shouldBe` Right expectedReq
+      it "should parse simple body" $ property prop_body
 
       it "should parse empty body" $ do
         let req =
@@ -95,6 +88,20 @@ propValidHeader (LongString xs) =
   let req =
         "GET /foo HTTP/1.1\r\nIf-Match: " ++ xs ++ "\r\n\r\n"
   in either (const False) (const True) (parseHttpRequest req)
+
+
+prop_body :: String -> Bool
+prop_body xs =
+  parseHttpRequest req == Right expectedReq
+  where
+    expectedReq =
+      let hs =
+            [("Media-Type", "text/plain"), ("Content-Length", (show . length) xs)]
+      in HttpRequest Post "foo" hs (Just xs)
+
+    req =
+      "POST /foo HTTP/1.1\r\nMedia-Type: text/plain\r\nContent-Length: "
+      ++ (show . length) xs ++ "\r\n\r\n" ++ xs
 
 
 prop_chunkedBodyNoHeaders :: [NotNullString] -> Property
