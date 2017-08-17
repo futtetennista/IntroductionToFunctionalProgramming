@@ -67,7 +67,7 @@ p_request =
 
 p_body :: Monad m
        => ParsecT String Int m ()
-       -> ParsecT String Int m ((Maybe String, [Header]))
+       -> ParsecT String Int m (Maybe String, [Header])
 p_body p_eof =
   mapLiftBody (anyChar `manyTill` p_eof) (pure [])
 
@@ -85,16 +85,12 @@ mapLiftBody x y =
 --   deriving Show
 
 
-p_chunkedBody :: Monad m => ParsecT String Int m ((Maybe String, [Header]))
+p_chunkedBody :: Monad m => ParsecT String Int m (Maybe String, [Header])
 p_chunkedBody =
-  mapLiftBody cdata cheaders
+  mapLiftBody cdata p_headers
   where
     cdata =
       fmap concat (chunk `manyTill` lastChunk)
-
-    cheaders =
-      --[] <$ crlf
-      p_headers <* optional crlf
 
     chunk :: Monad m => ParsecT String Int m String
     chunk = do
@@ -121,7 +117,7 @@ p_chunkedBody =
         chunkData size =
           -- setState n -- OMG is this "shared state" among funcs!?
           -- n <- getState
-          count size notEOL <* crlf
+          count size anyChar <* crlf
 
     chunkExt :: Monad m => ParsecT String Int m [(String, Maybe String)]
     chunkExt =
@@ -145,7 +141,7 @@ p_chunkedBody =
       () <$ char '0' <* chunkExt <* crlf
 
 
--- token          = 1*<any CHAR except CTLs or separators>
+-- token = 1*<any CHAR except CTLs or separators>
 httpToken :: Monad m
           => (ParsecT String Int m Char -> ParsecT String Int m Char)
           -> ParsecT String Int m [Char]
