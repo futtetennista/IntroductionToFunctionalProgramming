@@ -9,9 +9,14 @@ where
 
 import Data.Char (chr, toLower)
 import Control.Applicative (liftA, liftA2, liftA3)
-import Control.Arrow
+import Control.Arrow (first)
+import Control.Exception (bracket, catch, finally)
 import Text.Parsec
 import Numeric
+import Network
+import System.IO
+import System.Timeout (timeout)
+import Control.Concurrent.Async
 
 
 data Method
@@ -243,3 +248,88 @@ p_headers =
           boundedParser = do
             headerLength <- getState
             if headerLength < 4096 then p else parserFail "Header line too big"
+
+
+parseReq :: SourceName -> String -> Either ParseError HttpRequest
+parseReq =
+  runParser p_request 0
+
+
+data HttpResponse =
+  HttpResponse { statusCode :: Int
+               , reasonPhrase :: String
+               , respHeaders :: [Header]
+               , respBody :: Maybe String
+               }
+
+
+instance Show HttpResponse where
+  show x =
+    statusLine ++ showHeaders ++ "\r\n" ++ showBody
+    where
+      statusLine =
+        "HTTP/1.1 " ++ (show . statusCode) x ++ " " ++ reasonPhrase x
+
+      showHeaders =
+        concat . map (\(k, v) -> k ++ ": " ++ v ++ "\r\n") $ respHeaders x
+
+      showBody =
+        maybe "" id (respBody x)
+
+
+emptyHttpResponse :: HttpResponse
+emptyHttpResponse =
+  HttpResponse 200 "Success" [] Nothing
+
+
+main :: IO ()
+main = do
+  bracket open sClose loop
+  where
+    open =
+      listenOn (PortNumber 8888)
+
+    loop :: Socket -> IO()
+    loop s = do
+      withAsync (accept s) asyncHandleCon
+      loop s
+
+    asyncHandleCon a =
+      catch (handleCon =<< wait a) handleEx
+      where
+        handleEx :: IOError -> IO ()
+        handleEx e = do
+          putStrLn (show e)
+          return ()
+
+    handleCon (h, hostname, port) =
+      finally (handleReq secs30) (hClose h)
+      where
+        secs30 =
+          5 * 1000 * 1000
+
+        name =
+          "socket(" ++ hostname ++ ":" ++ show port ++ ")"
+
+        handleReq userTimeout = do
+          req <- hGetContents h
+          mparse <- parseHttpRequest req userTimeout
+          maybe dropReq reply mparse
+
+        dropReq =
+          hPutStrLn h $ show emptyHttpResponse { statusCode = 408
+                                               , reasonPhrase = "Request Timeout"
+                                               }
+
+        reply :: Either ParseError HttpRequest -> IO ()
+        reply (Right httpRequest) =
+          hPutStrLn h $ show emptyHttpResponse { respBody = Just ("I see you:\n" ++ show httpRequest) }
+        reply (Left err) =
+          hPutStrLn h $ show emptyHttpResponse { statusCode = 500
+                                               , reasonPhrase = "Internal Server Error"
+                                               , respBody = Just (show err)
+                                               }
+
+        parseHttpRequest req uTimeout =
+          -- why inserting a `putStrLn (show req)` blocks ?!
+          timeout uTimeout (return (parseReq name req))
