@@ -213,6 +213,7 @@ p_headers :: Monad m => ParsecT String Int m [Header]
 p_headers =
   header `manyTill` crlf
   where
+    -- "vars" are needed - i.e. fname: applicatives don't suit the use case
     header :: Monad m => ParsecT String Int m Header
     header = do
       fname <- fieldName
@@ -333,6 +334,6 @@ main = do
                                                , respBody = Just (show err)
                                                }
 
-        parseHttpRequest req uTimeout =
+        parseHttpRequest req userTimeout =
           -- why inserting a `putStrLn (show req)` blocks ?!
-          timeout uTimeout (return (parseReq name req))
+          timeout userTimeout (return (parseReq name req))
