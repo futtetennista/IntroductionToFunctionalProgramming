@@ -66,11 +66,7 @@ spec =
 
 parseHttpRequest :: String -> Either ParseError HttpRequest
 parseHttpRequest =
-  runIdentity . runParserT p 0 "HTTP request"
-  where
-    p :: ParsecT String Int Identity HttpRequest
-    p =
-      p_request
+  parseReq "(hspec)"
 
 
 prop_dosHeader :: VeryLongString -> Bool

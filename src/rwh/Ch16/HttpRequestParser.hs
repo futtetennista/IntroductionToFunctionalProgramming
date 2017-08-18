@@ -2,7 +2,7 @@ module RWH.Ch16.HttpRequestParser ( HttpRequest(..)
                                   , Method(..)
                                   , Header
                                   , p_request
-                                  --, p_query
+                                  , parseReq
                                   )
 where
 
@@ -284,30 +284,33 @@ emptyHttpResponse =
 
 main :: IO ()
 main = do
+  -- make sure sockets are closed
   bracket open sClose loop
   where
     open =
       listenOn (PortNumber 8888)
 
-    loop :: Socket -> IO()
+    loop :: Socket -> IO ()
     loop s = do
+      -- make it possible to close all open sockets if the main loop exits.
       withAsync (accept s) asyncHandleCon
       loop s
 
     asyncHandleCon a =
+      -- if an exception occurs and it's not handled the whole loop breaks:
+      -- we don't want an open connection to bring down the server!
       catch (handleCon =<< wait a) handleEx
       where
         handleEx :: IOError -> IO ()
-        handleEx e = do
-          putStrLn (show e)
-          return ()
+        handleEx =
+          print
 
     handleCon (h, hostname, port) =
-      finally (handleReq secs30) (hClose h)
+      -- make sure sockets are closed
+      let userTimeout =
+            30 * 1000 * 1000 -- 30 secs
+      in finally (handleReq userTimeout) (hClose h)
       where
-        secs30 =
-          5 * 1000 * 1000
-
         name =
           "socket(" ++ hostname ++ ":" ++ show port ++ ")"
 
