@@ -268,7 +268,7 @@ instance Show HttpResponse where
     statusLine ++ showHeaders ++ "\r\n" ++ showBody
     where
       statusLine =
-        "HTTP/1.1 " ++ (show . statusCode) x ++ " " ++ reasonPhrase x
+        "HTTP/1.1 " ++ (show . statusCode) x ++ " " ++ reasonPhrase x ++ "\r\n"
 
       showHeaders =
         concat . map (\(k, v) -> k ++ ": " ++ v ++ "\r\n") $ respHeaders x
