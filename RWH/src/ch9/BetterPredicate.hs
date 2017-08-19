@@ -1,7 +1,7 @@
-module RWH.Ch9.BetterPredicate
+module Ch9.BetterPredicate
 where
 
-import RWH.Ch9.ControlledVisit (Info(..))
+import Ch9.ControlledVisit (Info(..))
 
 
 type InfoP a =

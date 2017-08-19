@@ -1,16 +1,16 @@
-module RWH.Ch9.ControlledVisit ( Info(..)
-                               , TraverseOrder
-                               , traverse
-                               , traversePreOrder
-                               , traversePostOrder
-                               , reverseAlphabeticOrder
-                               , findContents
-                               , getUsefulContents
-                               , getInfo
-                               , isDirectory
-                               , postOrder
-                               , preOrder
-                               )
+module Ch9.ControlledVisit ( Info(..)
+                           , TraverseOrder
+                           , traverse
+                           , traversePreOrder
+                           , traversePostOrder
+                           , reverseAlphabeticOrder
+                           , findContents
+                           , getUsefulContents
+                           , getInfo
+                           , isDirectory
+                           , postOrder
+                           , preOrder
+                           )
 where
 
 import Data.Time (UTCTime)

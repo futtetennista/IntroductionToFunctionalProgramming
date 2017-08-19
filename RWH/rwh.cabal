@@ -1,6 +1,6 @@
-name:                IntroductionToFunctionalProgramming
+name:                rwh
 version:             0.1.0.0
-synopsis:            Originally this project contained only solutions to the exercises in the book "Introduction to Functional Programming" by Richard Bird and Philip Wadler. Over time I used it to solve exercises of other books and online resources.
+synopsis:            TBW
 description:         Please see README.md
 homepage:            https://github.com/futtetennista/IntroductionToFunctionalProgramming#readme
 license:             MIT
@@ -13,30 +13,24 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Chapter2
-                     , Chapter3
-                     , Chapter4
-                     , Chapter5
-                     , Chapter6
-                     , Chapter7
-                     , Hangman
-                     , Chapter8
-                     , Chapter9
-                     , Countdown
-                     , Life
-                     , Pih.Exercises
-                     , Pih.Chapter8
-                     , Pih.Chapter9
-                     , TicTacToe
-                     , Calculator
-                     , MonadTransformers
-                     , Typeclasses
-                     , CovarianceContravariance
-                     , ImplicitParams
-                     , Pih.Compiler
+  exposed-modules:     Ch8.GlobRegex
+                     , Ch8.Glob
+                     , Ch9.ControlledVisit
+                     , Ch9.FoldDir
+                     , Ch9.BetterPredicate
+                     , Ch11.Prettify2
+                     , Ch13.Passwdmap
+                     , Ch13.Num
+                     , Ch15.Supply
+                     , Ch15.SupplyClass
+                     , Ch15.HandleIO
+                     , Ch15.HandleClass
+                     , Ch16.Csv
+                     , Ch16.HttpRequestParser
+                     , Ch18.UglyStack
+                     , Ch19.ParseInt
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
-                     , random >= 1.1 && < 1.2
                      , mtl >= 2.2.1 && < 2.3.0
                      , text >= 1.2.2.1 && < 1.2.2.2
                      , bytestring >= 0.10.8.1 && < 0.10.8.2
@@ -46,7 +40,6 @@ library
                      , unix >= 2.7.2.1 && < 2.7.2.2
                      , time >= 1.6.0.1 && < 1.6.0.2
                      , array >= 0.5.1.1 && < 0.5.1.2
-                     , contravariant >= 1.4 && < 1.5
                      , parsec >= 3.1.11 && < 3.1.12
                      , network >= 2.6.3.1 && < 2.6.3.2
                      , async >=2.1.1 && < 2.1.2
@@ -64,7 +57,7 @@ executable main
                        -Wincomplete-record-updates
                        -Wmissing-import-lists
   build-depends:       base
-                     , IntroductionToFunctionalProgramming
+                     , rwh
   default-language:    Haskell2010
 
 test-suite test
@@ -72,28 +65,14 @@ test-suite test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , IntroductionToFunctionalProgramming
-                     , hspec >= 2.4.3 && < 2.4.4
-                     , QuickCheck >= 2.9.2 && < 2.9.3
                      , parsec
                      , mtl
+                     , rwh
+                     , hspec >= 2.4.3 && < 2.4.4
+                     , QuickCheck >= 2.9.2 && < 2.9.3
   ghc-options:         -threaded
                        -rtsopts
                        -with-rtsopts=-N
-                       -Wall
-                       -Wincomplete-uni-patterns
-                       -Wincomplete-record-updates
-                       -Wmissing-import-lists
-  default-language:    Haskell2010
-
-test-suite space-bench
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      bench
-  main-is:             Main.hs
-  build-depends:       base
-                     , IntroductionToFunctionalProgramming
-                     , weigh >= 0.0.3 && < 0.0.4
-  ghc-options:         -O2
                        -Wall
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates

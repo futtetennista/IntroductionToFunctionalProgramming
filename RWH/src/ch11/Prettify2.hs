@@ -1,4 +1,4 @@
-module RWH.Ch11.Prettify2
+module Ch11.Prettify2
 where
 
 

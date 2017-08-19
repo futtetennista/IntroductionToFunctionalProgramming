@@ -1,9 +1,9 @@
 {-# LANGUAGE TupleSections, OverloadedStrings #-}
-module RWH.Ch8.GlobRegex ( ErrorMsg
-                         , globToRegex
-                         , matchesGlob
-                         , matchesGlob'
-                         )
+module Ch8.GlobRegex ( ErrorMsg
+                     , globToRegex
+                     , matchesGlob
+                     , matchesGlob'
+                     )
 where
 
 import Text.Regex.Posix ((=~))

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module RWH.Ch8.Glob ( namesMatching )
+module Ch8.Glob ( namesMatching )
 where
 
 import System.Directory (doesDirectoryExist, getCurrentDirectory, getDirectoryContents)
