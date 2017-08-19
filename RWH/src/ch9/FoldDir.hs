@@ -1,9 +1,9 @@
-module RWH.Ch9.FoldDir
+module Ch9.FoldDir
 where
 
 import Data.Char (toLower)
 import System.FilePath ((</>), takeFileName, takeExtension)
-import RWH.Ch9.ControlledVisit (Info(..), TraverseOrder, getUsefulContents, getInfo, isDirectory, preOrder, postOrder)
+import Ch9.ControlledVisit (Info(..), TraverseOrder, getUsefulContents, getInfo, isDirectory, preOrder, postOrder)
 
 
 data Iterate seed

@@ -1,5 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module RWH.Ch15.Supply ( Supply
+module Ch15.Supply ( Supply
                        , next
                        , runSupply
                        , runRandomSupply

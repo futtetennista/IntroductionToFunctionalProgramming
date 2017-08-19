@@ -1,4 +1,4 @@
-module RWH.Ch13.Passwdmap
+module Ch13.Passwdmap
 where
 
 import qualified Data.Map as Map

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module RWH.Ch16.Csv
+module Ch16.Csv
 where
 
 import Text.Parsec

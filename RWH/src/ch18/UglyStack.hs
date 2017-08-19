@@ -1,5 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module RWH.Ch18.UglyStack
+module Ch18.UglyStack
 where
 
 import qualified Data.Monoid as Mono

@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module RWH.Ch15.HandleClass ( MonadHandle (..) )
+module Ch15.HandleClass ( MonadHandle (..) )
 where
 
 import qualified System.IO as SIO

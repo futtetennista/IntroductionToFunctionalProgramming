@@ -1,5 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module RWH.Ch15.HandleIO ( HandleIO
+module Ch15.HandleIO ( HandleIO
                          , SIO.Handle
                          , SIO.IOMode (..)
                          , runHandleIO

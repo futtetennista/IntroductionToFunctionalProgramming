@@ -1,7 +1,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module RWH.Ch19.ParseInt
+module Ch19.ParseInt
 where
 
 import Data.Functor.Identity (Identity)

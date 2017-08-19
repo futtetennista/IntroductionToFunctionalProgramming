@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module RWH.Ch15.SupplyClass ( S.Supply
+module Ch15.SupplyClass ( S.Supply
                             , S.runSupply
                             , S.runRandomSupply
                             , MonadSupply (..)
                             )
 where
 
-import qualified RWH.Ch15.Supply as S
+import qualified Ch15.Supply as S
 
 class (Monad m) => (MonadSupply s) m | m -> s where
   next :: m (Maybe s)

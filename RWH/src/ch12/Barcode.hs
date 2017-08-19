@@ -1,4 +1,4 @@
-module RWH.Ch12.Barcode
+module Ch12.Barcode
 where
 
 import Data.Array (Array(..), (!), bounds, elems, indices, ixmap, listArray)

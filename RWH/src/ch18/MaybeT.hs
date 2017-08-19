@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-module RWH.Ch18.MaybeT
+module Ch18.MaybeT
 where
 
 import qualified Control.Monad as M

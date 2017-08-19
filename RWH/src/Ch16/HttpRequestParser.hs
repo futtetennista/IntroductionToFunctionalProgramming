@@ -1,4 +1,4 @@
-module RWH.Ch16.HttpRequestParser ( HttpRequest(..)
+module Ch16.HttpRequestParser ( HttpRequest(..)
                                   , Method(..)
                                   , Header
                                   , p_request

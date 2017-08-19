@@ -1,9 +1,9 @@
-module RWH.Ch13.NumSpec (spec)
+module Ch13.NumSpec (spec)
 where
 
 import Test.Hspec
 import Test.QuickCheck
-import RWH.Ch13.Num
+import Ch13.Num
 
 
 spec :: Spec

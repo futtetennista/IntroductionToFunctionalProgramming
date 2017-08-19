@@ -6,7 +6,7 @@ import System.Directory (doesDirectoryExist, getCurrentDirectory, getDirectoryCo
 import System.FilePath (dropTrailingPathSeparator, splitFileName, (</>), pathSeparator)
 import System.Posix.Files (getFileStatus, fileExist, isDirectory)
 import Control.Exception (IOException, handle)
-import RWH.Ch8.GlobRegex (ErrorMsg, matchesGlob')
+import Ch8.GlobRegex (ErrorMsg, matchesGlob')
 import Data.Foldable (foldrM)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as C8 (pack, unpack)

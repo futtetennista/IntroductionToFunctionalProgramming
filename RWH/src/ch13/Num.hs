@@ -1,5 +1,5 @@
 {-# LANGUAGE DatatypeContexts #-}
-module RWH.Ch13.Num
+module Ch13.Num
 where
 
 import qualified Data.List as L

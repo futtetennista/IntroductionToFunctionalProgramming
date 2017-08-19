@@ -1,9 +1,9 @@
-module RWH.Ch11.Prettify2Spec (spec)
+module Ch11.Prettify2Spec (spec)
 where
 
 import Test.Hspec
 import Test.QuickCheck
-import RWH.Ch11.Prettify2
+import Ch11.Prettify2
 
 
 spec :: Spec
