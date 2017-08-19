@@ -185,7 +185,7 @@ instance Foldable BTree where
     foldMap f l `mappend` f x `mappend` foldMap f r
 
 
-instance Traversable BTree where
+-- instance Traversable BTree where
   -- traverse :: (Applicative f) => (a -> f b) -> BTree a -> f (BTree b)
 
 

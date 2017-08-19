@@ -6,14 +6,11 @@ where
 
 import Test.Hspec
 import Test.QuickCheck
-import Data.Char (isAlphaNum, isControl)
+import Data.Char (isAlphaNum)
 import Numeric (showHex)
-import Control.Applicative (liftA2)
 import Control.Arrow ((***))
-import Control.Monad.Identity (Identity, runIdentity)
 import Data.Either (either, isLeft, isRight)
 import Ch16.HttpRequestParser
-import Text.Parsec (ParsecT, runParserT)
 import Text.Parsec.Error (Message(..), ParseError, errorMessages)
 
 
