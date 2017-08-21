@@ -9,8 +9,9 @@ module MonadTransformers ( Exp(..)
 where
 
 import Prelude hiding (abs, exp)
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), liftA)
 import Control.Monad.Identity (Identity, runIdentity)
+import Text.Parsec hiding ((<|>), State)
 -- import qualified Control.Monad.Trans.Except as ME
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Reader (MonadReader, ReaderT, ask, asks, local, runReaderT)
@@ -19,7 +20,6 @@ import Control.Monad.Writer (WriterT, tell, runWriterT)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Data.Maybe as M
-import qualified Calculator as P
 
 
 type Name =
@@ -64,52 +64,61 @@ sampleInput =
 
 sampleExp :: Exp
 sampleExp =
-  fst . head $ P.parse exp sampleInput
+  either undefined id (parse exp "(sample)" sampleInput)
 
 
-fact :: P.Parser Exp
+fact :: Parsec T.Text () Exp
 fact =
   parens exp <|> name <|> nat
   where
     nat =
-      do n <- P.natural ; return (Lit n)
+      Lit <$> (liftA read natural)
+
+    natural =
+      (++) <$> option "" (string "-") <*> many1 digit
 
 
-parens :: P.Parser a -> P.Parser a
-parens p =
-  do _ <- P.symbol "(" ; e <- p ; _ <- P.symbol ")" ; return e
+parens :: Parsec T.Text u a -> Parsec T.Text u a
+parens =
+  between (char '(') (char ')')
 
 
-name :: P.Parser Exp
+name :: Parsec T.Text () Exp
 name =
-  do xs <- P.var ; return (Var xs)
+  Var <$> var
+  where
+    var =
+      liftA T.pack ((:) <$> lower <*> many alphaNum)
 
 
-abs :: P.Parser Exp
-abs = do
-  _ <- P.symbol "\\"
-  Var n <- name
-  _ <- P.symbol "->"
-  e <- exp
-  return (Abs n e)
+abs :: Parsec T.Text () Exp
+abs = -- do
+  -- _ <- string "\\"
+  -- Var n <- name
+  -- _ <- string "->"
+  -- e <- exp
+  -- return (Abs n e)
+  -- string "\\" *>
+  (\(Var n) -> Abs n) <$ string "\\" <*> name <* string "->" <*> exp
 
 
-fun :: P.Parser Exp
+fun :: Parsec T.Text () Exp
 fun =
   App <$> parens abs <*> exp <|> abs
 
 
-term :: P.Parser Exp
+term :: Parsec T.Text () Exp
 term =
   fun <|> fact
 
 
-exp :: P.Parser Exp
+exp :: Parsec T.Text () Exp
 exp =
   do e1 <- term ; add e1 <|> return e1
   where
     add x =
-      do _ <- P.symbol "+" ; y <- exp ; return (Add x y)
+      pure (Add x) <*> (char '+' *> exp)
+      -- do _ <- char '+' ; y <- exp ; return (Add x y)
 
 
 -- EVALUATION

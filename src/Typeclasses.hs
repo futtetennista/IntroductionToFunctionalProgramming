@@ -4,13 +4,14 @@ where
 
 import Control.Applicative ((<|>), many, some)
 import Control.Monad.State ((>=>))
+import Data.Char (ord)
+import qualified Text.Parsec as P
 import qualified Data.Foldable as F
 import qualified System.Random as R
 import qualified Control.Monad.Identity as MId
 import qualified Control.Monad.State as S
 import qualified Control.Monad.State.Strict as SS
 import qualified Data.Monoid as M
-import qualified Calculator as P
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
@@ -87,15 +88,20 @@ mkBTree bst =
 
     trees :: T.Text -> [Int]
     trees xs =
-      case P.parse (many $ P.natural) xs of
-        [(bts, "")] ->
-          bts
+      case P.parse nums "(stdin)" xs of
+        Right bts ->
+          map read bts
 
-        [(_, ts)] ->
-          error $ "Invalid input: " ++ T.unpack ts ++ ". Valid input example: \"1 2 3 4\""
+        Left err ->
+          error $ "Invalid input: " ++ show xs ++ ". Valid input example: \"1 2 3 4\""
+      where
+        nums :: P.Parsec T.Text () [String]
+        nums =
+          P.many (P.spaces *> natural <* P.spaces)
 
-        _ ->
-          []
+        natural :: P.Parsec T.Text () String
+        natural =
+          (++) <$> P.option "" (P.string "-") <*> P.many1 P.digit
 
 
 bstree :: Ord a => BTree a -> Bool
