@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Pih.Chapter9
+module Chapter9
 
 where
 

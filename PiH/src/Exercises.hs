@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Pih.Exercises
+module Exercises
 
 where
 

@@ -1,4 +1,4 @@
-module Pih.Compiler
+module Compiler
 where
 
 import Control.Applicative ((<|>))

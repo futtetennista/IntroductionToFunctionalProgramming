@@ -1,6 +1,5 @@
-module Main where
-
-import Chapter6
+module Main
+where
 
 main :: IO ()
 main =
