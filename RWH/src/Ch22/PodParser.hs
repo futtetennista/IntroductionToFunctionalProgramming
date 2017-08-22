@@ -33,6 +33,7 @@ item2ep pc item =
           , epDone = False
           }
 
+
 sampleFeed :: T.Text
 sampleFeed =
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss xmlns:itunes=\"http://www.itunes.com/DTDs/Podcast-1.0.dtd\" version=\"2.0\"><channel><title>Haskell Radio</title><link>http://www.example.com/radio/</link><description>Description of this podcast</description><item><title>Episode 2: Lambdas</title><link>http://www.example.com/radio/lambdas</link><enclosure url=\"http://www.example.com/radio/lambdas.mp3\" type=\"audio/mpeg\" length=\"10485760\"/></item><item><title>Episode 1: Parsec</title><link>http://www.example.com/radio/parsec</link><enclosure url=\"http://www.example.com/radio/parsec.mp3\" type=\"audio/mpeg\" length=\"10485150\"/></item></channel></rss>"
@@ -91,10 +92,10 @@ getEnclosures =
 
     procEnclosure :: T.Text -> Content a -> [PodItem]
     procEnclosure title enclosure =
-      map makePodItem (showattr "url" enclosure)
+      map mkPodItem (showattr "url" enclosure)
       where
-        makePodItem :: Content a -> PodItem
-        makePodItem x =
+        mkPodItem :: Content a -> PodItem
+        mkPodItem x =
           PodItem { itemtitle = title
                   , enclosureurl = contentToString [x]
                   }

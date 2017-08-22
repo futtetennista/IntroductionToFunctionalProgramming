@@ -13,7 +13,7 @@ import Control.Arrow (first)
 import Control.Exception (bracket, catch, finally)
 import Text.Parsec
 import Numeric
-import Network
+import Network (Socket, PortID(PortNumber), sClose, accept, listenOn, withSocketsDo)
 import System.IO
 import System.Timeout (timeout)
 import Control.Concurrent.Async
@@ -289,7 +289,7 @@ main = do
   bracket open sClose loop
   where
     open =
-      listenOn (PortNumber 8888)
+      withSocketsDo $ listenOn (PortNumber 8888)
 
     loop :: Socket -> IO ()
     loop s = do
