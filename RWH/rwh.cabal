@@ -46,6 +46,9 @@ library
                      , network >= 2.6.3.1 && < 2.6.3.2
                      , async >=2.1.1 && < 2.1.2
                      , HaXml >= 1.25.3 && < 1.25.4
+                     , persistent >= 2.6.1 && < 2.6.2
+                     , persistent-sqlite >= 2.6.2 && < 2.6.3
+                     , persistent-template >= 2.5.2 && < 2.5.3
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
