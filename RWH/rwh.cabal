@@ -28,7 +28,7 @@ library
                      , Ch16.HttpRequestParser
                      , Ch18.UglyStack
                      , Ch19.ParseInt
-                     , Ch22.PodTypes
+                     , Ch21.PodDB
                      , Ch22.PodParser
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
