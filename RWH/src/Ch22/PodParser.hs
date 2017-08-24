@@ -13,7 +13,7 @@ import qualified Data.Text as T
 
 data PodItem =
   PodItem { itemTitle :: T.Text
-          , linkUrl :: T.Text
+          , itemUrl :: T.Text
           , enclosureUrl :: T.Text
           }
   deriving (Eq, Show, Read)
@@ -26,9 +26,9 @@ data Feed =
   deriving (Eq, Show, Read)
 
 
-itemToEpf :: PodItem -> (Key Podcast -> Episode)
-itemToEpf item =
-  Episode (itemTitle item) (linkUrl item) (enclosureUrl item) False
+itemToEp :: PodItem -> (Key Podcast -> Episode)
+itemToEp item =
+  Episode (itemTitle item) (itemUrl item) (enclosureUrl item) False
 
 
 sampleFeed :: T.Text
@@ -95,7 +95,7 @@ getEnclosures =
         mkPodItem :: Content a -> PodItem
         mkPodItem x =
           PodItem { itemTitle = title
-                  , linkUrl = link
+                  , itemUrl = link
                   , enclosureUrl = contentToString [x]
                   }
 
