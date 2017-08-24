@@ -21,7 +21,7 @@ import Network.HTTP.Types.Status (status200)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Control.Monad (forM_)
 import System.IO (IOMode(WriteMode), openBinaryFile, hClose)
-import Control.Exception (bracket)
+import Control.Exception (bracket, catch)
 
 
 type ErrorMsg =
@@ -30,11 +30,6 @@ type ErrorMsg =
 
 mkManager :: IO Manager
 mkManager =
-  newManager defaultManagerSettings
-
-
-mkSecureManager :: IO Manager
-mkSecureManager =
   newManager tlsManagerSettings
 
 
@@ -73,17 +68,24 @@ the filename it was placed into, or Nothing on error. -}
 getEpisode :: Episode -> Manager -> IO (Maybe T.Text)
 getEpisode ep m = do
   resp <- downloadURL (episodeMediaUrl ep) m
-  either (const (return Nothing)) saveMedia resp
+  either (const (return Nothing)) saveEpisode resp
   where
+    saveEpisode :: LB.ByteString -> IO (Maybe T.Text)
+    saveEpisode bytes =
+      catch (fmap (Just . T.pack) $ saveMedia bytes)
+            ((\_ -> return Nothing) :: IOError -> IO (Maybe T.Text))
+
+    extractFileName :: T.Text -> FilePath
     extractFileName =
       T.unpack . last . T.splitOn "/"
 
+    saveMedia :: LB.ByteString -> IO FilePath
     saveMedia bytes = do
       let fileName =
             extractFileName . episodeUrl $ ep
       bracket (openBinaryFile fileName WriteMode) hClose (writeToFile bytes)
       updateEpisode ep (ep { episodeDone = True })
-      return . Just . T.pack $ fileName
+      return fileName
 
     writeToFile =
       flip LB.hPut
