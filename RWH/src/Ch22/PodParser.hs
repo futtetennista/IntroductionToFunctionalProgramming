@@ -2,12 +2,12 @@ module Ch22.PodParser
 
 where
 
-import Ch22.PodTypes
-import Text.XML.HaXml
-import Text.XML.HaXml.Parse
+
+import Ch21.PodDB
+import Text.XML.HaXml ( (/>) , CFilter , Content(..) , Document(..) , Element(..) , QName (..)
+                      , keep, tag, txt, xmlParse, verbatim, info, xmlUnEscape ,stdXmlEscaper)
 import Text.XML.HaXml.Html.Generate (showattr)
 import Text.XML.HaXml.Posn (Posn, noPos)
-import Data.Char
 import qualified Data.Text as T
 
 
@@ -26,13 +26,9 @@ data Feed =
   deriving (Eq, Show, Read)
 
 
-item2ep :: Podcast -> PodItem -> Episode
-item2ep pc item =
-  Episode { epId = 0
-          , epCast = pc
-          , epURL = enclosureUrl item
-          , epDone = False
-          }
+itemToEpf :: PodItem -> (Key Podcast -> Episode)
+itemToEpf item =
+  Episode (itemTitle item) (linkUrl item) (enclosureUrl item) False
 
 
 sampleFeed :: T.Text

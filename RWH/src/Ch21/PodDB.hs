@@ -12,15 +12,15 @@ module Ch21.PodDB
 
 where
 
-import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import qualified Data.Text as T
-import Data.Maybe (fromJust)
 
 
 {-
+Target SQL:
+
 CREATE TABLE podcasts (\
                        \castid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
                        \castURL TEXT NOT NULL UNIQUE)
@@ -51,21 +51,6 @@ Episode sql=episodes
   -- sqlite3 fk support needs tp be activated at runtime (https://sqlite.org/foreignkeys.html): how do I achieve it?
   -- Foreign Podcast fkpodcast podcast -- how do I declare a fk if the field does not exist in the hs world ?! I have to create a pk field in hs just for that reason but then I have to handle uniqueness in the hs world
   deriving Eq Show
-
-
--- Feed' sql=feeds
---   channelTitle T.Text
---   -- Primary channelTitle
---   deriving Eq Show
-
-
--- PodItem' sql=poditems
---   itemTitle T.Text
---   enclosureUrl T.Text
---   feed T.Text
---   -- Foreign Feed fkfeed feed
---   -- how can I achieve smth like: `feedId Int ; Foreign Feed fkfeed feedId`
---   deriving Eq Show
 |]
 
 
