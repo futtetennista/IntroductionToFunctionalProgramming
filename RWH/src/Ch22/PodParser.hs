@@ -12,14 +12,15 @@ import qualified Data.Text as T
 
 
 data PodItem =
-  PodItem { itemtitle :: T.Text
-          , enclosureurl :: T.Text
+  PodItem { itemTitle :: T.Text
+          , linkUrl :: T.Text
+          , enclosureUrl :: T.Text
           }
   deriving (Eq, Show, Read)
 
 
 data Feed =
-  Feed { channeltitle :: T.Text
+  Feed { channelTitle :: T.Text
        , items :: [PodItem]
        }
   deriving (Eq, Show, Read)
@@ -29,7 +30,7 @@ item2ep :: Podcast -> PodItem -> Episode
 item2ep pc item =
   Episode { epId = 0
           , epCast = pc
-          , epURL = enclosureurl item
+          , epURL = enclosureUrl item
           , epDone = False
           }
 
@@ -41,10 +42,13 @@ sampleFeed =
 
 parse :: T.Text -> T.Text -> Feed
 parse content name =
-  Feed { channeltitle = getTitle doc
+  Feed { channelTitle = title doc
        , items = getEnclosures doc
        }
   where
+    title =
+      contentToStringDefault "Untitled Podcast" . (channel /> tag "title" /> txt)
+
     parseResult :: Document Posn
     parseResult =
       xmlParse (T.unpack name) (T.unpack (stripUnicodeBOM content))
@@ -67,37 +71,36 @@ channel =
   tag "rss" /> tag "channel"
 
 
-getTitle :: Content a -> T.Text
-getTitle =
-  contentToStringDefault "Untitled Podcast" . (channel /> tag "title" /> txt)
-
-
 getEnclosures :: Content a -> [PodItem]
 getEnclosures =
-  concatMap procPodItem . getPodItems
+  concatMap procPodItem . podItems
   where
     procPodItem :: Content a -> [PodItem]
     procPodItem item =
-      concatMap (procEnclosure title) enclosure
+      concatMap (procEnclosure title link) enclosure
       where
+        link =
+          contentToString . (keep /> tag "link" /> txt) $ item
+
         title =
-          contentToStringDefault "Untitled Episode" (keep /> tag "title" /> txt $ item)
+          contentToStringDefault "Untitled Episode" . (keep /> tag "title" /> txt) $ item
 
         enclosure =
           (keep /> tag "enclosure") item
 
-    getPodItems :: CFilter a
-    getPodItems =
+    podItems :: CFilter a
+    podItems =
       channel /> tag "item"
 
-    procEnclosure :: T.Text -> Content a -> [PodItem]
-    procEnclosure title enclosure =
+    procEnclosure :: T.Text -> T.Text -> Content a -> [PodItem]
+    procEnclosure title link enclosure =
       map mkPodItem (showattr "url" enclosure)
       where
         mkPodItem :: Content a -> PodItem
         mkPodItem x =
-          PodItem { itemtitle = title
-                  , enclosureurl = contentToString [x]
+          PodItem { itemTitle = title
+                  , linkUrl = link
+                  , enclosureUrl = contentToString [x]
                   }
 
 
