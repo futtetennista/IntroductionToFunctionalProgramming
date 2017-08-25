@@ -6,8 +6,6 @@ where
 import Ch21.PodDB
 import Ch22.PodParser
 import qualified Data.Text as T (Text, pack, unpack, splitOn)
-import qualified Data.Text.Lazy as TL (toStrict)
-import Data.Text.Lazy.Encoding (decodeUtf8')
 import qualified Data.ByteString.Lazy as LB
 import Network.HTTP.Client ( Manager
                            , newManager
@@ -49,17 +47,14 @@ updatePodcastFromFeed p m = do
   either (\_ -> return ()) updatePodcastFromFeed' efeed
   where
     updatePodcastFromFeed' response =
-      case decodeUtf8' response of
-        Right content -> do
-          let feed =
-                parse (TL.toStrict content) (podcastTitle p)
-              p' =
+      case parse' response (podcastTitle p) of
+        Just feed -> do
+          let p' =
                 p { podcastTitle = channelTitle feed }
-
           updatePodcast p p'
           forM_ (items feed) (addEpisode p' . itemToEp)
 
-        Left err ->
+        Nothing ->
           return ()
 
 

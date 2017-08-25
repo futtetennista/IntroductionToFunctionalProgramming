@@ -9,6 +9,9 @@ import Text.XML.HaXml ( (/>) , CFilter , Content(..) , Document(..) , Element(..
 import Text.XML.HaXml.Html.Generate (showattr)
 import Text.XML.HaXml.Posn (Posn, noPos)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL (toStrict)
+import Data.Text.Lazy.Encoding (decodeUtf8')
+import qualified Data.ByteString.Lazy as LB (ByteString)
 
 
 data PodItem =
@@ -34,6 +37,11 @@ itemToEp item =
 sampleFeed :: T.Text
 sampleFeed =
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss xmlns:itunes=\"http://www.itunes.com/DTDs/Podcast-1.0.dtd\" version=\"2.0\"><channel><title>Haskell Radio</title><link>http://www.example.com/radio/</link><description>Description of this podcast</description><item><title>Episode 2: Lambdas</title><link>http://www.example.com/radio/lambdas</link><enclosure url=\"http://www.example.com/radio/lambdas.mp3\" type=\"audio/mpeg\" length=\"10485760\"/></item><item><title>Episode 1: Parsec</title><link>http://www.example.com/radio/parsec</link><enclosure url=\"http://www.example.com/radio/parsec.mp3\" type=\"audio/mpeg\" length=\"10485150\"/></item></channel></rss>"
+
+
+parse' :: LB.ByteString -> T.Text -> Maybe Feed
+parse' bytes name =
+  either (const Nothing) (Just . flip parse name . TL.toStrict) (decodeUtf8' bytes)
 
 
 parse :: T.Text -> T.Text -> Feed

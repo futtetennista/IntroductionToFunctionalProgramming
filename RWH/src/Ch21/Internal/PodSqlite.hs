@@ -31,7 +31,7 @@ import Data.Maybe (isJust)
 
 
 {-
-Target SQL:
+Reference SQL:
 
 CREATE TABLE podcasts (\
                        \castid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
