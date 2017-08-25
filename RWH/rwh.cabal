@@ -31,6 +31,7 @@ library
                      , Ch21.PodDB
                      , Ch22.PodParser
                      , Ch22.PodDownload
+                     , Ch22.PodMain
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2
