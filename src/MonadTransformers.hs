@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module MonadTransformers ( Exp(..)
@@ -13,15 +14,43 @@ import Control.Applicative ((<|>), liftA)
 import Control.Monad.Identity (Identity, runIdentity)
 import Text.Parsec hiding ((<|>), State)
 -- import qualified Control.Monad.Trans.Except as ME
-import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
+import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError, catchError)
 import Control.Monad.Reader (MonadReader, ReaderT, ask, asks, local, runReaderT)
 import Control.Monad.State (MonadState, StateT, get, put, runStateT)
-import Control.Monad.Writer (WriterT, tell, runWriterT)
+import Control.Monad.Writer (MonadWriter, WriterT, tell, runWriterT)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Data.Maybe as M
 
 
+{-
+Interesting example from https://www.reddit.com/r/haskell/comments/6w4kml/weekly_beginner_saturday_hask_anything_1/dm6hqmv/
+
+runExceptT $ runStateT (example0 :: StateT Int (ExceptT String Identity) ()) 0 == ?
+[example0#put]        Right ((), 1)
+  [example1#put]        Right ((), 2)
+  [example1#throwError] Left "Urk!" -- will be discarded
+[example0#catchError] Right ((), 1)
+
+runStateT (runExceptT (example0 :: ExceptT String (StateT Int Identity) ())) 0 == ?
+[example0#put]        (Right (), 1)
+  [example1#put]        (Right (), 2)
+  [example1#throwError] (Left "Urk!", 2) -- (Left "Urk!") will be discarded
+[example0#catchError] (Right (), 2)
+-}
+example0 :: (MonadError String m, MonadState Int m) => m ()
+example0 = do
+  put 1
+  example1 `catchError` (\_ -> return ())
+
+
+example1 :: (MonadError String m, MonadState Int m) => m ()
+example1 = do
+  put 2
+  throwError "Urk!"
+
+
+-- Code taken from the tutorial: "Monad Transformers Step by Step" by Martin Grabmüller
 type Name =
   T.Text
 
