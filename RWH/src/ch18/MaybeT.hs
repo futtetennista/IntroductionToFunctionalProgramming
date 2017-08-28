@@ -40,7 +40,6 @@ instance (Monad m) => Monad (MaybeT m) where
   m >>= g =
     MaybeT $ runMaybeT m >>= maybe (return Nothing) (runMaybeT . g)
 
-
   fail _ =
     MaybeT $ return Nothing
 
