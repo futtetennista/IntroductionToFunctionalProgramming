@@ -33,6 +33,7 @@ library
                      , Ch22.PodParser
                      , Ch22.PodMain
                      , Ch24.BoundedChan
+                     , Ch24.MVar
                      , Ch24.Sorting
                      , Ch24.SortMain
   build-depends:       base >= 4.7 && < 5
