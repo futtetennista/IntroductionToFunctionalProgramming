@@ -1,12 +1,20 @@
-module Ch24.BoundedChan
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ViewPatterns #-}
+module Ch24.BoundedChan ( BoundedChan
+                        , newBoundedChan
+                        , writeBoundedChan
+                        , readBoundedChan
+                        , main
+                        )
 
 where
 
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import Control.Arrow (first)
 import Control.Concurrent
-import Control.Exception
+import Control.DeepSeq (NFData, force)
+import qualified Data.Text.IO as TIO
+import qualified Data.Text as T
 
 
 type State =
@@ -36,6 +44,8 @@ writeBoundedChan (BoundedChan mvar) msg = do
         Just x
           | x == 0 -> do
               empty <- newEmptyMVar
+              -- it's ok here to discard the mvar since nobody can be waiting on it,
+              -- the call to `modifyMVar mvar` assures this.
               return (((empty, limit), ch), (empty, ch))
           | otherwise -> do
               putMVar counter (x - 1)
@@ -49,14 +59,23 @@ readBoundedChan (BoundedChan mvar) = do
   ch <- modifyMVar mvar $
     \bch@((counter, limit), ch) -> do
       mMVar <- tryTakeMVar counter
-      case mMVar of
-        Nothing ->
-          putMVar counter 1
-        Just x ->
-          putMVar counter $ max limit (x + 1)
+      putMVar counter (maybe 1 (\x -> max limit (x + 1)) mMVar)
       return (bch, ch)
   -- will block until there's something to read from ch
   readChan ch
+
+
+writeBoundedChan' :: NFData a => BoundedChan a -> a -> IO ()
+-- is it really needed to reduce `msg` to whnf since `force` will reduce it to nf anyway?
+writeBoundedChan' bch !msg =
+  writeBoundedChan bch (force msg)
+-- writeBoundedChan' bch (force -> !msg) =
+--   writeBoundedChan bch msg
+
+
+readBoundedChan' :: NFData a => BoundedChan a -> IO a
+readBoundedChan' bch =
+  return . force =<< readBoundedChan bch
 
 
 {-
