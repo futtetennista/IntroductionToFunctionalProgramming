@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 #!/usr/bin/env stack
 -- stack script --resolver lts-8.22
-module AsyncLibrary
+module AsyncPlayground
 
 where
 
@@ -95,6 +95,7 @@ main2 = do
 wait :: Async a -> IO a
 wait a =
   either throwIO return =<< waitCatch a
+
 
 {-
 Efficiently implement `waitCatch` in terms of `poll`.

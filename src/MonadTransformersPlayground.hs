@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module MonadTransformers ( Exp(..)
-                         , Value(..)
-                         , Eval2
-                         , Env
-                         , unwrapEvalFail
-                         )
+module MonadTransformersPlayground ( Exp(..)
+                                   , Value(..)
+                                   , Eval2
+                                   , Env
+                                   , unwrapEvalFail
+                                   )
 where
 
 import Prelude hiding (abs, exp)

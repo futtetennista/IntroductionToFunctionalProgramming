@@ -1,4 +1,4 @@
-name:                LearningHaskell
+name:                HaskellPlayground
 version:             0.1.0.0
 synopsis:            TBW
 description:         Please see README.md
@@ -13,11 +13,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     MonadTransformers
-                     , Typeclasses
-                     , CovarianceContravariance
-                     , ImplicitParams
-                     , AsyncLibrary
+  exposed-modules:     MonadTransformersPlayground
+                     , TypeclassesPlayground
+                     , CovarianceContravariancePlayground
+                     , ImplicitParamsPlayground
+                     , AsyncPlayground
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2

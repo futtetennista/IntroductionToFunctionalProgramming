@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Typeclasses
+module TypeclassesPlayground
 where
 
 import Control.Applicative ((<|>), many, some)
@@ -35,9 +35,9 @@ mkBTree' bst =
 -- TODO: use smth more performant than lists
 mkBTree :: Bool -> T.Text -> BTree Int
 mkBTree bst =
-  combineTrees . fmap Leaf . condOrd . trees
+  combineTrees . fmap Leaf . chooseOrd . trees
   where
-    condOrd =
+    chooseOrd =
       if bst then qsort else id
 
     qsort :: Ord a => [a] -> [a]

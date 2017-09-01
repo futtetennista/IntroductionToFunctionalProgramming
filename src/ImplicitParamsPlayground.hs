@@ -1,8 +1,8 @@
 {-# LANGUAGE ImplicitParams #-}
-module ImplicitParams
+module ImplicitParamsPlayground
 where
 
-import MonadTransformers
+import MonadTransformersPlayground
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Identity (runIdentity)
 import qualified Data.Text as T

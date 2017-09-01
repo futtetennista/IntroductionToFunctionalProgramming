@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
-module CovarianceContravariance
+module CovarianceContravariancePlayground
 where
 
 import Data.Functor.Contravariant
