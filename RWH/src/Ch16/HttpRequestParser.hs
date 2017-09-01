@@ -1,14 +1,14 @@
 module Ch16.HttpRequestParser ( HttpRequest(..)
-                                  , Method(..)
-                                  , Header
-                                  , p_request
-                                  , parseReq
-                                  )
+                              , Method(..)
+                              , Header
+                              , p_request
+                              , parseReq
+                              )
 where
 
 
 import Data.Char (chr, toLower)
-import Control.Applicative (liftA, liftA2, liftA3)
+import Control.Applicative (liftA, liftA2)
 import Control.Arrow (first)
 import Control.Exception (bracket, catch, finally)
 import Text.Parsec
@@ -107,10 +107,9 @@ p_chunkedBody =
 
     chunk :: Monad m => ParsecT String Int m String
     chunk = do
-      x <- chunkSize
-      _exts <- chunkExt
-      _ <- crlf
-      maybe failData chunkData (toSize x)
+      -- currently it ignores the chunk extension
+      hexN <- chunkSize <* chunkExt <* crlf
+      maybe failData chunkData (toSize hexN)
       where
         failData =
           parserFail "chunk size is not a valid hex number"
@@ -294,19 +293,19 @@ main = do
     loop :: Socket -> IO ()
     loop s = do
       -- make it possible to close all open sockets if the main loop exits.
-      withAsync (accept s) asyncHandleCon
+      withAsync (accept s) handleConnAsync
       loop s
 
-    asyncHandleCon a =
+    handleConnAsync a =
       -- if an exception occurs and it's not handled the whole loop breaks:
       -- we don't want an open connection to bring down the server!
-      catch (handleCon =<< wait a) handleEx
+      catch (handleConn =<< wait a) handleEx
       where
         handleEx :: IOError -> IO ()
         handleEx =
           print
 
-    handleCon (h, hostname, port) =
+    handleConn (h, hostname, port) =
       -- make sure sockets are closed
       let userTimeout =
             30 * 1000 * 1000 -- 30 secs
