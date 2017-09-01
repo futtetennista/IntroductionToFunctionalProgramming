@@ -90,14 +90,14 @@ main :: IO ()
 main = do
   ch <- newBoundedChan 2
   sem <- newMVar ()
-  forkIO $ writeBoundedChan ch "foo" >> withMVar sem (\_ -> putStrLn "Wrote 'foo'")
-  forkIO $ writeBoundedChan ch "bar" >> withMVar sem (\_ -> putStrLn "Wrote 'bar'")
-  forkIO $ writeBoundedChan ch "buzz" >> withMVar sem (\_ -> putStrLn "Wrote 'buzz'")
+  _ <- forkIO $ writeBoundedChan ch "foo" >> withMVar sem (\_ -> putStrLn "Wrote 'foo'")
+  _ <- forkIO $ writeBoundedChan ch "bar" >> withMVar sem (\_ -> putStrLn "Wrote 'bar'")
+  _ <- forkIO $ writeBoundedChan ch "buzz" >> withMVar sem (\_ -> putStrLn "Wrote 'buzz'")
   --threadDelay (10^3 * 500)
-  xs <- readBoundedChan ch
-  withMVar sem (\_ -> putStrLn $ "Read:" ++ xs)
-  xs <- readBoundedChan ch
-  withMVar sem (\_ -> putStrLn $ "Read:" ++ xs)
+  xs1 <- readBoundedChan ch
+  withMVar sem (\_ -> putStrLn $ "Read:" ++ xs1)
+  xs2 <- readBoundedChan ch
+  withMVar sem (\_ -> putStrLn $ "Read:" ++ xs2)
 --  threadDelay (10^6)
-  xs <- readBoundedChan ch
-  putStrLn $ "Read:" ++ xs
+  xs3 <- readBoundedChan ch
+  putStrLn $ "Read:" ++ xs3
