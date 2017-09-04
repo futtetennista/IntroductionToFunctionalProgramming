@@ -66,9 +66,11 @@ readBoundedChan (BoundedChan mvar) = do
 
 
 writeBoundedChan' :: NFData a => BoundedChan a -> a -> IO ()
--- is it really needed to reduce `msg` to whnf since `force` will reduce it to nf anyway?
-writeBoundedChan' bch !msg =
-  writeBoundedChan bch (force msg)
+writeBoundedChan' bch msg =
+  writeBoundedChan bch msg'
+  where
+    !msg' =
+      force msg
 -- writeBoundedChan' bch (force -> !msg) =
 --   writeBoundedChan bch msg
 
