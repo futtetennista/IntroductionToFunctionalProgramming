@@ -13,8 +13,6 @@ import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent
 import Control.DeepSeq (NFData, force)
-import qualified Data.Text.IO as TIO
-import qualified Data.Text as T
 
 
 type State =
