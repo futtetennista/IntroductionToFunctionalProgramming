@@ -1,15 +1,22 @@
-module BloomFilter.Utils ( easyList
-                         , suggestSizing
-                         , sizings
-                         )
+module BloomFilter.BloomFilter ( Bloom
+                               , easyList
+                               , suggestSizing
+                               , sizings
+                               , B.elem
+                               , B.length
+                               )
 where
 
 import Prelude hiding (elem, length, notElem)
 import Data.List (genericLength)
 import Data.Maybe (catMaybes)
 import BloomFilter.Hash (Hashable(..), doubleHash)
-import BloomFilter.Immutable (IBloom, fromList)
+import qualified BloomFilter.Immutable as B (IBloom, fromList, elem, length)
 import Data.Word (Word32)
+
+
+type Bloom =
+  B.IBloom
 
 
 -- The expected rate of false positives (between 0 and 1)
@@ -17,12 +24,12 @@ type ErrorRate =
   Double
 
 
-easyList :: Hashable a => ErrorRate -> [a] -> Either String (IBloom a)
+easyList :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
 easyList errRate xs =
   either Left (Right . bfilt) $ suggestSizing (genericLength xs) errRate
   where
     bfilt (bits, numHashes) =
-      fromList (doubleHash numHashes) bits xs
+      B.fromList (doubleHash numHashes) bits xs
 
 
 -- expected maximum capacity

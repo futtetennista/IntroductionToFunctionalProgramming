@@ -1,0 +1,539 @@
+[1 of 1] Compiling BloomFilter.Immutable ( src/BloomFilter/Immutable.hs, src/BloomFilter/Immutable.o )
+
+==================== Tidy Core ====================
+Result size of Tidy Core = {terms: 442, types: 448, coercions: 9}
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl_r4dI :: Int
+[GblId, Caf=NoCafRefs, Str=DmdType m]
+lvl_r4dI = GHC.Types.I# 76#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl1_r4dJ :: Int
+[GblId, Caf=NoCafRefs, Str=DmdType m]
+lvl1_r4dJ = GHC.Types.I# 88#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl2_r4dK :: Int
+[GblId, Caf=NoCafRefs, Str=DmdType m]
+lvl2_r4dK = GHC.Types.I# 31#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl3_r4dL :: Int
+[GblId, Caf=NoCafRefs, Str=DmdType m]
+lvl3_r4dL = GHC.Types.I# 87#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl4_r4dM :: [Char]
+[GblId, Str=DmdType]
+lvl4_r4dM =
+  GHC.CString.unpackCString# "libraries/array/Data/Array/Base.hs"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl5_r4dN :: [Char]
+[GblId, Str=DmdType]
+lvl5_r4dN = GHC.CString.unpackCString# "Data.Array.Base"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl6_r4dO :: [Char]
+[GblId, Str=DmdType]
+lvl6_r4dO = GHC.CString.unpackCString# "array-0.5.1.1"#
+
+-- RHS size: {terms: 8, types: 0, coercions: 0}
+lvl7_r4dP :: GHC.Stack.Types.SrcLoc
+[GblId, Str=DmdType m]
+lvl7_r4dP =
+  GHC.Stack.Types.SrcLoc
+    lvl6_r4dO
+    lvl5_r4dN
+    lvl4_r4dM
+    lvl3_r4dL
+    lvl2_r4dK
+    lvl1_r4dJ
+    lvl_r4dI
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl8_r4dQ :: [Char]
+[GblId, Str=DmdType]
+lvl8_r4dQ = GHC.CString.unpackCString# "error"#
+
+-- RHS size: {terms: 4, types: 0, coercions: 0}
+lvl9_r4dR :: GHC.Stack.Types.CallStack
+[GblId, Str=DmdType m2]
+lvl9_r4dR =
+  GHC.Stack.Types.PushCallStack
+    lvl8_r4dQ lvl7_r4dP GHC.Stack.Types.EmptyCallStack
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+lvl10_r4dS :: [Char]
+[GblId, Str=DmdType]
+lvl10_r4dS = GHC.CString.unpackCString# ")"#
+
+-- RHS size: {terms: 29, types: 28, coercions: 4}
+BloomFilter.Immutable.elem1
+  :: GHC.Prim.Int# -> GHC.Prim.Int# -> Int
+[GblId, Arity=2, Str=DmdType <L,U><L,U>x]
+BloomFilter.Immutable.elem1 =
+  \ (ww_s42F :: GHC.Prim.Int#) (ww1_s42J :: GHC.Prim.Int#) ->
+    error
+      @ 'GHC.Types.PtrRepLifted
+      @ Int
+      (lvl9_r4dR
+       `cast` (Sym
+                 (GHC.Classes.N:IP[0] <"callStack">_N <GHC.Stack.Types.CallStack>_N)
+               :: (GHC.Stack.Types.CallStack :: *)
+                  ~R#
+                  ((?callStack::GHC.Stack.Types.CallStack) :: Constraint)))
+      (GHC.CString.unpackAppendCString#
+         "Error in array index; "#
+         (case GHC.Show.$wshowSignedInt 0# ww1_s42J (GHC.Types.[] @ Char)
+          of _ [Occ=Dead] { (# ww5_a3HM, ww6_a3HN #) ->
+          ++
+            @ Char
+            (GHC.Types.: @ Char ww5_a3HM ww6_a3HN)
+            (GHC.CString.unpackAppendCString#
+               " not in range [0.."#
+               (case GHC.Show.$wshowSignedInt 0# ww_s42F (GHC.Types.[] @ Char)
+                of _ [Occ=Dead] { (# ww3_X3Iz, ww7_X3IB #) ->
+                ++ @ Char (GHC.Types.: @ Char ww3_X3Iz ww7_X3IB) lvl10_r4dS
+                }))
+          }))
+
+-- RHS size: {terms: 193, types: 77, coercions: 5}
+BloomFilter.Immutable.$welem [InlPrag=[0]]
+  :: forall a_s42O.
+     a_s42O
+     -> (a_s42O -> [Word32])
+     -> Data.Array.Base.UArray Word32 Bool
+     -> Bool
+[GblId,
+ Arity=3,
+ Str=DmdType <L,U><C(S),1*C1(U)><L,U(U(U),U(U),U,U)>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 60 20] 564 20}]
+BloomFilter.Immutable.$welem =
+  \ (@ a_s42O)
+    (w_s42P :: a_s42O)
+    (ww_s42T :: a_s42O -> [Word32])
+    (ww1_s42U :: Data.Array.Base.UArray Word32 Bool) ->
+    case ww_s42T w_s42P of _ [Occ=Dead] {
+      [] -> GHC.Types.True;
+      : y_a3GR ys_a3GS ->
+        case ww1_s42U
+        of _ [Occ=Dead]
+        { Data.Array.Base.UArray l_a3qZ u_a3r0 dt_a3r1 ds1_a3r2 ->
+        case l_a3qZ of _ [Occ=Dead] { GHC.Word.W32# x_s46O ->
+        case u_a3r0 of _ [Occ=Dead] { GHC.Word.W32# y1_s46R ->
+        case y_a3GR of _ [Occ=Dead] { GHC.Word.W32# x#_a3EY ->
+        case y1_s46R of wild5_a3qw {
+          __DEFAULT ->
+            case GHC.Prim.narrow32Word# (GHC.Prim.plusWord# wild5_a3qw 1##)
+            of wild6_a3F4 {
+              __DEFAULT ->
+                case GHC.Prim.remWord# x#_a3EY wild6_a3F4
+                of wild7_a3F5 { __DEFAULT ->
+                case GHC.Prim.tagToEnum#
+                       @ Bool (GHC.Prim.leWord# x_s46O wild7_a3F5)
+                of _ [Occ=Dead] {
+                  False -> case GHC.Arr.hopelessIndexError of wild9_00 { };
+                  True ->
+                    case GHC.Prim.tagToEnum#
+                           @ Bool (GHC.Prim.leWord# wild7_a3F5 wild5_a3qw)
+                    of _ [Occ=Dead] {
+                      False -> case GHC.Arr.hopelessIndexError of wild10_00 { };
+                      True ->
+                        let {
+                          y2_a3Gv [Dmd=<S,U>] :: GHC.Prim.Int#
+                          [LclId, Str=DmdType]
+                          y2_a3Gv =
+                            GHC.Prim.word2Int#
+                              (GHC.Prim.narrow32Word#
+                                 (GHC.Prim.minusWord# wild7_a3F5 x_s46O)) } in
+                        case GHC.Prim.tagToEnum# @ Bool (GHC.Prim.<=# 0# y2_a3Gv)
+                        of _ [Occ=Dead] {
+                          False ->
+                            case BloomFilter.Immutable.elem1 dt_a3r1 y2_a3Gv of wild11_00 { };
+                          True ->
+                            case GHC.Prim.tagToEnum# @ Bool (GHC.Prim.<# y2_a3Gv dt_a3r1)
+                            of _ [Occ=Dead] {
+                              False ->
+                                case BloomFilter.Immutable.elem1 dt_a3r1 y2_a3Gv of wild12_00 { };
+                              True ->
+                                case GHC.Prim.indexWordArray#
+                                       ds1_a3r2 (GHC.Prim.uncheckedIShiftRA# y2_a3Gv 6#)
+                                of wild12_a3Jc { __DEFAULT ->
+                                case GHC.Prim.and#
+                                       wild12_a3Jc
+                                       (GHC.Prim.uncheckedShiftL#
+                                          1##
+                                          (GHC.Prim.word2Int#
+                                             (GHC.Prim.and# (GHC.Prim.int2Word# y2_a3Gv) 63##)))
+                                of _ [Occ=Dead] {
+                                  __DEFAULT ->
+                                    letrec {
+                                      go_a3GL [Occ=LoopBreaker] :: [Word32] -> Data.Monoid.All
+                                      [LclId, Arity=1, Str=DmdType <S,1*U>]
+                                      go_a3GL =
+                                        \ (ds_a3GM :: [Word32]) ->
+                                          case ds_a3GM of _ [Occ=Dead] {
+                                            [] ->
+                                              GHC.Types.True
+                                              `cast` (Sym Data.Monoid.N:All[0]
+                                                      :: (Bool :: *) ~R# (Data.Monoid.All :: *));
+                                            : y3_X3Is ys1_X3Iu ->
+                                              case y3_X3Is
+                                              of _ [Occ=Dead] { GHC.Word.W32# x#1_X3GK ->
+                                              case GHC.Prim.remWord# x#1_X3GK wild6_a3F4
+                                              of wild16_X3GX { __DEFAULT ->
+                                              case GHC.Prim.tagToEnum#
+                                                     @ Bool (GHC.Prim.leWord# x_s46O wild16_X3GX)
+                                              of _ [Occ=Dead] {
+                                                False ->
+                                                  case GHC.Arr.hopelessIndexError of wild18_00 { };
+                                                True ->
+                                                  case GHC.Prim.tagToEnum#
+                                                         @ Bool
+                                                         (GHC.Prim.leWord# wild16_X3GX wild5_a3qw)
+                                                  of _ [Occ=Dead] {
+                                                    False ->
+                                                      case GHC.Arr.hopelessIndexError of wild19_00 {
+                                                      };
+                                                    True ->
+                                                      let {
+                                                        y4_X3It [Dmd=<S,U>] :: GHC.Prim.Int#
+                                                        [LclId, Str=DmdType]
+                                                        y4_X3It =
+                                                          GHC.Prim.word2Int#
+                                                            (GHC.Prim.narrow32Word#
+                                                               (GHC.Prim.minusWord#
+                                                                  wild16_X3GX x_s46O)) } in
+                                                      case GHC.Prim.tagToEnum#
+                                                             @ Bool (GHC.Prim.<=# 0# y4_X3It)
+                                                      of _ [Occ=Dead] {
+                                                        False ->
+                                                          case BloomFilter.Immutable.elem1
+                                                                 dt_a3r1 y4_X3It
+                                                          of wild20_00 {
+                                                          };
+                                                        True ->
+                                                          case GHC.Prim.tagToEnum#
+                                                                 @ Bool
+                                                                 (GHC.Prim.<# y4_X3It dt_a3r1)
+                                                          of _ [Occ=Dead] {
+                                                            False ->
+                                                              case BloomFilter.Immutable.elem1
+                                                                     dt_a3r1 y4_X3It
+                                                              of wild21_00 {
+                                                              };
+                                                            True ->
+                                                              case GHC.Prim.indexWordArray#
+                                                                     ds1_a3r2
+                                                                     (GHC.Prim.uncheckedIShiftRA#
+                                                                        y4_X3It 6#)
+                                                              of wild21_X3Lh { __DEFAULT ->
+                                                              case GHC.Prim.and#
+                                                                     wild21_X3Lh
+                                                                     (GHC.Prim.uncheckedShiftL#
+                                                                        1##
+                                                                        (GHC.Prim.word2Int#
+                                                                           (GHC.Prim.and#
+                                                                              (GHC.Prim.int2Word#
+                                                                                 y4_X3It)
+                                                                              63##)))
+                                                              of _ [Occ=Dead] {
+                                                                __DEFAULT -> go_a3GL ys1_X3Iu;
+                                                                0## ->
+                                                                  GHC.Types.False
+                                                                  `cast` (Sym Data.Monoid.N:All[0]
+                                                                          :: (Bool :: *)
+                                                                             ~R#
+                                                                             (Data.Monoid.All :: *))
+                                                              }
+                                                              }
+                                                          }
+                                                      }
+                                                  }
+                                              }
+                                              }
+                                              }
+                                          }; } in
+                                    (go_a3GL ys_a3GS)
+                                    `cast` (Data.Monoid.N:All[0]
+                                            :: (Data.Monoid.All :: *) ~R# (Bool :: *));
+                                  0## -> GHC.Types.False
+                                }
+                                }
+                            }
+                        }
+                    }
+                }
+                };
+              0## -> case GHC.Real.divZeroError of wild7_00 { }
+            };
+          4294967295## -> case GHC.Word.$fEnumWord6 of wild6_00 { }
+        }
+        }
+        }
+        }
+        }
+    }
+
+-- RHS size: {terms: 10, types: 14, coercions: 0}
+elem [InlPrag=INLINE[0]]
+  :: forall a_aPk. a_aPk -> IBloom a_aPk -> Bool
+[GblId,
+ Arity=2,
+ Str=DmdType <L,U><S(C(S)L),1*U(1*C1(U),U(U(U),U(U),U,U))>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_s42O)
+                 (w_s42P [Occ=Once] :: a_s42O)
+                 (w1_s42Q [Occ=Once!] :: IBloom a_s42O) ->
+                 case w1_s42Q
+                 of _ [Occ=Dead] { IB ww1_s42T [Occ=Once] ww2_s42U [Occ=Once] ->
+                 BloomFilter.Immutable.$welem @ a_s42O w_s42P ww1_s42T ww2_s42U
+                 }}]
+elem =
+  \ (@ a_s42O) (w_s42P :: a_s42O) (w1_s42Q :: IBloom a_s42O) ->
+    case w1_s42Q of _ [Occ=Dead] { IB ww1_s42T ww2_s42U ->
+    BloomFilter.Immutable.$welem @ a_s42O w_s42P ww1_s42T ww2_s42U
+    }
+
+-- RHS size: {terms: 15, types: 15, coercions: 0}
+notElem :: forall a_aIc. a_aIc -> IBloom a_aIc -> Bool
+[GblId,
+ Arity=2,
+ Str=DmdType <L,U><S(C(S)L),1*U(1*C1(U),U(U(U),U(U),U,U))>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_a2BD)
+                 (elt_a1Fl [Occ=Once] :: a_a2BD)
+                 (filt_a1Fm [Occ=Once] :: IBloom a_a2BD) ->
+                 case elem @ a_a2BD elt_a1Fl filt_a1Fm of _ [Occ=Dead] {
+                   False -> GHC.Types.True;
+                   True -> GHC.Types.False
+                 }}]
+notElem =
+  \ (@ a_a2BD) (elt_a1Fl :: a_a2BD) (filt_a1Fm :: IBloom a_a2BD) ->
+    case filt_a1Fm of _ [Occ=Dead] { IB ww1_s42T ww2_s42U ->
+    case BloomFilter.Immutable.$welem
+           @ a_a2BD elt_a1Fl ww1_s42T ww2_s42U
+    of _ [Occ=Dead] {
+      False -> GHC.Types.True;
+      True -> GHC.Types.False
+    }
+    }
+
+-- RHS size: {terms: 23, types: 23, coercions: 0}
+length :: forall a_aPm. IBloom a_aPm -> Int
+[GblId,
+ Arity=1,
+ Str=DmdType <S(LS(LS(S)LL)),1*U(A,1*U(A,U(1*U),A,A))>m,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=1,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_a2C9) (x_a2RR [Occ=Once!] :: IBloom a_a2C9) ->
+                 case x_a2RR
+                 of _ [Occ=Dead] { IB _ [Occ=Dead] ds2_a3oS [Occ=Once!] ->
+                 case ds2_a3oS
+                 of _ [Occ=Dead]
+                 { Data.Array.Base.UArray _ [Occ=Dead] u_a3r0 [Occ=Once!]
+                                          _ [Occ=Dead] _ [Occ=Dead] ->
+                 case u_a3r0 of _ [Occ=Dead] { GHC.Word.W32# x1_a3qu [Occ=Once!] ->
+                 case x1_a3qu of wild3_a3qw {
+                   __DEFAULT ->
+                     GHC.Types.I#
+                       (GHC.Prim.word2Int#
+                          (GHC.Prim.narrow32Word# (GHC.Prim.plusWord# wild3_a3qw 1##)));
+                   4294967295## -> case GHC.Word.$fEnumWord6 of _ [Occ=Dead] { }
+                 }
+                 }
+                 }
+                 }}]
+length =
+  \ (@ a_a2C9) (x_a2RR :: IBloom a_a2C9) ->
+    case x_a2RR of _ [Occ=Dead] { IB ds1_a3oR ds2_a3oS ->
+    case ds2_a3oS
+    of _ [Occ=Dead]
+    { Data.Array.Base.UArray l_a3qZ u_a3r0 dt_a3r1 ds4_a3r2 ->
+    case u_a3r0 of _ [Occ=Dead] { GHC.Word.W32# x1_s476 ->
+    case x1_s476 of wild3_a3qw {
+      __DEFAULT ->
+        GHC.Types.I#
+          (GHC.Prim.word2Int#
+             (GHC.Prim.narrow32Word# (GHC.Prim.plusWord# wild3_a3qw 1##)));
+      4294967295## -> case GHC.Word.$fEnumWord6 of wild4_00 { }
+    }
+    }
+    }
+    }
+
+-- RHS size: {terms: 101, types: 190, coercions: 0}
+BloomFilter.Immutable.$wfromList [InlPrag=[0]]
+  :: forall a_s42Z.
+     (a_s42Z -> [Word32])
+     -> Word32
+     -> [a_s42Z]
+     -> (# a_s42Z -> [Word32], Data.Array.Base.UArray Word32 Bool #)
+[GblId,
+ Arity=3,
+ Str=DmdType <L,U><L,1*U(U)><L,1*U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 20 61] 422 30}]
+BloomFilter.Immutable.$wfromList =
+  \ (@ a_s42Z)
+    (w_s430 :: a_s42Z -> [Word32])
+    (w1_s431 :: Word32)
+    (w2_s432 :: [a_s42Z]) ->
+    (# w_s430,
+       case GHC.Magic.runRW#
+              @ 'GHC.Types.PtrRepLifted
+              @ (Data.Array.Base.UArray Word32 Bool)
+              (\ (s1_a3p3 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+                 case w1_s431 of _ [Occ=Dead] { GHC.Word.W32# ww1_a3Ms ->
+                 case BloomFilter.Mutable.$wnew
+                        @ a_s42Z @ GHC.Prim.RealWorld w_s430 ww1_a3Ms s1_a3p3
+                 of _ [Occ=Dead] { (# ipv_a3FT, ipv1_a3FU #) ->
+                 case w2_s432 of _ [Occ=Dead] {
+                   [] ->
+                     case ipv1_a3FU of _ [Occ=Dead] { MBF.MB ds2_a3qh ds3_a3qi ->
+                     case ds3_a3qi
+                     of _ [Occ=Dead]
+                     { Data.Array.Base.STUArray l_a3pj u_a3pk dt_a3pl marr#_a3pm ->
+                     case GHC.Prim.unsafeFreezeByteArray#
+                            @ GHC.Prim.RealWorld marr#_a3pm ipv_a3FT
+                     of _ [Occ=Dead] { (# ipv2_a3pq, ipv3_a3pr #) ->
+                     (# ipv2_a3pq,
+                        Data.Array.Base.UArray
+                          @ Word32 @ Bool l_a3pj u_a3pk dt_a3pl ipv3_a3pr #)
+                     }
+                     }
+                     };
+                   : y_a3GR ys_a3GS ->
+                     case ipv1_a3FU of _ [Occ=Dead] { MBF.MB ww3_a3MP ww4_a3MQ ->
+                     case ww4_a3MQ
+                     of _ [Occ=Dead]
+                     { Data.Array.Base.STUArray ww6_a3MU ww7_a3MV ww8_a3MW ww9_a3MX ->
+                     case ww7_a3MV of ww10_s478 { GHC.Word.W32# ww11_s479 ->
+                     case BloomFilter.Mutable.$winsert
+                            @ GHC.Prim.RealWorld
+                            @ a_s42Z
+                            ww3_a3MP
+                            ww6_a3MU
+                            ww11_s479
+                            ww8_a3MW
+                            ww9_a3MX
+                            y_a3GR
+                            ipv_a3FT
+                     of _ [Occ=Dead] { (# ipv2_a3MC, ipv3_a3MD #) ->
+                     letrec {
+                       go_s3XX [Occ=LoopBreaker]
+                         :: [a_s42Z]
+                            -> GHC.Prim.State# GHC.Prim.RealWorld
+                            -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+                       [LclId, Arity=2, Str=DmdType <S,1*U><S,U>]
+                       go_s3XX =
+                         \ (ds2_a3GM :: [a_s42Z])
+                           (eta_X1s [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+                           case ds2_a3GM of _ [Occ=Dead] {
+                             [] -> (# eta_X1s, GHC.Tuple.() #);
+                             : y1_X3Ik ys1_X3Im ->
+                               case BloomFilter.Mutable.$winsert
+                                      @ GHC.Prim.RealWorld
+                                      @ a_s42Z
+                                      ww3_a3MP
+                                      ww6_a3MU
+                                      ww11_s479
+                                      ww8_a3MW
+                                      ww9_a3MX
+                                      y1_X3Ik
+                                      eta_X1s
+                               of _ [Occ=Dead] { (# ipv4_X3Oh, ipv5_X3Oj #) ->
+                               go_s3XX ys1_X3Im ipv4_X3Oh
+                               }
+                           }; } in
+                     case go_s3XX ys_a3GS ipv2_a3MC
+                     of _ [Occ=Dead] { (# ipv4_X3O4, ipv5_X3O6 #) ->
+                     case GHC.Prim.unsafeFreezeByteArray#
+                            @ GHC.Prim.RealWorld ww9_a3MX ipv4_X3O4
+                     of _ [Occ=Dead] { (# ipv6_a3pq, ipv7_a3pr #) ->
+                     (# ipv6_a3pq,
+                        Data.Array.Base.UArray
+                          @ Word32 @ Bool ww6_a3MU ww10_s478 ww8_a3MW ipv7_a3pr #)
+                     }
+                     }
+                     }
+                     }
+                     }
+                     }
+                 }
+                 }
+                 })
+       of _ [Occ=Dead] { (# ipv_a3pA, ipv1_a3pB #) ->
+       ipv1_a3pB
+       } #)
+
+-- RHS size: {terms: 13, types: 25, coercions: 0}
+fromList [InlPrag=INLINE[0]]
+  :: forall a_asK.
+     (a_asK -> [Word32]) -> Word32 -> [a_asK] -> IBloom a_asK
+[GblId,
+ Arity=3,
+ Str=DmdType <L,U><L,1*U(U)><L,1*U>m,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=3,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_s42Z)
+                 (w_s430 [Occ=Once] :: a_s42Z -> [Word32])
+                 (w1_s431 [Occ=Once] :: Word32)
+                 (w2_s432 [Occ=Once] :: [a_s42Z]) ->
+                 case BloomFilter.Immutable.$wfromList
+                        @ a_s42Z w_s430 w1_s431 w2_s432
+                 of _ [Occ=Dead] { (# ww1_s437 [Occ=Once], ww2_s438 [Occ=Once] #) ->
+                 BloomFilter.Internal.IB @ a_s42Z ww1_s437 ww2_s438
+                 }}]
+fromList =
+  \ (@ a_s42Z)
+    (w_s430 :: a_s42Z -> [Word32])
+    (w1_s431 :: Word32)
+    (w2_s432 :: [a_s42Z]) ->
+    case BloomFilter.Immutable.$wfromList
+           @ a_s42Z w_s430 w1_s431 w2_s432
+    of _ [Occ=Dead] { (# ww1_s437, ww2_s438 #) ->
+    BloomFilter.Internal.IB @ a_s42Z ww1_s437 ww2_s438
+    }
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Immutable.$trModule2 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 30 20}]
+BloomFilter.Immutable.$trModule2 = GHC.Types.TrNameS "main"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Immutable.$trModule1 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 80 20}]
+BloomFilter.Immutable.$trModule1 =
+  GHC.Types.TrNameS "BloomFilter.Immutable"#
+
+-- RHS size: {terms: 3, types: 0, coercions: 0}
+BloomFilter.Immutable.$trModule :: GHC.Types.Module
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 30}]
+BloomFilter.Immutable.$trModule =
+  GHC.Types.Module
+    BloomFilter.Immutable.$trModule2 BloomFilter.Immutable.$trModule1
+
+
+

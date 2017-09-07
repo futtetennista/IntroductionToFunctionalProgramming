@@ -28,16 +28,16 @@ len =
 
 
 elem :: a -> IBloom a -> Bool
-elt `elem` bfilt =
-  all test (ihash bfilt elt)
+x `elem` bfilt =
+  all test (ihash bfilt x)
   where
     test hashx =
       iarray bfilt ! (hashx `mod` len bfilt)
 
 
 notElem :: a -> IBloom a -> Bool
-elt `notElem` filt =
-  not (elt `elem` filt)
+x `notElem` filt =
+  not (x `elem` filt)
 
 
 fromList :: (a -> [Word32]) -- family of hash functions to use

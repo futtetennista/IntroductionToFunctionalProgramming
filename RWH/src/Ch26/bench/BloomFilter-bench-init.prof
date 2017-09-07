@@ -1,0 +1,141 @@
+	Thu Sep  7 17:21 2017 Time and Allocation Profiling Report  (Final)
+
+	   BloomFilter-bench +RTS -p -RTS
+
+	total time  =        0.62 secs   (624 ticks @ 1000 us, 1 processor)
+	total alloc = 1,254,597,968 bytes  (excludes profiling overheads)
+
+COST CENTRE      MODULE                SRC                                          %time %alloc
+
+doubleHash       BloomFilter.Hash      src/BloomFilter/Hash.hs:(159,1)-(175,28)      29.0   69.5
+elem             BloomFilter.Immutable src/BloomFilter/Immutable.hs:(31,1)-(35,44)   14.6    0.0
+indices          BloomFilter.Mutable   src/BloomFilter/Mutable.hs:(46,1)-(48,48)     12.8   16.4
+insert           BloomFilter.Mutable   src/BloomFilter/Mutable.hs:(40,1)-(42,54)     10.3    0.0
+doubleHash.h     BloomFilter.Hash      src/BloomFilter/Hash.hs:(162,5)-(163,39)       5.4    0.0
+insert.\         BloomFilter.Mutable   src/BloomFilter/Mutable.hs:42:20-53            3.8    0.0
+elem.test        BloomFilter.Immutable src/BloomFilter/Immutable.hs:(34,5)-(35,44)    3.7    0.0
+hashIO.go        BloomFilter.Hash      src/BloomFilter/Hash.hs:(43,7)-(50,28)         2.9    1.5
+timed            Main                  bench/Main.hs:(49,1)-(54,12)                   2.4    5.0
+hashByteString   BloomFilter.Hash      src/BloomFilter/Hash.hs:(123,1)-(125,38)       1.8    1.7
+hashIO           BloomFilter.Hash      src/BloomFilter/Hash.hs:(33,1)-(53,21)         1.8    2.6
+hashIO.\         BloomFilter.Hash      src/BloomFilter/Hash.hs:(34,40)-(41,14)        1.8    0.0
+length           BloomFilter.Mutable   src/BloomFilter/Mutable.hs:(52,1)-(53,43)      1.6    0.6
+len              BloomFilter.Immutable src/BloomFilter/Immutable.hs:(26,1)-(27,30)    1.3    0.3
+hashByteString.\ BloomFilter.Hash      src/BloomFilter/Hash.hs:125:5-38               1.1    0.0
+fromList.array'  BloomFilter.Immutable src/BloomFilter/Immutable.hs:(55,5)-(59,30)    1.1    0.9
+
+
+                                                                                                                               individual      inherited
+COST CENTRE                           MODULE                  SRC                                           no.     entries  %time %alloc   %time %alloc
+
+MAIN                                  MAIN                    <built-in>                                     96          0    0.2    0.0   100.0  100.0
+ CAF                                  Data.Time.Clock.UTC     <entire-module>                               183          0    0.0    0.0     0.0    0.0
+ CAF                                  Data.Either             <entire-module>                               145          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.Conc.Signal         <entire-module>                               141          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.IO.Encoding         <entire-module>                               134          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.IO.Encoding.Iconv   <entire-module>                               132          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.IO.FD               <entire-module>                               126          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.IO.Handle.FD        <entire-module>                               124          0    0.0    0.0     0.0    0.0
+ CAF                                  GHC.IO.Handle.Text      <entire-module>                               122          0    0.0    0.0     0.0    0.0
+ CAF:errRate_r8z3                     Main                    bench/Main.hs:30:7-13                         186          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  205          0    0.0    0.0     0.0    0.0
+   main.\                             Main                    bench/Main.hs:(24,26)-(45,66)                 206          0    0.0    0.0     0.0    0.0
+    main.\.errRate                    Main                    bench/Main.hs:(30,7)-(31,12)                  207          1    0.0    0.0     0.0    0.0
+ CAF:len                              BloomFilter.Immutable   src/BloomFilter/Immutable.hs:26:1-3           169          0    0.0    0.0     0.0    0.0
+  len                                 BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(26,1)-(27,30)   228          1    0.0    0.0     0.0    0.0
+ CAF:length                           BloomFilter.Immutable   src/BloomFilter/Immutable.hs:21:1-6           175          0    0.0    0.0     0.0    0.0
+  length                              BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(21,1)-(22,20)   226          1    0.0    0.0     0.0    0.0
+ CAF:lvl1_r8z2                        Main                    <no location info>                            185          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  258          0    0.0    0.0     0.0    0.0
+   main.\                             Main                    bench/Main.hs:(24,26)-(45,66)                 259          0    0.0    0.0     0.0    0.0
+ CAF:lvl2_r8z4                        Main                    <no location info>                            187          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  199          0    0.0    0.0     0.0    0.0
+   main.\                             Main                    bench/Main.hs:(24,26)-(45,66)                 200          0    0.0    0.0     0.0    0.0
+ CAF:lvl3_r8z5                        Main                    <no location info>                            189          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  202          0    0.0    0.0     0.0    0.0
+   main.\                             Main                    bench/Main.hs:(24,26)-(45,66)                 203          0    0.0    0.0     0.0    0.0
+ CAF:lvl_r8z1                         Main                    <no location info>                            184          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  283          0    0.0    0.0     0.0    0.0
+   main.\                             Main                    bench/Main.hs:(24,26)-(45,66)                 284          0    0.0    0.0     0.0    0.0
+ CAF:main1                            Main                    <no location info>                            190          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  192          1    0.0    0.0     0.0    0.0
+ CAF:main3                            Main                    <no location info>                            188          0    0.0    0.0     0.0    0.0
+  main                                Main                    bench/Main.hs:(17,1)-(45,66)                  197          0    0.0    0.0     0.0    0.0
+   main.files                         Main                    bench/Main.hs:(19,7)-(23,16)                  198          0    0.0    0.0     0.0    0.0
+ CAF:sizings1                         BloomFilter.BloomFilter <no location info>                            181          0    0.0    0.0     0.0    0.0
+  sizings                             BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(67,1)-(71,27) 210          0    0.0    0.0     0.0    0.0
+ CAF:suggestSizing10                  BloomFilter.BloomFilter <no location info>                            179          0    0.0    0.0     0.0    0.0
+  suggestSizing                       BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(43,1)-(63,43) 215          0    0.0    0.0     0.0    0.0
+   suggestSizing.saneSizes            BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(53,5)-(54,57) 216          0    0.0    0.0     0.0    0.0
+    suggestSizing.sanitize            BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(56,5)-(63,43) 217          0    0.0    0.0     0.0    0.0
+     suggestSizing.sanitize.maxWord32 BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(62,9)-(63,43) 218          1    0.0    0.0     0.0    0.0
+ main                                 Main                    bench/Main.hs:(17,1)-(45,66)                  193          0    0.0    0.0    99.8  100.0
+  main.\                              Main                    bench/Main.hs:(24,26)-(45,66)                 195          1    0.0    0.0    99.8  100.0
+   timed                              Main                    bench/Main.hs:(49,1)-(54,12)                  196          3    2.4    5.0    44.9   43.5
+    elem                              BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(31,1)-(35,44)   260     235886   14.6    0.0    42.5   38.5
+     elem.test                        BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(34,5)-(35,44)   266    1887088    3.7    0.0     5.0    0.3
+      iarray                          BloomFilter.Internal    src/BloomFilter/Internal.hs:14:8-13           267     235886    0.0    0.0     0.0    0.0
+      len                             BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(26,1)-(27,30)   280          0    1.3    0.3     1.3    0.3
+       iarray                         BloomFilter.Internal    src/BloomFilter/Internal.hs:14:8-13           281     235886    0.0    0.0     0.0    0.0
+     ihash                            BloomFilter.Internal    src/BloomFilter/Internal.hs:13:8-12           261     235886    0.0    0.0     0.0    0.0
+     easyList                         BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(28,1)-(32,47) 262          0    0.0    0.0    22.9   38.2
+      easyList.bfilt                  BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(31,5)-(32,47) 263          0    0.5    0.0    22.9   38.2
+       doubleHash                     BloomFilter.Hash        src/BloomFilter/Hash.hs:(159,1)-(175,28)      264     235886   13.9   34.7    22.4   38.2
+        doubleHash.h                  BloomFilter.Hash        src/BloomFilter/Hash.hs:(162,5)-(163,39)      269     235886    3.7    0.0     8.2    2.9
+         hashSalt                     BloomFilter.Hash        src/BloomFilter/Hash.hs:(129,3)-(130,44)      270     235886    0.3    0.0     4.5    2.9
+          hashByteString              BloomFilter.Hash        src/BloomFilter/Hash.hs:(123,1)-(125,38)      271     235886    1.0    0.8     4.2    2.9
+           hashByteString.\           BloomFilter.Hash        src/BloomFilter/Hash.hs:125:5-38              272     235886    0.5    0.0     3.2    2.0
+            hashIO                    BloomFilter.Hash        src/BloomFilter/Hash.hs:(33,1)-(53,21)        273     235886    1.0    1.3     2.7    2.0
+             hashIO.\                 BloomFilter.Hash        src/BloomFilter/Hash.hs:(34,40)-(41,14)       274     235886    0.3    0.0     1.8    0.8
+              hashIO.\.salt1p         BloomFilter.Hash        src/BloomFilter/Hash.hs:(36,7)-(37,21)        278     235886    0.0    0.0     0.0    0.0
+              hashIO.\.salt2p         BloomFilter.Hash        src/BloomFilter/Hash.hs:(38,7)-(39,33)        277     235886    0.0    0.0     0.0    0.0
+              hashIO.go               BloomFilter.Hash        src/BloomFilter/Hash.hs:(43,7)-(50,28)        275     235886    1.3    0.8     1.4    0.8
+               hashIO.go.isByte       BloomFilter.Hash        src/BloomFilter/Hash.hs:(49,11)-(50,28)       276     235886    0.2    0.0     0.2    0.0
+             hashIO.words             BloomFilter.Hash        src/BloomFilter/Hash.hs:(52,7)-(53,21)        282      59303    0.0    0.0     0.0    0.0
+        doubleHash.h1                 BloomFilter.Hash        src/BloomFilter/Hash.hs:(165,5)-(166,47)      268     235886    0.0    0.3     0.0    0.3
+        doubleHash.h2                 BloomFilter.Hash        src/BloomFilter/Hash.hs:(171,5)-(172,20)      279     235886    0.3    0.3     0.3    0.3
+        doubleHash.num                BloomFilter.Hash        src/BloomFilter/Hash.hs:(174,5)-(175,28)      265     235886    0.0    0.0     0.0    0.0
+    rnf                               Main                    bench/Main.hs:(62,3)-(63,37)                  225          1    0.0    0.0     0.0    0.0
+     length                           BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(21,1)-(22,20)   227          0    0.0    0.0     0.0    0.0
+      len                             BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(26,1)-(27,30)   229          0    0.0    0.0     0.0    0.0
+       iarray                         BloomFilter.Internal    src/BloomFilter/Internal.hs:14:8-13           230          1    0.0    0.0     0.0    0.0
+   easyList                           BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(28,1)-(32,47) 219          1    0.8    0.3    54.6   56.5
+    easyList.bfilt                    BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(31,5)-(32,47) 231          1    0.0    0.0    53.8   56.1
+     fromList                         BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(47,1)-(59,30)   232          1    0.0    0.0    53.8   56.1
+      fromList.array'                 BloomFilter.Immutable   src/BloomFilter/Immutable.hs:(55,5)-(59,30)   233          1    1.1    0.9    53.8   56.1
+       insert                         BloomFilter.Mutable     src/BloomFilter/Mutable.hs:(40,1)-(42,54)     235     235886   10.3    0.0    52.7   55.2
+        insert.\                      BloomFilter.Mutable     src/BloomFilter/Mutable.hs:42:20-53           242    1887088    3.8    0.0     4.3    0.0
+         marray                       BloomFilter.Internal    src/BloomFilter/Internal.hs:20:8-13           243     235886    0.5    0.0     0.5    0.0
+        indices                       BloomFilter.Mutable     src/BloomFilter/Mutable.hs:(46,1)-(48,48)     236     235886   12.8   16.4    38.1   55.2
+         doubleHash                   BloomFilter.Hash        src/BloomFilter/Hash.hs:(159,1)-(175,28)      240     235886   15.1   34.7    23.4   38.2
+          doubleHash.h                BloomFilter.Hash        src/BloomFilter/Hash.hs:(162,5)-(163,39)      245     235886    1.8    0.0     7.5    2.9
+           hashSalt                   BloomFilter.Hash        src/BloomFilter/Hash.hs:(129,3)-(130,44)      246     235886    0.5    0.0     5.8    2.9
+            hashByteString            BloomFilter.Hash        src/BloomFilter/Hash.hs:(123,1)-(125,38)      247     235886    0.8    0.8     5.3    2.9
+             hashByteString.\         BloomFilter.Hash        src/BloomFilter/Hash.hs:125:5-38              248     235886    0.6    0.0     4.5    2.0
+              hashIO                  BloomFilter.Hash        src/BloomFilter/Hash.hs:(33,1)-(53,21)        249     235886    0.8    1.3     3.8    2.0
+               hashIO.\               BloomFilter.Hash        src/BloomFilter/Hash.hs:(34,40)-(41,14)       250     235886    1.4    0.0     3.0    0.8
+                hashIO.\.salt1p       BloomFilter.Hash        src/BloomFilter/Hash.hs:(36,7)-(37,21)        254     235886    0.0    0.0     0.0    0.0
+                hashIO.\.salt2p       BloomFilter.Hash        src/BloomFilter/Hash.hs:(38,7)-(39,33)        253     235886    0.0    0.0     0.0    0.0
+                hashIO.go             BloomFilter.Hash        src/BloomFilter/Hash.hs:(43,7)-(50,28)        251     235886    1.6    0.8     1.6    0.8
+                 hashIO.go.isByte     BloomFilter.Hash        src/BloomFilter/Hash.hs:(49,11)-(50,28)       252     235886    0.0    0.0     0.0    0.0
+               hashIO.words           BloomFilter.Hash        src/BloomFilter/Hash.hs:(52,7)-(53,21)        256      59303    0.0    0.0     0.0    0.0
+          doubleHash.h1               BloomFilter.Hash        src/BloomFilter/Hash.hs:(165,5)-(166,47)      244     235886    0.3    0.3     0.3    0.3
+          doubleHash.h2               BloomFilter.Hash        src/BloomFilter/Hash.hs:(171,5)-(172,20)      255     235886    0.5    0.3     0.5    0.3
+          doubleHash.num              BloomFilter.Hash        src/BloomFilter/Hash.hs:(174,5)-(175,28)      241     235886    0.0    0.0     0.0    0.0
+         length                       BloomFilter.Mutable     src/BloomFilter/Mutable.hs:(52,1)-(53,43)     237     235886    1.6    0.6     1.6    0.6
+          marray                      BloomFilter.Internal    src/BloomFilter/Internal.hs:20:8-13           238     235886    0.0    0.0     0.0    0.0
+         mhash                        BloomFilter.Internal    src/BloomFilter/Internal.hs:19:8-12           239     235886    0.3    0.0     0.3    0.0
+       marray                         BloomFilter.Internal    src/BloomFilter/Internal.hs:20:8-13           257          1    0.0    0.0     0.0    0.0
+       new                            BloomFilter.Mutable     src/BloomFilter/Mutable.hs:(19,1)-(20,49)     234          1    0.0    0.0     0.0    0.0
+    suggestSizing                     BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(43,1)-(63,43) 220          1    0.0    0.0     0.0    0.0
+     suggestSizing.saneSizes          BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(53,5)-(54,57) 221          1    0.0    0.0     0.0    0.0
+      suggestSizing.sanitize          BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(56,5)-(63,43) 224         50    0.0    0.0     0.0    0.0
+      sizings                         BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(67,1)-(71,27) 222          1    0.0    0.0     0.0    0.0
+       sizings.cap                    BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(70,5)-(71,27) 223          1    0.0    0.0     0.0    0.0
+   main.\.len                         Main                    bench/Main.hs:(28,7)-(29,20)                  201          1    0.3    0.0     0.3    0.0
+   suggestSizing                      BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(43,1)-(63,43) 204          1    0.0    0.0     0.0    0.0
+    suggestSizing.saneSizes           BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(53,5)-(54,57) 208          1    0.0    0.0     0.0    0.0
+     suggestSizing.sanitize           BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(56,5)-(63,43) 214         50    0.0    0.0     0.0    0.0
+     sizings                          BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(67,1)-(71,27) 209          1    0.0    0.0     0.0    0.0
+      sizings.cap                     BloomFilter.BloomFilter src/BloomFilter/BloomFilter.hs:(70,5)-(71,27) 213          1    0.0    0.0     0.0    0.0
+  main.files                          Main                    bench/Main.hs:(19,7)-(23,16)                  194          1    0.0    0.0     0.0    0.0

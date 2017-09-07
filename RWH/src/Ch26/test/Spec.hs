@@ -5,8 +5,7 @@ import Test.QuickCheck ( (==>)
                        , property, forAll, choose
                        )
 import Data.Word (Word32)
-import qualified BloomFilter.Utils as Utils
-import qualified BloomFilter.Immutable as IBloom
+import qualified BloomFilter.BloomFilter as BloomFilter
 import qualified Data.ByteString as Strict
 import qualified Data.ByteString.Lazy as Lazy
 
@@ -23,26 +22,26 @@ main =
 prop_onePresent :: Strict.ByteString -> Property
 prop_onePresent elt =
   forAll falsePositive $ \errRate ->
-    Utils.easyList errRate [elt] =~> \filt -> elt `IBloom.elem` filt
+    BloomFilter.easyList errRate [elt] =~> \filt -> elt `BloomFilter.elem` filt
 
 
 prop_allPresent :: [Strict.ByteString] -> Property
 prop_allPresent xs =
   forAll falsePositive $ \errRate ->
-    Utils.easyList errRate xs =~> \filt -> all (`IBloom.elem` filt) xs
+    BloomFilter.easyList errRate xs =~> \filt -> all (`BloomFilter.elem` filt) xs
 
 
 prop_suggestionsSane :: Property
 prop_suggestionsSane =
   config $ \capacity errRate ->
-    either (const False) sane $ Utils.suggestSizing capacity errRate
+    either (const False) sane $ BloomFilter.suggestSizing capacity errRate
   where
     config test =
       forAll falsePositive $ \errRate ->
         forAll (choose (1, fromIntegral maxWord32 `div` 8)) $ \capacity ->
           let
             size =
-              fst . minimum $ Utils.sizings capacity errRate
+              fst . minimum $ BloomFilter.sizings capacity errRate
           in
             size < fromIntegral maxWord32 ==> test capacity errRate
 

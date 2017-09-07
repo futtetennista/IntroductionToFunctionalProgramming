@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module BloomFilter.Hash ( Hashable(..)
                         , hash
@@ -156,19 +157,47 @@ instance Hashable Lazy.ByteString where
 
 
 doubleHash :: Hashable a => Int -> a -> [Word32]
-doubleHash numHashes value =
+doubleHash =
+  doubleHash2
+
+
+doubleHash2 :: Hashable a => Int -> a -> [Word32]
+doubleHash2 numHashes value =
+  go 0
+  where
+    go i
+      | i == num =
+          []
+      | otherwise =
+          h1 + h2 * i : go (i + 1)
+
+    h =
+      hashSalt 0x9150a946c4a8966e value
+
+    !h1 =
+      fromIntegral (h `shiftR` 32) .&. maxBound
+
+    !h2 =
+      fromIntegral h
+
+    num =
+      fromIntegral numHashes
+
+
+_doubleHash1 :: Hashable a => Int -> a -> [Word32]
+_doubleHash1 numHashes value =
   [h1 + h2 * i | i <- [0..num]]
   where
     h =
       hashSalt 0x9150a946c4a8966e value
 
-    h1  =
+    h1 =
       fromIntegral (h `shiftR` 32) .&. maxBound
 
     -- UHU?! How does this extract the lowest 32 bits?
     -- Guess: h is Word64 but we return Word32 so `fromIntegral`
     -- here truncates the last 32 bits
-    h2  =
+    h2 =
       fromIntegral h
 
     num =

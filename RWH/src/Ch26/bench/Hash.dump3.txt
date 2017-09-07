@@ -1,0 +1,1448 @@
+[1 of 1] Compiling BloomFilter.Hash ( src/BloomFilter/Hash.hs, src/BloomFilter/Hash.o )
+
+ORIGINAL CODE OF doubleHash:
+
+doubleHash2 :: Hashable a => Int -> a -> [Word32]
+doubleHash2 numHashes value =
+  go 0
+  where
+    go i
+      | i == num =
+          []
+      | otherwise =
+          h1 + h2 * i : go (i + 1)
+
+    h =
+      hashSalt 0x9150a946c4a8966e value
+
+    h1 =
+      fromIntegral (h `shiftR` 32) .&. maxBound
+
+    h2 =
+      fromIntegral h
+
+    num =
+      fromIntegral numHashes
+
+==================== Tidy Core ====================
+Result size of Tidy Core = {terms: 862, types: 974, coercions: 97}
+
+-- RHS size: {terms: 3, types: 4, coercions: 2}
+hashSalt [InlPrag=INLINE]
+  :: forall a_a2Cn[sk].
+     Hashable a_a2Cn[sk] =>
+     Salt -> a_a2Cn[sk] -> Word64
+[GblId[ClassOp],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <S,U>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=1,unsat_ok=False,boring_ok=True)
+         Tmpl= \ (@ a_a2Cn[sk])
+                 (tpl_B1 [Occ=Once] :: Hashable a_a2Cn[sk]) ->
+                 tpl_B1
+                 `cast` (BloomFilter.Hash.N:Hashable[0] <a_a2Cn[sk]>_N
+                         :: (Hashable a_a2Cn[sk] :: Constraint)
+                            ~R#
+                            ((Salt -> a_a2Cn[sk] -> Word64) :: *))}]
+hashSalt =
+  \ (@ a_a2Cn[sk]) (tpl_B1 :: Hashable a_a2Cn[sk]) ->
+    tpl_B1
+    `cast` (BloomFilter.Hash.N:Hashable[0] <a_a2Cn[sk]>_N
+            :: (Hashable a_a2Cn[sk] :: Constraint)
+               ~R#
+               ((Salt -> a_a2Cn[sk] -> Word64) :: *))
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.hash1 :: Word64
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 20}]
+BloomFilter.Hash.hash1 = GHC.Word.W64# 503340467227682003##
+
+-- RHS size: {terms: 4, types: 4, coercions: 2}
+hash :: forall a_a2S6. Hashable a_a2S6 => a_a2S6 -> Word64
+[GblId,
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <C(S),1*C1(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=1,unsat_ok=True,boring_ok=True)
+         Tmpl= \ (@ a_a4Et)
+                 ($dHashable_a5kY [Occ=Once] :: Hashable a_a4Et) ->
+                 ($dHashable_a5kY
+                  `cast` (BloomFilter.Hash.N:Hashable[0] <a_a4Et>_N
+                          :: (Hashable a_a4Et :: Constraint)
+                             ~R#
+                             ((Salt -> a_a4Et -> Word64) :: *)))
+                   BloomFilter.Hash.hash1}]
+hash =
+  \ (@ a_a4Et) ($dHashable_a5kY :: Hashable a_a4Et) ->
+    ($dHashable_a5kY
+     `cast` (BloomFilter.Hash.N:Hashable[0] <a_a4Et>_N
+             :: (Hashable a_a4Et :: Constraint)
+                ~R#
+                ((Salt -> a_a4Et -> Word64) :: *)))
+      BloomFilter.Hash.hash1
+
+-- RHS size: {terms: 18, types: 24, coercions: 6}
+BloomFilter.Hash.$fHashable(,,)_$chashSalt
+  :: forall a_a5tQ b_a5tR c_a5tS.
+     (Hashable a_a5tQ, Hashable b_a5tR, Hashable c_a5tS) =>
+     Salt -> (a_a5tQ, b_a5tR, c_a5tS) -> Word64
+[GblId,
+ Arity=5,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U))><L,1*C1(C1(U))><C(C(S)),1*C1(C1(U(U)))><L,U><S,1*U(U,U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=5,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_a5tQ)
+                 (@ b_a5tR)
+                 (@ c_a5tS)
+                 ($dHashable_a5tT [Occ=Once] :: Hashable a_a5tQ)
+                 ($dHashable1_a5tU [Occ=Once] :: Hashable b_a5tR)
+                 ($dHashable2_a5tV [Occ=Once] :: Hashable c_a5tS)
+                 (salt_a4uv [Occ=Once] :: Salt)
+                 (ds_d5wE [Occ=Once!] :: (a_a5tQ, b_a5tR, c_a5tS)) ->
+                 case ds_d5wE
+                 of _ [Occ=Dead]
+                 { (a1_a4uw [Occ=Once], b1_a4ux [Occ=Once], c1_a4uy [Occ=Once]) ->
+                 ($dHashable2_a5tV
+                  `cast` (BloomFilter.Hash.N:Hashable[0] <c_a5tS>_N
+                          :: (Hashable c_a5tS :: Constraint)
+                             ~R#
+                             ((Salt -> c_a5tS -> Word64) :: *)))
+                   (($dHashable1_a5tU
+                     `cast` (BloomFilter.Hash.N:Hashable[0] <b_a5tR>_N
+                             :: (Hashable b_a5tR :: Constraint)
+                                ~R#
+                                ((Salt -> b_a5tR -> Word64) :: *)))
+                      (($dHashable_a5tT
+                        `cast` (BloomFilter.Hash.N:Hashable[0] <a_a5tQ>_N
+                                :: (Hashable a_a5tQ :: Constraint)
+                                   ~R#
+                                   ((Salt -> a_a5tQ -> Word64) :: *)))
+                         salt_a4uv a1_a4uw)
+                      b1_a4ux)
+                   c1_a4uy
+                 }}]
+BloomFilter.Hash.$fHashable(,,)_$chashSalt =
+  \ (@ a_a5tQ)
+    (@ b_a5tR)
+    (@ c_a5tS)
+    ($dHashable_a5tT :: Hashable a_a5tQ)
+    ($dHashable1_a5tU :: Hashable b_a5tR)
+    ($dHashable2_a5tV :: Hashable c_a5tS)
+    (salt_a4uv :: Salt)
+    (ds_d5wE :: (a_a5tQ, b_a5tR, c_a5tS)) ->
+    case ds_d5wE of _ [Occ=Dead] { (a1_a4uw, b1_a4ux, c1_a4uy) ->
+    ($dHashable2_a5tV
+     `cast` (BloomFilter.Hash.N:Hashable[0] <c_a5tS>_N
+             :: (Hashable c_a5tS :: Constraint)
+                ~R#
+                ((Salt -> c_a5tS -> Word64) :: *)))
+      (($dHashable1_a5tU
+        `cast` (BloomFilter.Hash.N:Hashable[0] <b_a5tR>_N
+                :: (Hashable b_a5tR :: Constraint)
+                   ~R#
+                   ((Salt -> b_a5tR -> Word64) :: *)))
+         (($dHashable_a5tT
+           `cast` (BloomFilter.Hash.N:Hashable[0] <a_a5tQ>_N
+                   :: (Hashable a_a5tQ :: Constraint)
+                      ~R#
+                      ((Salt -> a_a5tQ -> Word64) :: *)))
+            salt_a4uv a1_a4uw)
+         b1_a4ux)
+      c1_a4uy
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 24}
+BloomFilter.Hash.$fHashable(,,) [InlPrag=INLINE (sat-args=0)]
+  :: forall a_a4BA b_a4BB c_a4BC.
+     (Hashable a_a4BA, Hashable b_a4BB, Hashable c_a4BC) =>
+     Hashable (a_a4BA, b_a4BB, c_a4BC)
+[GblId[DFunId(nt)],
+ Arity=5,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U))><L,1*C1(C1(U))><C(C(S)),1*C1(C1(U(U)))><L,U><S,1*U(U,U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=3,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashable(,,)_$chashSalt
+               `cast` (forall (a_a5tQ :: <*>_N).
+                       forall (b_a5tR :: <*>_N).
+                       forall (c_a5tS :: <*>_N).
+                       <Hashable a_a5tQ>_R
+                       -> <Hashable b_a5tR>_R
+                       -> <Hashable c_a5tS>_R
+                       -> Sym
+                            (BloomFilter.Hash.N:Hashable[0] <(a_a5tQ, b_a5tR, c_a5tS)>_N)
+                       :: ((forall a_a5tQ b_a5tR c_a5tS.
+                            (Hashable a_a5tQ, Hashable b_a5tR, Hashable c_a5tS) =>
+                            Salt -> (a_a5tQ, b_a5tR, c_a5tS) -> Word64) :: *)
+                          ~R#
+                          ((forall a_a5tQ b_a5tR c_a5tS.
+                            (Hashable a_a5tQ, Hashable b_a5tR, Hashable c_a5tS) =>
+                            Hashable (a_a5tQ, b_a5tR, c_a5tS)) :: *))}]
+BloomFilter.Hash.$fHashable(,,) =
+  BloomFilter.Hash.$fHashable(,,)_$chashSalt
+  `cast` (forall (a_a5tQ :: <*>_N).
+          forall (b_a5tR :: <*>_N).
+          forall (c_a5tS :: <*>_N).
+          <Hashable a_a5tQ>_R
+          -> <Hashable b_a5tR>_R
+          -> <Hashable c_a5tS>_R
+          -> Sym
+               (BloomFilter.Hash.N:Hashable[0] <(a_a5tQ, b_a5tR, c_a5tS)>_N)
+          :: ((forall a_a5tQ b_a5tR c_a5tS.
+               (Hashable a_a5tQ, Hashable b_a5tR, Hashable c_a5tS) =>
+               Salt -> (a_a5tQ, b_a5tR, c_a5tS) -> Word64) :: *)
+             ~R#
+             ((forall a_a5tQ b_a5tR c_a5tS.
+               (Hashable a_a5tQ, Hashable b_a5tR, Hashable c_a5tS) =>
+               Hashable (a_a5tQ, b_a5tR, c_a5tS)) :: *))
+
+-- RHS size: {terms: 14, types: 17, coercions: 4}
+BloomFilter.Hash.$fHashable(,)_$chashSalt
+  :: forall a_a5ug b_a5uh.
+     (Hashable a_a5ug, Hashable b_a5uh) =>
+     Salt -> (a_a5ug, b_a5uh) -> Word64
+[GblId,
+ Arity=4,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U))><C(C(S)),1*C1(C1(U(U)))><L,U><S,1*U(U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=4,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_a5ug)
+                 (@ b_a5uh)
+                 ($dHashable_a5ui [Occ=Once] :: Hashable a_a5ug)
+                 ($dHashable1_a5uj [Occ=Once] :: Hashable b_a5uh)
+                 (salt_a4uB [Occ=Once] :: Salt)
+                 (ds_d5wK [Occ=Once!] :: (a_a5ug, b_a5uh)) ->
+                 case ds_d5wK
+                 of _ [Occ=Dead] { (a1_a4uC [Occ=Once], b1_a4uD [Occ=Once]) ->
+                 ($dHashable1_a5uj
+                  `cast` (BloomFilter.Hash.N:Hashable[0] <b_a5uh>_N
+                          :: (Hashable b_a5uh :: Constraint)
+                             ~R#
+                             ((Salt -> b_a5uh -> Word64) :: *)))
+                   (($dHashable_a5ui
+                     `cast` (BloomFilter.Hash.N:Hashable[0] <a_a5ug>_N
+                             :: (Hashable a_a5ug :: Constraint)
+                                ~R#
+                                ((Salt -> a_a5ug -> Word64) :: *)))
+                      salt_a4uB a1_a4uC)
+                   b1_a4uD
+                 }}]
+BloomFilter.Hash.$fHashable(,)_$chashSalt =
+  \ (@ a_a5ug)
+    (@ b_a5uh)
+    ($dHashable_a5ui :: Hashable a_a5ug)
+    ($dHashable1_a5uj :: Hashable b_a5uh)
+    (salt_a4uB :: Salt)
+    (ds_d5wK :: (a_a5ug, b_a5uh)) ->
+    case ds_d5wK of _ [Occ=Dead] { (a1_a4uC, b1_a4uD) ->
+    ($dHashable1_a5uj
+     `cast` (BloomFilter.Hash.N:Hashable[0] <b_a5uh>_N
+             :: (Hashable b_a5uh :: Constraint)
+                ~R#
+                ((Salt -> b_a5uh -> Word64) :: *)))
+      (($dHashable_a5ui
+        `cast` (BloomFilter.Hash.N:Hashable[0] <a_a5ug>_N
+                :: (Hashable a_a5ug :: Constraint)
+                   ~R#
+                   ((Salt -> a_a5ug -> Word64) :: *)))
+         salt_a4uB a1_a4uC)
+      b1_a4uD
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 17}
+BloomFilter.Hash.$fHashable(,) [InlPrag=INLINE (sat-args=0)]
+  :: forall a_a4BF b_a4BG.
+     (Hashable a_a4BF, Hashable b_a4BG) =>
+     Hashable (a_a4BF, b_a4BG)
+[GblId[DFunId(nt)],
+ Arity=4,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U))><C(C(S)),1*C1(C1(U(U)))><L,U><S,1*U(U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashable(,)_$chashSalt
+               `cast` (forall (a_a5ug :: <*>_N).
+                       forall (b_a5uh :: <*>_N).
+                       <Hashable a_a5ug>_R
+                       -> <Hashable b_a5uh>_R
+                       -> Sym (BloomFilter.Hash.N:Hashable[0] <(a_a5ug, b_a5uh)>_N)
+                       :: ((forall a_a5ug b_a5uh.
+                            (Hashable a_a5ug, Hashable b_a5uh) =>
+                            Salt -> (a_a5ug, b_a5uh) -> Word64) :: *)
+                          ~R#
+                          ((forall a_a5ug b_a5uh.
+                            (Hashable a_a5ug, Hashable b_a5uh) =>
+                            Hashable (a_a5ug, b_a5uh)) :: *))}]
+BloomFilter.Hash.$fHashable(,) =
+  BloomFilter.Hash.$fHashable(,)_$chashSalt
+  `cast` (forall (a_a5ug :: <*>_N).
+          forall (b_a5uh :: <*>_N).
+          <Hashable a_a5ug>_R
+          -> <Hashable b_a5uh>_R
+          -> Sym (BloomFilter.Hash.N:Hashable[0] <(a_a5ug, b_a5uh)>_N)
+          :: ((forall a_a5ug b_a5uh.
+               (Hashable a_a5ug, Hashable b_a5uh) =>
+               Salt -> (a_a5ug, b_a5uh) -> Word64) :: *)
+             ~R#
+             ((forall a_a5ug b_a5uh.
+               (Hashable a_a5ug, Hashable b_a5uh) =>
+               Hashable (a_a5ug, b_a5uh)) :: *))
+
+Rec {
+-- RHS size: {terms: 27, types: 31, coercions: 0}
+rechunk [Occ=LoopBreaker] :: Lazy.ByteString -> [Strict.ByteString]
+[GblId, Arity=1, Str=DmdType <S,1*U>]
+rechunk =
+  \ (s_a4mD :: Lazy.ByteString) ->
+    case s_a4mD of wild_a5Bo {
+      Data.ByteString.Lazy.Internal.Empty ->
+        GHC.Types.[] @ Strict.ByteString;
+      Data.ByteString.Lazy.Internal.Chunk ipv_a5Nl ipv1_a5Nm ipv2_a5Nn
+                                          ipv3_a5No ipv4_a5Np ->
+        let {
+          ds_s5ML [Dmd=<L,U(U,U)>] :: (Lazy.ByteString, Lazy.ByteString)
+          [LclId, Str=DmdType]
+          ds_s5ML =
+            case Data.ByteString.Lazy.$wsplitAt' 65536# wild_a5Bo
+            of _ [Occ=Dead] { (# ww3_a5NA, ww4_a5NB #) ->
+            (ww3_a5NA, ww4_a5NB)
+            } } in
+        GHC.Types.:
+          @ Strict.ByteString
+          (case ds_s5ML of _ [Occ=Dead] { (pre_X59I, suf_a58Z) ->
+           Data.ByteString.Internal.$fMonoidByteString_$cmconcat
+             (Data.ByteString.Lazy.toChunks_go1 pre_X59I)
+           })
+          (case ds_s5ML of _ [Occ=Dead] { (pre_X59b, suf_X59M) ->
+           rechunk suf_X59M
+           })
+    }
+end Rec }
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+doubleHash1 :: Word64
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 20}]
+doubleHash1 = GHC.Word.W64# 10471055255048590958##
+
+-- RHS size: {terms: 62, types: 26, coercions: 2}
+BloomFilter.Hash.$wdoubleHash [InlPrag=[0]]
+  :: forall a_s6bq.
+     Hashable a_s6bq =>
+     GHC.Prim.Int# -> a_s6bq -> [Word32]
+[GblId,
+ Arity=3,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U(U)))><S,U><L,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [60 0 0] 233 0}]
+BloomFilter.Hash.$wdoubleHash =
+  \ (@ a_s6bq)
+    (w_s6br :: Hashable a_s6bq)
+    (ww_s6bw :: GHC.Prim.Int#)
+    (w1_s6bt :: a_s6bq) ->
+    let {
+      num_s6cC :: GHC.Prim.Word#
+      [LclId, Str=DmdType]
+      num_s6cC = GHC.Prim.narrow32Word# (GHC.Prim.int2Word# ww_s6bw) } in
+    let {
+      h_s5MI [Dmd=<L,U(U)>] :: Word64
+      [LclId, Str=DmdType]
+      h_s5MI =
+        (w_s6br
+         `cast` (BloomFilter.Hash.N:Hashable[0] <a_s6bq>_N
+                 :: (Hashable a_s6bq :: Constraint)
+                    ~R#
+                    ((Salt -> a_s6bq -> Word64) :: *)))
+          doubleHash1 w1_s6bt } in
+    let {
+      h1_s5MH [Dmd=<L,U(U)>] :: Word32
+      [LclId, Str=DmdType]
+      h1_s5MH =
+        case h_s5MI of _ [Occ=Dead] { GHC.Word.W64# x#_a5EK ->
+        GHC.Word.W32#
+          (GHC.Prim.and#
+             (GHC.Prim.narrow32Word# (GHC.Prim.uncheckedShiftRL# x#_a5EK 32#))
+             4294967295##)
+        } } in
+    let {
+      h2_s5MG [Dmd=<L,U(U)>] :: Word32
+      [LclId, Str=DmdType]
+      h2_s5MG =
+        case h_s5MI of _ [Occ=Dead] { GHC.Word.W64# x#_a5F1 ->
+        GHC.Word.W32# (GHC.Prim.narrow32Word# x#_a5F1)
+        } } in
+    letrec {
+      $wgo_s6bp [InlPrag=[0], Occ=LoopBreaker]
+        :: GHC.Prim.Word# -> [Word32]
+      [LclId, Arity=1, Str=DmdType <S,U>]
+      $wgo_s6bp =
+        \ (ww1_s6bn :: GHC.Prim.Word#) ->
+          case GHC.Prim.tagToEnum#
+                 @ Bool (GHC.Prim.eqWord# ww1_s6bn num_s6cC)
+          of _ [Occ=Dead] {
+            False ->
+              GHC.Types.:
+                @ Word32
+                -- READ: unboxing because h1 and h2 are NOT strictly evaluated
+                (case h1_s5MH of _ [Occ=Dead] { GHC.Word.W32# x#_a5FW ->
+                 case h2_s5MG of _ [Occ=Dead] { GHC.Word.W32# x#1_a5FM ->
+                 GHC.Word.W32#
+                   (GHC.Prim.narrow32Word#
+                      (GHC.Prim.plusWord#
+                         x#_a5FW
+                         (GHC.Prim.narrow32Word# (GHC.Prim.timesWord# x#1_a5FM ww1_s6bn))))
+                 }
+                 })
+                ($wgo_s6bp
+                   (GHC.Prim.narrow32Word# (GHC.Prim.plusWord# ww1_s6bn 1##)));
+            True -> GHC.Types.[] @ Word32
+          }; } in
+    $wgo_s6bp 0##
+
+-- RHS size: {terms: 11, types: 9, coercions: 0}
+doubleHash [InlPrag=INLINE[0]]
+  :: forall a_a2Jx. Hashable a_a2Jx => Int -> a_a2Jx -> [Word32]
+[GblId,
+ Arity=3,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*C1(C1(U(U)))><S(S),1*U(U)><L,U>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=3,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (@ a_s6bq)
+                 (w_s6br [Occ=Once] :: Hashable a_s6bq)
+                 (w1_s6bs [Occ=Once!] :: Int)
+                 (w2_s6bt [Occ=Once] :: a_s6bq) ->
+                 case w1_s6bs of _ [Occ=Dead] { GHC.Types.I# ww1_s6bw [Occ=Once] ->
+                 BloomFilter.Hash.$wdoubleHash @ a_s6bq w_s6br ww1_s6bw w2_s6bt
+                 }}]
+doubleHash =
+  \ (@ a_s6bq)
+    (w_s6br :: Hashable a_s6bq)
+    (w1_s6bs :: Int)
+    (w2_s6bt :: a_s6bq) ->
+    case w1_s6bs of _ [Occ=Dead] { GHC.Types.I# ww1_s6bw ->
+    BloomFilter.Hash.$wdoubleHash @ a_s6bq w_s6br ww1_s6bw w2_s6bt
+    }
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.$trModule2 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 30 20}]
+BloomFilter.Hash.$trModule2 = GHC.Types.TrNameS "main"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.$trModule1 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 60 20}]
+BloomFilter.Hash.$trModule1 = GHC.Types.TrNameS "BloomFilter.Hash"#
+
+-- RHS size: {terms: 3, types: 0, coercions: 0}
+BloomFilter.Hash.$trModule :: GHC.Types.Module
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 30}]
+BloomFilter.Hash.$trModule =
+  GHC.Types.Module
+    BloomFilter.Hash.$trModule2 BloomFilter.Hash.$trModule1
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.$tc'C:Hashable1 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 50 20}]
+BloomFilter.Hash.$tc'C:Hashable1 = GHC.Types.TrNameS "'C:Hashable"#
+
+-- RHS size: {terms: 5, types: 0, coercions: 0}
+BloomFilter.Hash.$tc'C:Hashable :: GHC.Types.TyCon
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 50}]
+BloomFilter.Hash.$tc'C:Hashable =
+  GHC.Types.TyCon
+    15350366277146155190##
+    11892326176059284023##
+    BloomFilter.Hash.$trModule
+    BloomFilter.Hash.$tc'C:Hashable1
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.$tcHashable1 :: GHC.Types.TrName
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m1,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 40 20}]
+BloomFilter.Hash.$tcHashable1 = GHC.Types.TrNameS "Hashable"#
+
+-- RHS size: {terms: 5, types: 0, coercions: 0}
+BloomFilter.Hash.$tcHashable :: GHC.Types.TyCon
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 50}]
+BloomFilter.Hash.$tcHashable =
+  GHC.Types.TyCon
+    14368337847621322247##
+    3169995627451274767##
+    BloomFilter.Hash.$trModule
+    BloomFilter.Hash.$tcHashable1
+
+-- RHS size: {terms: 83, types: 98, coercions: 0}
+BloomFilter.Hash.$w$shashStorable1 [InlPrag=[0]]
+  :: GHC.Prim.Word# -> GHC.Prim.Double# -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S,U><S,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 0] 138 0}]
+BloomFilter.Hash.$w$shashStorable1 =
+  \ (ww_s6bD :: GHC.Prim.Word#) (ww1_s6bH :: GHC.Prim.Double#) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 8# 8# s'_a5C9
+              of _ [Occ=Dead] { (# ipv_a5Sa, ipv1_a5Sb #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv1_a5Sb ipv_a5Sa
+              of _ [Occ=Dead] { (# ipv2_a5Sg, ipv3_a5Sh #) ->
+              let {
+                ptr_a5Sf [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr_a5Sf = GHC.Prim.byteArrayContents# ipv3_a5Sh } in
+              case GHC.Prim.writeDoubleOffAddr#
+                     @ GHC.Prim.RealWorld ptr_a5Sf 0# ww1_s6bH ipv2_a5Sg
+              of s2_a5Th [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 8# 8# s2_a5Th
+              of _ [Occ=Dead] { (# ipv4_X5Ty, ipv5_X5TA #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv5_X5TA ipv4_X5Ty
+              of _ [Occ=Dead] { (# ipv6_X5TI, ipv7_X5TK #) ->
+              let {
+                ptr1_X5Vf [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr1_X5Vf = GHC.Prim.byteArrayContents# ipv7_X5TK } in
+              case GHC.Prim.writeWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vf 0# ww_s6bD ipv6_X5TI
+              of s1_a5SL [OS=OneShot] { __DEFAULT ->
+              case {__pkg_ccall main hashword2 Addr#
+                            -> Word#
+                            -> Addr#
+                            -> Addr#
+                            -> State# RealWorld
+                            -> (# State# RealWorld #)}_d5xn
+                     ptr_a5Sf 2## ptr1_X5Vf (GHC.Prim.plusAddr# ptr1_X5Vf 4#) s1_a5SL
+              of _ [Occ=Dead] { (# ds_d5xl [OS=OneShot] #) ->
+              case GHC.Prim.readWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vf 0# ds_d5xl
+              of _ [Occ=Dead] { (# ipv8_a5Rv, ipv9_a5Rw #) ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted
+                     @ GHC.Prim.ByteArray#
+                     ipv7_X5TK
+                     ipv8_a5Rv
+              of s4_a5Su [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted @ GHC.Prim.ByteArray# ipv3_a5Sh s4_a5Su
+              of s3_X5Uo [OS=OneShot] { __DEFAULT ->
+              (# s3_X5Uo, GHC.Word.W64# ipv9_a5Rw #)
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 11, types: 6, coercions: 0}
+BloomFilter.Hash.$fHashableDouble_$shashStorable [InlPrag=INLINE[0]]
+  :: Word64 -> Double -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (w_s6bz [Occ=Once!] :: Word64)
+                 (w1_s6bA [Occ=Once!] :: Double) ->
+                 case w_s6bz of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bD [Occ=Once] ->
+                 case w1_s6bA of _ [Occ=Dead] { GHC.Types.D# ww3_s6bH [Occ=Once] ->
+                 BloomFilter.Hash.$w$shashStorable1 ww1_s6bD ww3_s6bH
+                 }
+                 }}]
+BloomFilter.Hash.$fHashableDouble_$shashStorable =
+  \ (w_s6bz :: Word64) (w1_s6bA :: Double) ->
+    case w_s6bz of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bD ->
+    case w1_s6bA of _ [Occ=Dead] { GHC.Types.D# ww3_s6bH ->
+    BloomFilter.Hash.$w$shashStorable1 ww1_s6bD ww3_s6bH
+    }
+    }
+
+-- RHS size: {terms: 83, types: 98, coercions: 0}
+BloomFilter.Hash.$w$shashStorable [InlPrag=[0]]
+  :: GHC.Prim.Word# -> GHC.Prim.Char# -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S,U><S,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 0] 138 0}]
+BloomFilter.Hash.$w$shashStorable =
+  \ (ww_s6bO :: GHC.Prim.Word#) (ww1_s6bS :: GHC.Prim.Char#) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 4# 4# s'_a5C9
+              of _ [Occ=Dead] { (# ipv_a5Sa, ipv1_a5Sb #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv1_a5Sb ipv_a5Sa
+              of _ [Occ=Dead] { (# ipv2_a5Sg, ipv3_a5Sh #) ->
+              let {
+                ptr_a5Sf [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr_a5Sf = GHC.Prim.byteArrayContents# ipv3_a5Sh } in
+              case GHC.Prim.writeWideCharOffAddr#
+                     @ GHC.Prim.RealWorld ptr_a5Sf 0# ww1_s6bS ipv2_a5Sg
+              of s2_a5TE [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 8# 8# s2_a5TE
+              of _ [Occ=Dead] { (# ipv4_X5Tz, ipv5_X5TB #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv5_X5TB ipv4_X5Tz
+              of _ [Occ=Dead] { (# ipv6_X5TJ, ipv7_X5TL #) ->
+              let {
+                ptr1_X5Vh [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr1_X5Vh = GHC.Prim.byteArrayContents# ipv7_X5TL } in
+              case GHC.Prim.writeWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vh 0# ww_s6bO ipv6_X5TJ
+              of s1_a5SL [OS=OneShot] { __DEFAULT ->
+              case {__pkg_ccall main hashword2 Addr#
+                            -> Word#
+                            -> Addr#
+                            -> Addr#
+                            -> State# RealWorld
+                            -> (# State# RealWorld #)}_d5xn
+                     ptr_a5Sf 1## ptr1_X5Vh (GHC.Prim.plusAddr# ptr1_X5Vh 4#) s1_a5SL
+              of _ [Occ=Dead] { (# ds_d5xl [OS=OneShot] #) ->
+              case GHC.Prim.readWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vh 0# ds_d5xl
+              of _ [Occ=Dead] { (# ipv8_a5Rv, ipv9_a5Rw #) ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted
+                     @ GHC.Prim.ByteArray#
+                     ipv7_X5TL
+                     ipv8_a5Rv
+              of s4_a5Su [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted @ GHC.Prim.ByteArray# ipv3_a5Sh s4_a5Su
+              of s3_X5Up [OS=OneShot] { __DEFAULT ->
+              (# s3_X5Up, GHC.Word.W64# ipv9_a5Rw #)
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 11, types: 6, coercions: 0}
+BloomFilter.Hash.$fHashableChar_$shashStorable [InlPrag=INLINE[0]]
+  :: Word64 -> Char -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (w_s6bK [Occ=Once!] :: Word64)
+                 (w1_s6bL [Occ=Once!] :: Char) ->
+                 case w_s6bK of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bO [Occ=Once] ->
+                 case w1_s6bL of _ [Occ=Dead] { GHC.Types.C# ww3_s6bS [Occ=Once] ->
+                 BloomFilter.Hash.$w$shashStorable ww1_s6bO ww3_s6bS
+                 }
+                 }}]
+BloomFilter.Hash.$fHashableChar_$shashStorable =
+  \ (w_s6bK :: Word64) (w1_s6bL :: Char) ->
+    case w_s6bK of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bO ->
+    case w1_s6bL of _ [Occ=Dead] { GHC.Types.C# ww3_s6bS ->
+    BloomFilter.Hash.$w$shashStorable ww1_s6bO ww3_s6bS
+    }
+    }
+
+-- RHS size: {terms: 83, types: 98, coercions: 0}
+BloomFilter.Hash.$w$shashStorable2 [InlPrag=[0]]
+  :: GHC.Prim.Word# -> GHC.Prim.Int# -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S,U><S,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 0] 138 0}]
+BloomFilter.Hash.$w$shashStorable2 =
+  \ (ww_s6bZ :: GHC.Prim.Word#) (ww1_s6c3 :: GHC.Prim.Int#) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 8# 8# s'_a5C9
+              of _ [Occ=Dead] { (# ipv_a5Sa, ipv1_a5Sb #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv1_a5Sb ipv_a5Sa
+              of _ [Occ=Dead] { (# ipv2_a5Sg, ipv3_a5Sh #) ->
+              let {
+                ptr_a5Sf [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr_a5Sf = GHC.Prim.byteArrayContents# ipv3_a5Sh } in
+              case GHC.Prim.writeIntOffAddr#
+                     @ GHC.Prim.RealWorld ptr_a5Sf 0# ww1_s6c3 ipv2_a5Sg
+              of s2_a5U0 [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.newAlignedPinnedByteArray#
+                     @ GHC.Prim.RealWorld 8# 8# s2_a5U0
+              of _ [Occ=Dead] { (# ipv4_X5TA, ipv5_X5TC #) ->
+              case GHC.Prim.unsafeFreezeByteArray#
+                     @ GHC.Prim.RealWorld ipv5_X5TC ipv4_X5TA
+              of _ [Occ=Dead] { (# ipv6_X5TK, ipv7_X5TM #) ->
+              let {
+                ptr1_X5Vj [Dmd=<S,U>] :: GHC.Prim.Addr#
+                [LclId, Str=DmdType]
+                ptr1_X5Vj = GHC.Prim.byteArrayContents# ipv7_X5TM } in
+              case GHC.Prim.writeWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vj 0# ww_s6bZ ipv6_X5TK
+              of s1_a5SL [OS=OneShot] { __DEFAULT ->
+              case {__pkg_ccall main hashword2 Addr#
+                            -> Word#
+                            -> Addr#
+                            -> Addr#
+                            -> State# RealWorld
+                            -> (# State# RealWorld #)}_d5xn
+                     ptr_a5Sf 2## ptr1_X5Vj (GHC.Prim.plusAddr# ptr1_X5Vj 4#) s1_a5SL
+              of _ [Occ=Dead] { (# ds_d5xl [OS=OneShot] #) ->
+              case GHC.Prim.readWord64OffAddr#
+                     @ GHC.Prim.RealWorld ptr1_X5Vj 0# ds_d5xl
+              of _ [Occ=Dead] { (# ipv8_a5Rv, ipv9_a5Rw #) ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted
+                     @ GHC.Prim.ByteArray#
+                     ipv7_X5TM
+                     ipv8_a5Rv
+              of s4_a5Su [OS=OneShot] { __DEFAULT ->
+              case GHC.Prim.touch#
+                     @ 'GHC.Types.PtrRepUnlifted @ GHC.Prim.ByteArray# ipv3_a5Sh s4_a5Su
+              of s3_X5Uq [OS=OneShot] { __DEFAULT ->
+              (# s3_X5Uq, GHC.Word.W64# ipv9_a5Rw #)
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              }
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 11, types: 6, coercions: 0}
+BloomFilter.Hash.$fHashableInt_$shashStorable [InlPrag=INLINE[0]]
+  :: Word64 -> Int -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (w_s6bV [Occ=Once!] :: Word64)
+                 (w1_s6bW [Occ=Once!] :: Int) ->
+                 case w_s6bV of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bZ [Occ=Once] ->
+                 case w1_s6bW of _ [Occ=Dead] { GHC.Types.I# ww3_s6c3 [Occ=Once] ->
+                 BloomFilter.Hash.$w$shashStorable2 ww1_s6bZ ww3_s6c3
+                 }
+                 }}]
+BloomFilter.Hash.$fHashableInt_$shashStorable =
+  \ (w_s6bV :: Word64) (w1_s6bW :: Int) ->
+    case w_s6bV of _ [Occ=Dead] { GHC.Word.W64# ww1_s6bZ ->
+    case w1_s6bW of _ [Occ=Dead] { GHC.Types.I# ww3_s6c3 ->
+    BloomFilter.Hash.$w$shashStorable2 ww1_s6bZ ww3_s6c3
+    }
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 0}
+BloomFilter.Hash.$fHashableDouble_$chashSalt
+  :: Salt -> Double -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=True,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableDouble_$shashStorable}]
+BloomFilter.Hash.$fHashableDouble_$chashSalt =
+  BloomFilter.Hash.$fHashableDouble_$shashStorable
+
+-- RHS size: {terms: 1, types: 0, coercions: 3}
+BloomFilter.Hash.$fHashableDouble [InlPrag=INLINE (sat-args=0)]
+  :: Hashable Double
+[GblId[DFunId(nt)],
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableDouble_$chashSalt
+               `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Double>_N)
+                       :: ((Salt -> Double -> Word64) :: *)
+                          ~R#
+                          (Hashable Double :: Constraint))}]
+BloomFilter.Hash.$fHashableDouble =
+  BloomFilter.Hash.$fHashableDouble_$shashStorable
+  `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Double>_N)
+          :: ((Salt -> Double -> Word64) :: *)
+             ~R#
+             (Hashable Double :: Constraint))
+
+-- RHS size: {terms: 1, types: 0, coercions: 0}
+BloomFilter.Hash.$fHashableInt_$chashSalt :: Salt -> Int -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=True,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableInt_$shashStorable}]
+BloomFilter.Hash.$fHashableInt_$chashSalt =
+  BloomFilter.Hash.$fHashableInt_$shashStorable
+
+-- RHS size: {terms: 1, types: 0, coercions: 3}
+BloomFilter.Hash.$fHashableInt [InlPrag=INLINE (sat-args=0)]
+  :: Hashable Int
+[GblId[DFunId(nt)],
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableInt_$chashSalt
+               `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Int>_N)
+                       :: ((Salt -> Int -> Word64) :: *)
+                          ~R#
+                          (Hashable Int :: Constraint))}]
+BloomFilter.Hash.$fHashableInt =
+  BloomFilter.Hash.$fHashableInt_$shashStorable
+  `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Int>_N)
+          :: ((Salt -> Int -> Word64) :: *) ~R# (Hashable Int :: Constraint))
+
+-- RHS size: {terms: 1, types: 0, coercions: 0}
+BloomFilter.Hash.$fHashableChar_$chashSalt
+  :: Salt -> Char -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=True,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableChar_$shashStorable}]
+BloomFilter.Hash.$fHashableChar_$chashSalt =
+  BloomFilter.Hash.$fHashableChar_$shashStorable
+
+-- RHS size: {terms: 1, types: 0, coercions: 3}
+BloomFilter.Hash.$fHashableChar [InlPrag=INLINE (sat-args=0)]
+  :: Hashable Char
+[GblId[DFunId(nt)],
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(U)><S(S),1*U(U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableChar_$chashSalt
+               `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Char>_N)
+                       :: ((Salt -> Char -> Word64) :: *)
+                          ~R#
+                          (Hashable Char :: Constraint))}]
+BloomFilter.Hash.$fHashableChar =
+  BloomFilter.Hash.$fHashableChar_$shashStorable
+  `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Char>_N)
+          :: ((Salt -> Char -> Word64) :: *)
+             ~R#
+             (Hashable Char :: Constraint))
+
+-- RHS size: {terms: 2, types: 0, coercions: 0}
+BloomFilter.Hash.$fHashable[]1 :: Int
+[GblId,
+ Caf=NoCafRefs,
+ Str=DmdType m,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [] 10 20}]
+BloomFilter.Hash.$fHashable[]1 = GHC.Types.I# 0#
+
+-- RHS size: {terms: 142, types: 138, coercions: 15}
+BloomFilter.Hash.$fHashable[]_$chashSalt
+  :: forall a_a5uz. Storable a_a5uz => Salt -> [a_a5uz] -> Word64
+[GblId,
+ Arity=3,
+ Str=DmdType <L,U(C(U(U)),C(U(U)),A,C(C1(C1(C1(U(U,A))))),A,A,A,A)><L,U(U)><L,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [30 20 30] 476 0}]
+BloomFilter.Hash.$fHashable[]_$chashSalt =
+  \ (@ a_a5uz)
+    ($dStorable_a5uA :: Storable a_a5uz)
+    (salt_a4uF :: Salt)
+    (xs_a4uG :: [a_a5uz]) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              let {
+                sizex_s5Mr [Dmd=<L,U(U)>] :: Int
+                [LclId, Str=DmdType]
+                sizex_s5Mr =
+                  case xs_a4uG of _ [Occ=Dead] {
+                    [] -> BloomFilter.Hash.$fHashable[]1;
+                    : ds1_a5Ua ds2_a5Ub -> sizeOf @ a_a5uz $dStorable_a5uA ds1_a5Ua
+                  } } in
+              let {
+                len_a5Ck [Dmd=<L,U(U)>] :: Int
+                [LclId, Str=DmdType]
+                len_a5Ck =
+                  case GHC.List.$wlenAcc @ a_a5uz xs_a4uG 0#
+                  of ww2_a5Cm { __DEFAULT ->
+                  GHC.Types.I# ww2_a5Cm
+                  } } in
+              ((Foreign.Marshal.Array.allocaArray
+                  @ a_a5uz
+                  @ Word64
+                  $dStorable_a5uA
+                  len_a5Ck
+                  ((\ (ptr_a5Cq :: Ptr a_a5uz)
+                      (eta_a5Cr [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+                      case Foreign.Marshal.Array.newArray2
+                             @ a_a5uz $dStorable_a5uA ptr_a5Cq xs_a4uG eta_a5Cr
+                      of _ [Occ=Dead] { (# ipv_a5Cw, ipv1_a5Cx #) ->
+                      case GHC.Prim.newAlignedPinnedByteArray#
+                             @ GHC.Prim.RealWorld 8# 8# ipv_a5Cw
+                      of _ [Occ=Dead] { (# ipv2_a5Sa, ipv3_a5Sb #) ->
+                      case GHC.Prim.unsafeFreezeByteArray#
+                             @ GHC.Prim.RealWorld ipv3_a5Sb ipv2_a5Sa
+                      of _ [Occ=Dead] { (# ipv4_a5Sg, ipv5_a5Sh #) ->
+                      case salt_a4uF of _ [Occ=Dead] { GHC.Word.W64# x_a5SJ ->
+                      let {
+                        ptr1_a5Sf [Dmd=<S,U>] :: GHC.Prim.Addr#
+                        [LclId, Str=DmdType]
+                        ptr1_a5Sf = GHC.Prim.byteArrayContents# ipv5_a5Sh } in
+                      case GHC.Prim.writeWord64OffAddr#
+                             @ GHC.Prim.RealWorld ptr1_a5Sf 0# x_a5SJ ipv4_a5Sg
+                      of s2_a5SL [OS=OneShot] { __DEFAULT ->
+                      case len_a5Ck of _ [Occ=Dead] { GHC.Types.I# x1_a5KA ->
+                      case sizex_s5Mr of _ [Occ=Dead] { GHC.Types.I# y_a5KE ->
+                      let {
+                        x#_a5QG [Dmd=<S,U>] :: GHC.Prim.Word#
+                        [LclId, Str=DmdType]
+                        x#_a5QG = GHC.Prim.int2Word# (GHC.Prim.*# x1_a5KA y_a5KE) } in
+                      case GHC.Prim.and# x#_a5QG 3## of _ [Occ=Dead] {
+                        __DEFAULT ->
+                          case ptr_a5Cq of _ [Occ=Dead] { GHC.Ptr.Ptr ds4_d5wY ->
+                          case {__pkg_ccall main hashlittle2 Addr#
+                              -> Word#
+                              -> Addr#
+                              -> Addr#
+                              -> State# RealWorld
+                              -> (# State# RealWorld #)}_d5x7
+                                 ds4_d5wY
+                                 x#_a5QG
+                                 ptr1_a5Sf
+                                 (GHC.Prim.plusAddr# ptr1_a5Sf 4#)
+                                 s2_a5SL
+                          of _ [Occ=Dead] { (# ds5_d5x5 [OS=OneShot] #) ->
+                          case GHC.Prim.readWord64OffAddr#
+                                 @ GHC.Prim.RealWorld ptr1_a5Sf 0# ds5_d5x5
+                          of _ [Occ=Dead] { (# ipv6_a5Rv, ipv7_a5Rw #) ->
+                          case GHC.Prim.touch#
+                                 @ 'GHC.Types.PtrRepUnlifted
+                                 @ GHC.Prim.ByteArray#
+                                 ipv5_a5Sh
+                                 ipv6_a5Rv
+                          of s4_a5Su [OS=OneShot] { __DEFAULT ->
+                          (# s4_a5Su, GHC.Word.W64# ipv7_a5Rw #)
+                          }
+                          }
+                          }
+                          };
+                        0## ->
+                          case ptr_a5Cq
+                               `cast` ((Ptr U(phant:<*>_N, a_a5uz, Word32)_P)_R
+                                       :: (Ptr a_a5uz :: *) ~R# (Ptr Word32 :: *))
+                          of _ [Occ=Dead] { GHC.Ptr.Ptr ds4_d5xe ->
+                          case {__pkg_ccall main hashword2 Addr#
+                            -> Word#
+                            -> Addr#
+                            -> Addr#
+                            -> State# RealWorld
+                            -> (# State# RealWorld #)}_d5xn
+                                 ds4_d5xe
+                                 (GHC.Prim.quotWord# x#_a5QG 4##)
+                                 ptr1_a5Sf
+                                 (GHC.Prim.plusAddr# ptr1_a5Sf 4#)
+                                 s2_a5SL
+                          of _ [Occ=Dead] { (# ds5_d5xl [OS=OneShot] #) ->
+                          case GHC.Prim.readWord64OffAddr#
+                                 @ GHC.Prim.RealWorld ptr1_a5Sf 0# ds5_d5xl
+                          of _ [Occ=Dead] { (# ipv6_a5Rv, ipv7_a5Rw #) ->
+                          case GHC.Prim.touch#
+                                 @ 'GHC.Types.PtrRepUnlifted
+                                 @ GHC.Prim.ByteArray#
+                                 ipv5_a5Sh
+                                 ipv6_a5Rv
+                          of s4_a5Su [OS=OneShot] { __DEFAULT ->
+                          (# s4_a5Su, GHC.Word.W64# ipv7_a5Rw #)
+                          }
+                          }
+                          }
+                          }
+                      }
+                      }
+                      }
+                      }
+                      }
+                      }
+                      }
+                      })
+                   `cast` (<Ptr a_a5uz>_R -> Sym (GHC.Types.N:IO[0] <Word64>_R)
+                           :: ((Ptr a_a5uz
+                                -> GHC.Prim.State# GHC.Prim.RealWorld
+                                -> (# GHC.Prim.State# GHC.Prim.RealWorld, Word64 #)) :: *)
+                              ~R#
+                              ((Ptr a_a5uz -> IO Word64) :: *))))
+               `cast` (GHC.Types.N:IO[0] <Word64>_R
+                       :: (IO Word64 :: *)
+                          ~R#
+                          ((GHC.Prim.State# GHC.Prim.RealWorld
+                            -> (# GHC.Prim.State# GHC.Prim.RealWorld, Word64 #)) :: *)))
+                s'_a5C9
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 10}
+BloomFilter.Hash.$fHashable[] [InlPrag=INLINE (sat-args=0)]
+  :: forall a_a4BT. Storable a_a4BT => Hashable [a_a4BT]
+[GblId[DFunId(nt)],
+ Arity=3,
+ Str=DmdType <L,U(C(U(U)),C(U(U)),A,C(C1(C1(C1(U(U,A))))),A,A,A,A)><L,U(U)><L,U>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=1,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashable[]_$chashSalt
+               `cast` (forall (a_a5uz :: <*>_N).
+                       <Storable a_a5uz>_R
+                       -> Sym (BloomFilter.Hash.N:Hashable[0] <[a_a5uz]>_N)
+                       :: ((forall a_a5uz.
+                            Storable a_a5uz =>
+                            Salt -> [a_a5uz] -> Word64) :: *)
+                          ~R#
+                          ((forall a_a5uz. Storable a_a5uz => Hashable [a_a5uz]) :: *))}]
+BloomFilter.Hash.$fHashable[] =
+  BloomFilter.Hash.$fHashable[]_$chashSalt
+  `cast` (forall (a_a5uz :: <*>_N).
+          <Storable a_a5uz>_R
+          -> Sym (BloomFilter.Hash.N:Hashable[0] <[a_a5uz]>_N)
+          :: ((forall a_a5uz.
+               Storable a_a5uz =>
+               Salt -> [a_a5uz] -> Word64) :: *)
+             ~R#
+             ((forall a_a5uz. Storable a_a5uz => Hashable [a_a5uz]) :: *))
+
+-- RHS size: {terms: 145, types: 138, coercions: 0}
+BloomFilter.Hash.$whashByteString [InlPrag=[0]]
+  :: Word64
+     -> GHC.Prim.Addr#
+     -> GHC.ForeignPtr.ForeignPtrContents
+     -> GHC.Prim.Int#
+     -> GHC.Prim.Int#
+     -> GHC.Prim.State# GHC.Prim.RealWorld
+     -> (# GHC.Prim.State# GHC.Prim.RealWorld, Word64 #)
+[GblId,
+ Arity=6,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*U(U)><S,U><L,U><S,U><S,U><S,U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=IF_ARGS [20 0 0 0 0 0] 232 60}]
+BloomFilter.Hash.$whashByteString =
+  \ (w_s6ca :: Word64)
+    (ww_s6cf :: GHC.Prim.Addr#)
+    (ww1_s6cg :: GHC.ForeignPtr.ForeignPtrContents)
+    (ww2_s6ch :: GHC.Prim.Int#)
+    (ww3_s6ci :: GHC.Prim.Int#)
+    (w1_s6cc [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+    case GHC.Prim.newPinnedByteArray#
+           @ GHC.Prim.RealWorld (GHC.Prim.+# ww3_s6ci 1#) w1_s6cc
+    of _ [Occ=Dead] { (# ipv_a65m, ipv1_a65n #) ->
+    case GHC.Prim.unsafeFreezeByteArray#
+           @ GHC.Prim.RealWorld ipv1_a65n ipv_a65m
+    of _ [Occ=Dead] { (# ipv2_a65s, ipv3_a65t #) ->
+    let {
+      buf_a65r [Dmd=<S,U>] :: GHC.Prim.Addr#
+      [LclId, Str=DmdType]
+      buf_a65r = GHC.Prim.byteArrayContents# ipv3_a65t } in
+    case {__pkg_ccall bytestring-0.10.8.1 memcpy Addr#
+                                        -> Addr#
+                                        -> Word#
+                                        -> State# RealWorld
+                                        -> (# State# RealWorld, Addr# #)}_a65v
+           buf_a65r
+           (GHC.Prim.plusAddr# ww_s6cf ww2_s6ch)
+           (GHC.Prim.int2Word# ww3_s6ci)
+           ipv2_a65s
+    of _ [Occ=Dead] { (# ds4_a65y, ds5_a65z #) ->
+    case GHC.Prim.writeWord8OffAddr#
+           @ GHC.Prim.RealWorld
+           (GHC.Prim.plusAddr# buf_a65r ww3_s6ci)
+           0#
+           0##
+           ds4_a65y
+    of s2_a65B [OS=OneShot] { __DEFAULT ->
+    case GHC.Prim.newAlignedPinnedByteArray#
+           @ GHC.Prim.RealWorld 8# 8# s2_a65B
+    of _ [Occ=Dead] { (# ipv4_a5Sa, ipv5_a5Sb #) ->
+    case GHC.Prim.unsafeFreezeByteArray#
+           @ GHC.Prim.RealWorld ipv5_a5Sb ipv4_a5Sa
+    of _ [Occ=Dead] { (# ipv6_a5Sg, ipv7_a5Sh #) ->
+    case w_s6ca of _ [Occ=Dead] { GHC.Word.W64# x_a5SJ ->
+    let {
+      ptr_a5Sf [Dmd=<S,U>] :: GHC.Prim.Addr#
+      [LclId, Str=DmdType]
+      ptr_a5Sf = GHC.Prim.byteArrayContents# ipv7_a5Sh } in
+    case GHC.Prim.writeWord64OffAddr#
+           @ GHC.Prim.RealWorld ptr_a5Sf 0# x_a5SJ ipv6_a5Sg
+    of s1_a5SL [OS=OneShot] { __DEFAULT ->
+    let {
+      x#_a5QG [Dmd=<S,U>] :: GHC.Prim.Word#
+      [LclId, Str=DmdType]
+      x#_a5QG = GHC.Prim.int2Word# ww3_s6ci } in
+    case GHC.Prim.and# x#_a5QG 3## of _ [Occ=Dead] {
+      __DEFAULT ->
+        case {__pkg_ccall main hashlittle2 Addr#
+                              -> Word#
+                              -> Addr#
+                              -> Addr#
+                              -> State# RealWorld
+                              -> (# State# RealWorld #)}_d5x7
+               buf_a65r x#_a5QG ptr_a5Sf (GHC.Prim.plusAddr# ptr_a5Sf 4#) s1_a5SL
+        of _ [Occ=Dead] { (# ds_d5x5 [OS=OneShot] #) ->
+        case GHC.Prim.readWord64OffAddr#
+               @ GHC.Prim.RealWorld ptr_a5Sf 0# ds_d5x5
+        of _ [Occ=Dead] { (# ipv8_a5Rv, ipv9_a5Rw #) ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepUnlifted
+               @ GHC.Prim.ByteArray#
+               ipv7_a5Sh
+               ipv8_a5Rv
+        of s4_a5Su [OS=OneShot] { __DEFAULT ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepLifted
+               @ GHC.ForeignPtr.ForeignPtrContents
+               ww1_s6cg
+               s4_a5Su
+        of s'_a65H [OS=OneShot] { __DEFAULT ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepUnlifted @ GHC.Prim.ByteArray# ipv3_a65t s'_a65H
+        of s3_a65I [OS=OneShot] { __DEFAULT ->
+        (# s3_a65I, GHC.Word.W64# ipv9_a5Rw #)
+        }
+        }
+        }
+        }
+        };
+      0## ->
+        case {__pkg_ccall main hashword2 Addr#
+                            -> Word#
+                            -> Addr#
+                            -> Addr#
+                            -> State# RealWorld
+                            -> (# State# RealWorld #)}_d5xn
+               buf_a65r
+               (GHC.Prim.quotWord# x#_a5QG 4##)
+               ptr_a5Sf
+               (GHC.Prim.plusAddr# ptr_a5Sf 4#)
+               s1_a5SL
+        of _ [Occ=Dead] { (# ds_d5xl [OS=OneShot] #) ->
+        case GHC.Prim.readWord64OffAddr#
+               @ GHC.Prim.RealWorld ptr_a5Sf 0# ds_d5xl
+        of _ [Occ=Dead] { (# ipv8_a5Rv, ipv9_a5Rw #) ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepUnlifted
+               @ GHC.Prim.ByteArray#
+               ipv7_a5Sh
+               ipv8_a5Rv
+        of s4_a5Su [OS=OneShot] { __DEFAULT ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepLifted
+               @ GHC.ForeignPtr.ForeignPtrContents
+               ww1_s6cg
+               s4_a5Su
+        of s'_a65H [OS=OneShot] { __DEFAULT ->
+        case GHC.Prim.touch#
+               @ 'GHC.Types.PtrRepUnlifted @ GHC.Prim.ByteArray# ipv3_a65t s'_a65H
+        of s3_a65I [OS=OneShot] { __DEFAULT ->
+        (# s3_a65I, GHC.Word.W64# ipv9_a5Rw #)
+        }
+        }
+        }
+        }
+        }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+
+-- RHS size: {terms: 13, types: 9, coercions: 0}
+BloomFilter.Hash.$fHashableByteString1 [InlPrag=INLINE[0]]
+  :: Word64
+     -> Strict.ByteString
+     -> GHC.Prim.State# GHC.Prim.RealWorld
+     -> (# GHC.Prim.State# GHC.Prim.RealWorld, Word64 #)
+[GblId,
+ Arity=3,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*U(U)><S(SLSS),1*U(U,U,U,U)><S,U>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=3,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (w_s6ca [Occ=Once] :: Word64)
+                 (w1_s6cb [Occ=Once!] :: Strict.ByteString)
+                 (w2_s6cc [Occ=Once, OS=OneShot]
+                    :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+                 case w1_s6cb
+                 of _ [Occ=Dead]
+                 { Data.ByteString.Internal.PS ww1_s6cf [Occ=Once]
+                                               ww2_s6cg [Occ=Once] ww3_s6ch [Occ=Once]
+                                               ww4_s6ci [Occ=Once] ->
+                 BloomFilter.Hash.$whashByteString
+                   w_s6ca ww1_s6cf ww2_s6cg ww3_s6ch ww4_s6ci w2_s6cc
+                 }}]
+BloomFilter.Hash.$fHashableByteString1 =
+  \ (w_s6ca :: Word64)
+    (w1_s6cb :: Strict.ByteString)
+    (w2_s6cc [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+    case w1_s6cb
+    of _ [Occ=Dead]
+    { Data.ByteString.Internal.PS ww1_s6cf ww2_s6cg ww3_s6ch
+                                  ww4_s6ci ->
+    BloomFilter.Hash.$whashByteString
+      w_s6ca ww1_s6cf ww2_s6cg ww3_s6ch ww4_s6ci w2_s6cc
+    }
+
+Rec {
+-- RHS size: {terms: 26, types: 29, coercions: 0}
+BloomFilter.Hash.$fHashableByteString_go [Occ=LoopBreaker]
+  :: [Strict.ByteString]
+     -> Word64
+     -> GHC.Prim.State# GHC.Prim.RealWorld
+     -> (# GHC.Prim.State# GHC.Prim.RealWorld, Word64 #)
+[GblId, Arity=3, Caf=NoCafRefs, Str=DmdType <S,1*U><L,U(U)><S,U>]
+BloomFilter.Hash.$fHashableByteString_go =
+  \ (ds_a5VG :: [Strict.ByteString])
+    (eta1_a5VH :: Word64)
+    (eta2_a5VI [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+    case ds_a5VG of _ [Occ=Dead] {
+      [] -> (# eta2_a5VI, eta1_a5VH #);
+      : y_a5VN ys_a5VO ->
+        case y_a5VN
+        of _ [Occ=Dead]
+        { Data.ByteString.Internal.PS ww1_s6cf ww2_s6cg ww3_s6ch
+                                      ww4_s6ci ->
+        case BloomFilter.Hash.$whashByteString
+               eta1_a5VH ww1_s6cf ww2_s6cg ww3_s6ch ww4_s6ci eta2_a5VI
+        of _ [Occ=Dead] { (# ipv_a5VS, ipv1_a5VT #) ->
+        BloomFilter.Hash.$fHashableByteString_go ys_a5VO ipv1_a5VT ipv_a5VS
+        }
+        }
+    }
+end Rec }
+
+-- RHS size: {terms: 16, types: 17, coercions: 0}
+BloomFilter.Hash.$fHashableByteString_$chashSalt
+  :: Salt -> Lazy.ByteString -> Word64
+[GblId,
+ Arity=2,
+ Str=DmdType <L,U(U)><S,1*U>,
+ Unf=Unf{Src=<vanilla>, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True, Guidance=IF_ARGS [0 0] 92 0}]
+BloomFilter.Hash.$fHashableByteString_$chashSalt =
+  \ (salt_a4uo :: Salt) (bs_a4up :: Lazy.ByteString) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              BloomFilter.Hash.$fHashableByteString_go
+                (rechunk bs_a4up) salt_a4uo s'_a5C9
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 3}
+BloomFilter.Hash.$fHashableByteString [InlPrag=INLINE (sat-args=0)]
+  :: Hashable Lazy.ByteString
+[GblId[DFunId(nt)],
+ Arity=2,
+ Str=DmdType <L,U(U)><S,1*U>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableByteString_$chashSalt
+               `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Lazy.ByteString>_N)
+                       :: ((Salt -> Lazy.ByteString -> Word64) :: *)
+                          ~R#
+                          (Hashable Lazy.ByteString :: Constraint))}]
+BloomFilter.Hash.$fHashableByteString =
+  BloomFilter.Hash.$fHashableByteString_$chashSalt
+  `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Lazy.ByteString>_N)
+          :: ((Salt -> Lazy.ByteString -> Word64) :: *)
+             ~R#
+             (Hashable Lazy.ByteString :: Constraint))
+
+-- RHS size: {terms: 21, types: 22, coercions: 0}
+BloomFilter.Hash.$fHashableByteString0_$chashSalt
+  :: Salt -> Strict.ByteString -> Word64
+[GblId,
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*U(U)><S(SLSS),1*U(U,U,U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=2,unsat_ok=True,boring_ok=False)
+         Tmpl= \ (salt_a4uq [Occ=Once] :: Salt)
+                 (bs_a4ur [Occ=Once] :: Strict.ByteString) ->
+                 case GHC.Magic.runRW#
+                        @ 'GHC.Types.PtrRepLifted
+                        @ Word64
+                        (\ (s_a5C8 [Occ=Once, OS=OneShot]
+                              :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+                           case GHC.Prim.noDuplicate# s_a5C8
+                           of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+                           BloomFilter.Hash.$fHashableByteString1 salt_a4uq bs_a4ur s'_a5C9
+                           })
+                 of _ [Occ=Dead] { (# _ [Occ=Dead], ipv1_a5Cd [Occ=Once] #) ->
+                 ipv1_a5Cd
+                 }}]
+BloomFilter.Hash.$fHashableByteString0_$chashSalt =
+  \ (salt_a4uq :: Salt) (bs_a4ur :: Strict.ByteString) ->
+    case GHC.Magic.runRW#
+           @ 'GHC.Types.PtrRepLifted
+           @ Word64
+           (\ (s_a5C8 [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld) ->
+              case GHC.Prim.noDuplicate# s_a5C8
+              of s'_a5C9 [OS=OneShot] { __DEFAULT ->
+              case bs_a4ur
+              of _ [Occ=Dead]
+              { Data.ByteString.Internal.PS ww1_s6cf ww2_s6cg ww3_s6ch
+                                            ww4_s6ci ->
+              BloomFilter.Hash.$whashByteString
+                salt_a4uq ww1_s6cf ww2_s6cg ww3_s6ch ww4_s6ci s'_a5C9
+              }
+              })
+    of _ [Occ=Dead] { (# ipv_a5Cc, ipv1_a5Cd #) ->
+    ipv1_a5Cd
+    }
+
+-- RHS size: {terms: 1, types: 0, coercions: 3}
+BloomFilter.Hash.$fHashableByteString0 [InlPrag=INLINE (sat-args=0)]
+  :: Hashable Strict.ByteString
+[GblId[DFunId(nt)],
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <L,1*U(U)><S(SLSS),1*U(U,U,U,U)>,
+ Unf=Unf{Src=InlineStable, TopLvl=True, Value=True, ConLike=True,
+         WorkFree=True, Expandable=True,
+         Guidance=ALWAYS_IF(arity=0,unsat_ok=False,boring_ok=True)
+         Tmpl= BloomFilter.Hash.$fHashableByteString0_$chashSalt
+               `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Strict.ByteString>_N)
+                       :: ((Salt -> Strict.ByteString -> Word64) :: *)
+                          ~R#
+                          (Hashable Strict.ByteString :: Constraint))}]
+BloomFilter.Hash.$fHashableByteString0 =
+  BloomFilter.Hash.$fHashableByteString0_$chashSalt
+  `cast` (Sym (BloomFilter.Hash.N:Hashable[0] <Strict.ByteString>_N)
+          :: ((Salt -> Strict.ByteString -> Word64) :: *)
+             ~R#
+             (Hashable Strict.ByteString :: Constraint))
