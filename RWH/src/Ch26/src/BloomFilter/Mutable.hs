@@ -1,10 +1,10 @@
-module Ch26.Mutable ( MBloom(..)
-                    , elem
-                    , notElem
-                    , insert
-                    , length
-                    , new
-                    )
+module BloomFilter.Mutable ( MBloom(..)
+                           , elem
+                           , notElem
+                           , insert
+                           , length
+                           , new
+                           )
 where
 
 
@@ -12,7 +12,7 @@ import Control.Monad.ST (ST)
 import Data.Array.MArray (getBounds, newArray, readArray, writeArray)
 import Data.Word (Word32)
 import Prelude hiding (elem, length, notElem)
-import Ch26.Internal (MBloom(..))
+import BloomFilter.Internal (MBloom(..))
 
 
 new ::(a -> [Word32]) -> Word32 -> ST s (MBloom s a)

@@ -1,9 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE BangPatterns#-}
-module Ch26.Hash ( Hashable(..)
-                 , hash
-                 , doubleHash
-                 )
+module BloomFilter.Hash ( Hashable(..)
+                        , hash
+                        , doubleHash
+                        )
 where
 
 import Data.Bits ((.&.), shiftR)
@@ -32,14 +31,14 @@ hashIO :: Ptr a   -- value to hash
        -> Word64  -- salt
        -> IO Word64
 hashIO ptr bytes salt =
-  with (fromIntegral salt) $ \sp -> do
+  with (fromIntegral salt) $ \saltp -> do
     let
-      p1 =
-        castPtr sp
-      p2 =
-        castPtr sp `plusPtr` 4
-    go p1 p2
-    peek sp
+      salt1p =
+        castPtr saltp
+      salt2p =
+        castPtr saltp `plusPtr` 4
+    go salt1p salt2p
+    peek saltp
     where
       go p1 p2
         | isByte =
@@ -91,10 +90,13 @@ instance Hashable Double where
 hashList :: (Storable a) => Word64 -> [a] -> IO Word64
 hashList salt xs =
   withArrayLen xs $ \len ptr ->
-    hashIO ptr (fromIntegral (len * sizeOf x)) salt
+    hashIO ptr (fromIntegral (len * sizex)) salt
   where
-    x =
-      head xs
+    sizex
+      | null xs =
+        0
+      | otherwise =
+        sizeOf (head xs)
 
 
 instance (Storable a) => Hashable [a] where
@@ -117,7 +119,6 @@ instance (Hashable a, Hashable b, Hashable c) => Hashable (a, b, c) where
       hash2 c . hash2 b . hash2 a $ salt
 
 
-
 hashByteString :: Word64 -> Strict.ByteString -> IO Word64
 hashByteString salt bs =
   Strict.useAsCStringLen bs $ \(ptr, len) ->
@@ -125,10 +126,12 @@ hashByteString salt bs =
 
 
 instance Hashable Strict.ByteString where
-    hashSalt salt bs =
-      unsafePerformIO $ hashByteString salt bs
+  hashSalt salt bs =
+    unsafePerformIO $ hashByteString salt bs
 
 
+-- Ensures that the chunks we pass to the C hashing code are a uniform 64KB in size,
+-- so that we will give consistent hash values no matter where the original chunk boundaries lie.
 rechunk :: Lazy.ByteString -> [Strict.ByteString]
 rechunk s
   | Lazy.null s =
@@ -162,6 +165,9 @@ doubleHash numHashes value =
     h1  =
       fromIntegral (h `shiftR` 32) .&. maxBound
 
+    -- UHU?! How does this extract the lowest 32 bits?
+    -- Guess: h is Word64 but we return Word32 so `fromIntegral`
+    -- here truncates the last 32 bits
     h2  =
       fromIntegral h
 
