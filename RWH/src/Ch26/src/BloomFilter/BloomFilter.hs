@@ -12,7 +12,7 @@ import Prelude hiding (elem, length, notElem)
 import Data.List (genericLength)
 import Data.Maybe (catMaybes)
 import BloomFilter.Hash (Hashable(..), doubleHash)
-import qualified BloomFilter.Immutable as B (IBloom, fromList, elem, length)
+import qualified BloomFilter.Immutable as B (IBloom(..), fromList, elem, length)
 import Data.Word (Word32)
 
 
@@ -35,6 +35,27 @@ length =
   B.length
 
 
+-- To build the Bloom filter strictly: let !ebf = easyList' 0.01 ([1..10^6]::[Int])
+easyList' :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
+easyList' errRate xs =
+  either Left rightBFilt' $ suggestSizing (genericLength xs) errRate
+  where
+    rightBFilt' x =
+      let
+        !bfilt =
+          mkBFilt' x
+      in
+        Right bfilt
+
+    mkBFilt' (bits, numHashes) =
+      let
+        bfilt =
+          B.fromList (doubleHash numHashes) bits xs
+      in
+        B.iarray bfilt `seq` bfilt
+
+
+-- This only evaluates up to `suggestSizing`: let !ebf = easyList 0.01 ([1..10^6]::[Int])
 easyList :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
 easyList errRate xs =
   either Left (Right . mkBFilt) $ suggestSizing (genericLength xs) errRate

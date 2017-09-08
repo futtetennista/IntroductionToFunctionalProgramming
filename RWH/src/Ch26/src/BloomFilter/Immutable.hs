@@ -1,4 +1,4 @@
-module BloomFilter.Immutable ( IBloom
+module BloomFilter.Immutable( IBloom(..)
                              , elem
                              , notElem
                              , MBF.insert
