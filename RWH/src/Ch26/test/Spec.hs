@@ -29,13 +29,13 @@ main =
 prop_onePresent :: Strict.ByteString -> Property
 prop_onePresent elt =
   forAll falsePositiveRate $ \errRate ->
-    BloomFilter.easyList errRate [elt] =~> \filt -> elt `BloomFilter.elem` filt
+    BloomFilter.mkFromList errRate [elt] =~> \filt -> elt `BloomFilter.elem` filt
 
 
 prop_allPresent :: [Strict.ByteString] -> Property
 prop_allPresent xs =
   forAll falsePositiveRate $ \errRate ->
-    BloomFilter.easyList errRate xs =~> \filt -> all (`BloomFilter.elem` filt) xs
+    BloomFilter.mkFromList errRate xs =~> \filt -> all (`BloomFilter.elem` filt) xs
 
 
 prop_suggestionsSane :: Property
@@ -73,7 +73,7 @@ prop_expectedFalsePositivesRate xs ys =
     config test =
       forAll falsePositiveRate $ \errRate ->
         not (null xs)  && not (null ys) ==>
-          BloomFilter.easyList errRate xs =~> \bfilt ->
+          BloomFilter.mkFromList errRate xs =~> \bfilt ->
             let
               numFalsePositives =
                 foldl' (flip (countFps bfilt)) 0 ys

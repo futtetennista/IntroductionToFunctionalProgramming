@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 module BloomFilter.BloomFilter ( Bloom
-                               , easyList
+                               , mkFromList
+                               , mkFromList'
                                , suggestSizing
                                , sizings
                                , elem
@@ -35,9 +36,9 @@ length =
   B.length
 
 
--- To build the Bloom filter strictly: let !ebf = easyList' 0.01 ([1..10^6]::[Int])
-easyList' :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
-easyList' errRate xs =
+-- To build the Bloom filter strictly: let !ebf = mkFromList' 0.01 ([1..10^6]::[Int])
+mkFromList' :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
+mkFromList' errRate xs =
   either Left rightBFilt' $ suggestSizing (genericLength xs) errRate
   where
     rightBFilt' x =
@@ -55,9 +56,9 @@ easyList' errRate xs =
         B.iarray bfilt `seq` bfilt
 
 
--- This only evaluates up to `suggestSizing`: let !ebf = easyList 0.01 ([1..10^6]::[Int])
-easyList :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
-easyList errRate xs =
+-- This only evaluates up to `suggestSizing`: let !ebf = mkFromList 0.01 ([1..10^6]::[Int])
+mkFromList :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
+mkFromList errRate xs =
   either Left (Right . mkBFilt) $ suggestSizing (genericLength xs) errRate
   where
     mkBFilt (bits, numHashes) =

@@ -25,10 +25,10 @@ weigh = do
   ws <- fmap BS.lines $ BS.readFile "/usr/share/dict/words"
   mainWith $ do
     func "sizing" (BloomFilter.suggestSizing (fromIntegral (length ws))) 0.01
-    func "creating" (BloomFilter.easyList 0.01) ws
+    func "creating" (BloomFilter.mkFromList 0.01) ws
     let
       ebfilt =
-        BloomFilter.easyList 0.01 ws
+        BloomFilter.mkFromList 0.01 ws
     case ebfilt of
       Left err ->
         errorWithoutStackTrace err
@@ -58,7 +58,7 @@ profiling = do
     putStrLn $ "suggested sizings: "
       ++ show (BloomFilter.suggestSizing (fromIntegral len) errRate)
     filt <- timed "construct filter" $
-      case BloomFilter.easyList errRate words of
+      case BloomFilter.mkFromList errRate words of
         Left errmsg -> do
           putStrLn $ "Error: " ++ errmsg
           exitFailure
@@ -68,7 +68,6 @@ profiling = do
 
     timed "query every element" $
       mapM_ print $ filter (not . (`BloomFilter.elem` filt)) words
-
 
 timed :: (NFData a) => String -> IO a -> IO a
 timed desc action = do
