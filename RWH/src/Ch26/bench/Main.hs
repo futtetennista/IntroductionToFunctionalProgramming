@@ -76,12 +76,3 @@ timed desc action = do
   end <- rnf ret `seq` getCurrentTime
   putStrLn $ show (diffUTCTime end start) ++ " to " ++ desc
   return ret
-
-
--- instance NFData BS.ByteString where
---   rnf _ = ()
-
-
-instance NFData (BloomFilter.Bloom a) where
-  rnf bfilt =
-    BloomFilter.length bfilt `seq` ()
