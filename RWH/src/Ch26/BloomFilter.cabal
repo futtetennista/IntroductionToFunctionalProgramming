@@ -11,9 +11,9 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     BloomFilter.BloomFilter
-                     , BloomFilter.Immutable
-                     , BloomFilter.Hash
+  other-modules:       BloomFilter.Hash
                      , BloomFilter.Mutable
+                     , BloomFilter.Immutable
                      , BloomFilter.Internal
   build-depends:       base
                      , bytestring
