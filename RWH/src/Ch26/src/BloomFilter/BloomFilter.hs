@@ -50,10 +50,10 @@ mkFromList' errRate xs =
 
     mkBFilt' (bits, numHashes) =
       let
-        bfilt =
+        bfilt@(B.IB _ !arr) =
           B.fromList (doubleHash numHashes) bits xs
       in
-        B.iarray bfilt `seq` bfilt
+        bfilt
 
 
 -- This only evaluates up to `suggestSizing`: let !ebf = mkFromList 0.01 ([1..10^6]::[Int])
@@ -63,22 +63,6 @@ mkFromList errRate xs =
   where
     mkBFilt (bits, numHashes) =
       B.fromList (doubleHash numHashes) bits xs
-
-    genericLength' :: [a] -> Integer
-    genericLength' ys =
-      gl ys 0
-      where
-        gl [] l =
-          l
-        gl (_:zs) l
-          | l < 10^(9 :: Int) =
-              let
-                !l' =
-                  l + 1
-              in
-                gl zs l'
-          | otherwise =
-              l
 
 
 -- expected maximum capacity

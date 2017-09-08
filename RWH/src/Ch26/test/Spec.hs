@@ -62,10 +62,10 @@ prop_suggestionsSane =
 
 prop_expectedFalsePositivesRate :: Int -> [Strict.ByteString] -> [Strict.ByteString] -> Property
 prop_expectedFalsePositivesRate n xs ys =
-  config $ \numFps errRate ->
+  config $ \numFalsePos errRate ->
     -- UHU !? Why is this failing with ctrl chars? i.e. xs = ["\SOH"], ys = ["\NUL"]
     -- fromIntegral numFps / fromIntegral (length ys) <= errRate + 0.001 -- ±0.01%
-    numFps <= ceiling (errRate * fromIntegral n)
+    numFalsePos <= ceiling (errRate * fromIntegral n)
   where
     config :: (Int -> Double -> Bool) -> Property
     config test =
