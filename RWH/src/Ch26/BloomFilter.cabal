@@ -39,6 +39,7 @@ test-suite BloomFilter-test
                      , QuickCheck
                      , bytestring
                      , array
+                     , containers
   ghc-options:         -threaded
                        -rtsopts
                        -with-rtsopts=-N
