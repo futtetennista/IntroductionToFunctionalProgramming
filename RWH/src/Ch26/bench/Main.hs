@@ -11,10 +11,35 @@ import System.Exit (exitFailure)
 import Control.DeepSeq (rnf)
 import Prelude hiding (words)
 import Control.Parallel.Strategies (NFData)
+import Weigh
 
 
 main :: IO ()
 main = do
+  profiling
+  --weigh
+
+
+weigh :: IO ()
+weigh = do
+  ws <- fmap BS.lines $ BS.readFile "/usr/share/dict/words"
+  mainWith $ do
+    func "sizing" (BloomFilter.suggestSizing (fromIntegral (length ws))) 0.01
+    func "creating" (BloomFilter.easyList 0.01) ws
+    let
+      ebfilt =
+        BloomFilter.easyList 0.01 ws
+    case ebfilt of
+      Left err ->
+        errorWithoutStackTrace err
+
+      Right bfilt ->
+        action "query every element" $
+          mapM_ print $ filter (not . (`BloomFilter.elem` bfilt)) ws
+
+
+profiling :: IO ()
+profiling = do
   args <- getArgs
   let files
         | null args =

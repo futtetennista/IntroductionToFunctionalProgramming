@@ -56,7 +56,7 @@ benchmark BloomFilter-bench
                      , parallel
                      , time
                      , deepseq
-                     -- , weigh >= 0.0.3 && < 0.0.4
+                     , weigh >= 0.0.3 && < 0.0.4
   ghc-options:         -O2
                        -Wall
                        -Wincomplete-uni-patterns
