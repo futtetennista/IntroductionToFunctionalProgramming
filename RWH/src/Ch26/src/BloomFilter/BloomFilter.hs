@@ -1,9 +1,10 @@
+{-# LANGUAGE BangPatterns #-}
 module BloomFilter.BloomFilter ( Bloom
                                , easyList
                                , suggestSizing
                                , sizings
-                               , B.elem
-                               , B.length
+                               , elem
+                               , length
                                )
 where
 
@@ -24,12 +25,38 @@ type ErrorRate =
   Double
 
 
+elem :: a -> B.IBloom a -> Bool
+elem =
+  B.elem
+
+
+length :: B.IBloom a -> Int
+length =
+  B.length
+
+
 easyList :: Hashable a => ErrorRate -> [a] -> Either String (B.IBloom a)
 easyList errRate xs =
-  either Left (Right . bfilt) $ suggestSizing (genericLength xs) errRate
+  either Left (Right . mkBFilt) $ suggestSizing (genericLength xs) errRate
   where
-    bfilt (bits, numHashes) =
+    mkBFilt (bits, numHashes) =
       B.fromList (doubleHash numHashes) bits xs
+
+    genericLength' :: [a] -> Integer
+    genericLength' ys =
+      gl ys 0
+      where
+        gl [] l =
+          l
+        gl (_:zs) l
+          | l < 10^(9 :: Int) =
+              let
+                !l' =
+                  l + 1
+              in
+                gl zs l'
+          | otherwise =
+              l
 
 
 -- expected maximum capacity
