@@ -2,26 +2,24 @@
 
 Lazy evaluation sometimes makes it trickier to really understand how a piece of
 code for folks used to languages with strict semantics (as I am). We sometimes
-want (or need) to introduce strictness to avoid space leaks and to make
+want - or need - to introduce strictness to avoid space leaks and to make
 memory allocations more predictable in certain parts of our code. The usual
-suggestion is to "carefully sprinkle strict evaluation" and one of then
-classic examples is using `foldl` to sum a list of ints, with the
+suggestion is to "carefully sprinkle strict evaluation" in our code; one of the
+classic examples of memory leak is using `foldl` to sum a list of ints, with the
 result that instead of returning a result using constant space, it ends up
-failing because thunks pile up until memory is exhausted.
-But apart from a couple of really good examples in Real World Haskell I didn't
-found too many examples of what that actually mean in more complex scenarios and
-I find it always tricky to add strictness to a piece of Haskell code and I'm
-confident that one more example won't hurt.
+exhausting the available memory before returning a result because thunks pile up.
+Apart from a couple of really good examples in Real World Haskell, I didn't
+found too many examples of what that actually means in more complex scenarios and
+I find it always tricky to add strictness to a piece of Haskell code.
 
 We'll be using the Bloom filter implemented in chapter 26 of Real World Haskell
-as an example, the version contained in the book creates the Bloom filter
-lazily so our goal will be to create a strict version of that particular piece
-of code. In a nutshell, a [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter)
-is a probabilistic data structure composed of a number of hashes and an array of
-bits whose API allows only insertion and membership test. The latter API might
-return false positives with a probability set when the filter is instantiated.
-Here's the original version (the code is mostly as it is in the book with a few
-amendments):
+as an example, the version contained in the book creates the filter lazily:
+our goal will be to create a strict version of that particular piece of code.
+In a nutshell, a [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) is a
+probabilistic data structure that consists of several hash functions and a bit
+array whose API allows only insertion and membership querying. The latter API might
+return false positives with an expected error rate decided when the filter
+is instantiated. Here's a function that builds a Bloom filter lazily:
 
 ``` haskell
 -- file: BloomFilter/BloomFilter.hs
@@ -46,7 +44,7 @@ article. Let's try this code out in GHCI:
 ```
 ƛ :set +s -- to print timing/memory stats after each evaluation
 ƛ :load BloomFilter.BloomFilter
-ƛ let ebf = mkFromList 0.01 ([1..10^6]::[Int])
+ƛ let ebf = mkFromList 0.01 ([1..10^6] :: [Int])
 ebf :: Either String (B.IBloom Int)
 (0.01 secs, 4658656 bytes)
 ```
@@ -86,7 +84,7 @@ ebf = Right
               (GHC.Word.W32# 0) (GHC.Word.W32# 9592954) 9592955
               (_t4::ghc-prim-0.5.0.0:GHC.Prim.ByteArray#)))
 ```
-Let's not focusing on the types - again not important - GHCI is telling us
+Let's not focus on the types - again not important - GHCI is telling us
 the value of `ebf` after evaluation. We'd like to force this evaluation *before*
 the first time the Bloom filter is used, namely when it is created.
 
@@ -95,13 +93,13 @@ the first time the Bloom filter is used, namely when it is created.
 
 There are various ways of forcing evaluation in Haskell, the main ones are: `seq`,
 `deepseq`, `rnf` (the last two can be found in the `Control.DeepSeq` module and
-need the argument to be an instance of the `NFData` type class) or the handy
+require the argument to be an instance of the `NFData` type class) or the handy
 `BangPatterns` extension, which is syntactic sugar for `seq`. As a first try,
 let's force the evaluation of `ebf` using bang patters and see what happens:
 
 ```
 ƛ :set -XBangPatterns
-ƛ let !ebf' = mkFromList 0.01 ([1..10^6]::[Int])
+ƛ let !ebf' = mkFromList 0.01 ([1..10^6] :: [Int])
 ebf' :: Either String (B.IBloom Int)
 (0.34 secs, 197720920 bytes)
 ƛ :print ebf'
@@ -141,7 +139,7 @@ x = 6
 At this point `x` cannot be futher evaluated and is said to be in
 normal (or canonical) form. Now what about an expression like `Right (1 + 5)`?
 It should be clear that it's not in normal form so can we just force evaluation
-by adding a bang pattern? Let's see if it works:
+by adding a bang pattern? Let's see if that works:
 
 ```
 ƛ let !x = Right (1 + 5) :: Either a Int
@@ -154,8 +152,8 @@ other form called weak head normal form when it's not a redex itself and further
 evaluation of its sub-expressions cannot make it a redex. `Right (1 + 5)` isn't
 a redex (`Right` is a constructor for the `Either` type) and it cannot be made
 one if the sub-expression `1 + 5` is evaluated. Does that mean we have to unwrap
-the sub-expression in order for it to be evaluated? Not necesserily. We could force
-the evaluation of the sub-expression before we wrap it:
+the sub-expression in order for it to be evaluated? Not necessarily. We have a few
+options, namely forcing the evaluation of the sub-expression before we wrap it:
 
 ```
 ƛ let !x = let !y = 1 + 5 :: Int in Right y
@@ -163,7 +161,7 @@ x :: Either a Int
 ƛ :print x
 x = Right 6
 ```
-or levarage some of the functions in the `Control.DeepSeq` module:
+or levaraging some of the functions in the `Control.DeepSeq` module:
 
 ```
 ƛ let !x = let x = Right (1 + 5) :: Either a Int in x `deepseq` x
@@ -180,10 +178,10 @@ x = Right 6
 ```
 `deepseq` is like `seq` on steroids, it reduces an expression and all its
 sub-expressions to normal form (`rnf` which stays for "reduce to normal form" does
-exactly the same). Keep in mind is that in order to use these two functions
-the argument must be an instance of `NFData` (normal for data).
+exactly the same). Again keep in mind is that in order to use these two functions
+the argument must be an instance of `NFData` (Normal Form Data).
 
-A better and more in depth explanation and a bunch of very informative links and
+A more in depth explanation and a bunch of very informative links and
 more examples can be found in Stephen Diehl's
 [What I wish I knew when learning Haskell](http://dev.stephendiehl.com/hask/#laziness)
 
@@ -195,7 +193,7 @@ functions like `foldr'` use). The first function we need to change is
 `(Right . mkBFilt)`: this is equivalent to `\x -> Right (mkBFilt x)`
 (using [eta-expansion](https://en.wikipedia.org/wiki/Lambda_calculus#.CE.B7-conversion))
 and to `\pair -> let bfilt = mkBFilt pair in Right bfilt` if we massage the lambda
-a bit. Here `bfilt` needs again to be evaluated so again the easiest thing to do
+a bit. Here `bfilt` needs to be evaluated so again the easiest thing to do
 is to add a bang pattern: `\pair -> let !bfilt = mkBFilt pair in Right bfilt`.
 A quick note for all the eta-reduce freaks out there (I put myself in the
 category and I made the following mistake myself): beware that the
@@ -210,9 +208,9 @@ mkFromList' errRate xs =
     mkBFilt' (bits, numHashes) =
       let !bfilt =  B.fromList (doubleHash numHashes) bits xsin bfilt
 ```
-Again `(Right . mkFilt')` is equivalent to `\pair -> Right (mkFilt' pair)` that
-is a lambda will be evaluated lazily. Are we done yet? Almost there but still no
-cigar. Let's have a look at the type of `ebf'` again: `Either String (B.IBloom Int)`.
+Notice that `(Right . mkFilt')` is equivalent to `\pair -> Right (mkFilt' pair)`
+and it will be evaluated lazily. Are we done yet? We're almost  but not quite
+there yet. Let's have a look at the type of `ebf'` again: `Either String (B.IBloom Int)`.
 What's `IBloom` (the 'I' stays for "immutable")? Here's how it's defined:
 
 ``` haskell
@@ -223,8 +221,8 @@ data IBloom =
      , array :: UArray Word32 Bool
      }
 ```
-This closely reflects the definition of a Bloom filter, we have a hash
-function that produces hashes for a given value and an array of bits.
+This closely reflects the definition of a Bloom filter, we have a function that
+returns a list of hashes for a given value and an array of bits.
 Keeping in mind that a constructor is also a function, we might notice that
 there is still something we need to force evaluation upon: the `array` field.
 In order to do this let's write a strict version of `mkBFilt`, this time using
@@ -238,8 +236,8 @@ mkBFilt' (bits, numHashes) =
   in array bfilt `seq` bfilt
 ```
 Equivalently, we could have pattern-matched on `bfilt` and used a bang pattern
-on its `array` field. The final version of our `mkFromList'` function looks like
-this:
+on its `array` field. The final version of our `mkFromList'` function looks
+something like this:
 
 ``` haskell
 -- file: BloomFilter/BloomFilter.hs
@@ -257,7 +255,7 @@ mkFromList' errRate xs =
 Let's test it in GHCI:
 
 ```
-ƛ let !ebf'' = mkFromList' 0.01 ([1..10^6]::[Int])
+ƛ let !ebf'' = mkFromList' 0.01 ([1..10^6] :: [Int])
 ebf'' :: Either String (B.IBloom Int)
 (19.29 secs, 13819004104 bytes)
 ƛ :print ebf''
@@ -268,15 +266,16 @@ ebf'' = Right
                (GHC.Word.W32# 0) (GHC.Word.W32# 9592954) 9592955
                (_t2::ghc-prim-0.5.0.0:GHC.Prim.ByteArray#)))
 ```
-And YES! We finally managed to fully evaluate our Bloom filter before it's first
+And YES! We finally managed to fully evaluate our Bloom filter before its first
 use in our code.
 
 ## Wrapping up
 
-1. Be aware of how to introduce strictness in Haskell code: `seq`, the
-  `BangPatterns` extension or the functions in the `Control.DeepSeq` module
-2. Use GHCI and leverage the `:print` command and the `+s` flag to help
+1. There are multiple ways we can use to introduce strictness in Haskell code:
+   `seq`, the BangPatterns` extension or the functions in the `Control.DeepSeq`
+   module
+2. Using GHCI and leveraging the `:print` command and the `+s` flag can help us
    understanding how our code is evaluated while developing
-3. Keep in mind the difference between NF and WHNF, if we cannot manage to force
-   evaluation of an expression is because some sub-expression is still in WHNF
-4. Carefully analyse our code to identify where strictness need to be added
+3. Keep in mind the difference between NF and WHNF: if we cannot manage to force
+   evaluation of an expression it's because some sub-expression is still in WHNF
+4. Carefully analyse our code to identify where strictness needs to be added
