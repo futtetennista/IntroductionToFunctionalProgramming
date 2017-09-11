@@ -44,9 +44,9 @@ desired rate of false positives, but it's not important for the topic of this
 article. Let's try this code out in GHCI:
 
 ```
- :set +s -- to print timing/memory stats after each evaluation
- :load BloomFilter.BloomFilter
- let ebf = mkFromList 0.01 ([1..10^6]::[Int])
+ƛ :set +s -- to print timing/memory stats after each evaluation
+ƛ :load BloomFilter.BloomFilter
+ƛ let ebf = mkFromList 0.01 ([1..10^6]::[Int])
 ebf :: Either String (B.IBloom Int)
 (0.01 secs, 4658656 bytes)
 ```
@@ -54,7 +54,7 @@ The fact that `ebf` has not been fully evaluated should be clear since the
 evaluation took almost no time, but let's ask GHCI for help:
 
 ```
- :print ebf -- prints a value without forcing its computation
+ƛ :print ebf -- prints a value without forcing its computation
 ebf = (_t2::Either String (B.IBloom Int))
 
 ```
@@ -63,11 +63,11 @@ If we're still not convinced that `ebf` is not evaluated we can ask it if an ele
 is contained in the Bloom filter:
 
 ```
- either (const False) (1 `B.elem`) ebf
+ƛ either (const False) (1 `B.elem`) ebf
 True
 it :: Bool
 (19.44 secs, 13818404512 bytes)
- either (const False) (11 `B.elem`) ebf
+ƛ either (const False) (11 `B.elem`) ebf
 True
 it :: Bool
 (0.01 secs, 3118248 bytes)
@@ -78,7 +78,7 @@ Haskell's non-strict semantic. If we ask GHCI to give us information about `ebf`
 we can see that now it gives us a different answer:
 
 ```
- :print ebf
+ƛ :print ebf
 ebf = Right
         (B.IB
            (_t3::Int -> [Word32])
@@ -100,11 +100,11 @@ need the argument to be an instance of the `NFData` type class) or the handy
 let's force the evaluation of `ebf` using bang patters and see what happens:
 
 ```
- :set -XBangPatterns
- let !ebf' = mkFromList 0.01 ([1..10^6]::[Int])
+ƛ :set -XBangPatterns
+ƛ let !ebf' = mkFromList 0.01 ([1..10^6]::[Int])
 ebf' :: Either String (B.IBloom Int)
 (0.34 secs, 197720920 bytes)
- :print ebf'
+ƛ :print ebf'
 ebf' = Right (_t5::B.IBloom Int)
 ```
 That did something, specifically it evaluated `ebf'` a bit so that now we already
@@ -113,7 +113,7 @@ instantiate it? By carefully reading the output of GHCI it should be clear that
 we're not quite there yet but let's again double check:
 
 ```
- either (const False) (11 `B.elem`) ebf'
+ƛ either (const False) (11 `B.elem`) ebf'
 True
 it :: Bool
 (19.02 secs, 13624548640 bytes)
@@ -129,13 +129,13 @@ a value is obtained, i.e. `let x = 1 + 6` is a redex since it can be evaluated
 to obtain `let x = 5`. Let's again double check it in GHCI:
 
 ```
- let x = 1 + 5 :: Int
+ƛ let x = 1 + 5 :: Int
 x :: Int
- :print x
+ƛ :print x
 x = (_t6::Int)
- let !x = 1 + 5 :: Int
+ƛ let !x = 1 + 5 :: Int
 x :: Int
- :print x
+ƛ :print x
 x = 6
 ```
 At this point `x` cannot be futher evaluated and is said to be in
@@ -144,9 +144,9 @@ It should be clear that it's not in normal form so can we just force evaluation
 by adding a bang pattern? Let's see if it works:
 
 ```
- let !x = Right (1 + 5) :: Either a Int
+ƛ let !x = Right (1 + 5) :: Either a Int
 x :: Either a Int
- :print x
+ƛ :print x
 x = Right (_t8::Int)
 ```
 What's happening here?! It turns out that an expression in Haskell can be in
@@ -158,24 +158,24 @@ the sub-expression in order for it to be evaluated? Not necesserily. We could fo
 the evaluation of the sub-expression before we wrap it:
 
 ```
- let !x = let !y = 1 + 5 :: Int in Right y
+ƛ let !x = let !y = 1 + 5 :: Int in Right y
 x :: Either a Int
- :print x
+ƛ :print x
 x = Right 6
 ```
 or levarage some of the functions in the `Control.DeepSeq` module:
 
 ```
- let !x = let x = Right (1 + 5) :: Either a Int in x `deepseq` x
+ƛ let !x = let x = Right (1 + 5) :: Either a Int in x `deepseq` x
 x :: Either a Int
- :print x
+ƛ :print x
 x = Right 6
- let !x = Right (1 + 5) :: Either a Int
+ƛ let !x = Right (1 + 5) :: Either a Int
 x :: Either a Int
- rnf x
+ƛ rnf x
 ()
 it :: ()
- :print x
+ƛ :print x
 x = Right 6
 ```
 `deepseq` is like `seq` on steroids, it reduces an expression and all its
@@ -257,10 +257,10 @@ mkFromList' errRate xs =
 Let's test it in GHCI:
 
 ```
- let !ebf'' = mkFromList' 0.01 ([1..10^6]::[Int])
+ƛ let !ebf'' = mkFromList' 0.01 ([1..10^6]::[Int])
 ebf'' :: Either String (B.IBloom Int)
 (19.29 secs, 13819004104 bytes)
- :print ebf''
+ƛ :print ebf''
 ebf'' = Right
          (B.IB
             (_t1::Int -> [Word32])
