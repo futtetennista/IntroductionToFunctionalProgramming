@@ -25,7 +25,8 @@ weigh = do
   ws <- fmap BS.lines $ BS.readFile "/usr/share/dict/words"
   mainWith $ do
     func "sizing" (BloomFilter.suggestSizing (fromIntegral (length ws))) 0.01
-    func "creating" (BloomFilter.mkFromList 0.01) ws
+    func "lazy creation" (BloomFilter.mkFromList 0.01) ws
+    -- validateNFValue "strict creation" (BloomFilter.mkFromList' 0.01 ws) (BloomFilter.mkFromList' 0.01) ws
     let
       ebfilt =
         BloomFilter.mkFromList 0.01 ws
