@@ -36,6 +36,9 @@ library
                      , Ch24.MVar
                      , Ch24.Sorting
                      , Ch24.SortMain
+                     , Ch27.SyslogTypes
+                     , Ch27.SyslogUDPClient
+                     , Ch27.SyslogUDPServer
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2
