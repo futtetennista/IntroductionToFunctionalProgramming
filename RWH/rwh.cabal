@@ -64,6 +64,9 @@ library
                      , http-client-tls >= 0.3.4 && < 0.3.5
                      , parallel >= 3.2.1.0 && <  3.2.1.1
                      , deepseq >= 1.4.2.0 && < 1.4.2.1
+                     , stm
+                     , network-uri
+                     , optparse-applicative
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
