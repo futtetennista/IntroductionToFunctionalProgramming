@@ -39,6 +39,7 @@ library
                      , Ch27.SyslogTypes
                      , Ch27.SyslogUDPClient
                      , Ch27.SyslogUDPServer
+                     , Ch27.SyslogTCPServer
   build-depends:       base >= 4.7 && < 5
                      , containers >= 0.5.7.1 && < 0.5.7.2
                      , random >= 1.1 && < 1.2
