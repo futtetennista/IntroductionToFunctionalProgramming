@@ -54,7 +54,22 @@ data SyslogException
 instance Exception SyslogException
 
 
--- This context can never be satisfied in the IO monad! ==> instance MonadError IOException IO
+-- Goal: catch both SyslogExceptions and IOExceptions
+
+{-
+1st try: use the MonadError type class.
+
+Issue: the context can never be satisfied in the IO monad!
+That's because there is a fundep in the MonadError class declaration:
+  class MonadError e m | m -> e
+
+and the instance for IO is:
+  instance MonadError IOException IO
+
+so the following won't compile:
+  foo :: SyslogHandle -> IO ()
+  foo h = syslog h fac prio "foo"
+-}
 syslog :: (MonadError SomeException m, MonadIO m)
        => SyslogHandle
        -> Facility
@@ -68,7 +83,7 @@ syslog syslogh fac pri msg =
 
     Just code -> do
       eres <- runExceptT $ sendstr $ Lazy.toStrict (toLazyByteString sendmsgBuilder)
-      either (throwError . toException) (\_ -> return ()) eres
+      either (throwError . toException) return eres
       where
         sendmsgBuilder :: Builder
         sendmsgBuilder =
@@ -86,8 +101,12 @@ syslog syslogh fac pri msg =
                 (() <$ sendTo (slSocket syslogh) omsg (slAddress syslogh))
                 throwError
 
+{-
+2hd try: do without the MonadError type class and manually handle failure
 
-syslog' :: (MonadError IOException m, MonadIO m)
+Issue: it's re-doing what MonadError already does under the hood
+-}
+syslog' :: (MonadIO m)
        => Facility
        -> Priority
        -> Strict.ByteString
@@ -99,9 +118,11 @@ syslog' fac pri msg h =
       return . Left . toException $ InvalidCode
 
     Just code -> do
-      catchError
-        (Right () <$ sendstr (Lazy.toStrict (toLazyByteString sendmsgBuilder)))
-        (return . Left . toException)
+      liftIO $ catch
+        (Right <$> sendstr (Lazy.toStrict (toLazyByteString sendmsgBuilder)))
+        (return . Left . toException :: MonadIO m
+                                     => IOException
+                                     -> m (Either SomeException ()))
       where
         sendmsgBuilder :: Builder
         sendmsgBuilder =
