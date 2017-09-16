@@ -213,41 +213,38 @@ checkURLs fp =
   Job $
     runConduitRes $ sourceFileBS fp
       .| mapC extractLinks
-      .| (getZipConduit $
-            ZipConduit (filterMCE seenURI .| mapC sendJobs)
-            <* ZipConduit (lengthC >>= return . updateStats))
-      .| sinkNull
-  -- where
-  --   actions :: ConduitM [URL] (Job ()) Job ()
-  --   actions =
-  --     getZipConduit $
-  --       ZipConduit (filterMCE seenURI .| mapC sendJobs)
-  --       <* ZipConduit (lengthC >>= return . updateStats)
+      .| setupJob
+  where
+    setupJob :: Consumer [URL] (ResourceT (StateT JobState IO)) ()
+    setupJob =
+      (getZipConduit $
+        ZipConduit (filterMCE seenURI .| mapM_C enqueueTasks)
+        <* ZipConduit (mapM_C (updateStats . length)))
 
 
-updateStats :: Int -> Job ()
+updateStats :: (MonadState JobState m) => Int -> m ()
 updateStats n =
   modify $ \s ->
     s { linksFound = linksFound s + n }
 
 
-sendJobs :: [URL] -> Job ()
-sendJobs urls = do
+enqueueTasks :: (MonadState JobState m, MonadIO m) => [URL] -> m ()
+enqueueTasks urls = do
   task <- gets linkQueue
   liftIO . atomically $ mapM_ (writeTChan task . Check) urls
 
 
-insertURI :: MonadState JobState m => URL -> m ()
+insertURI :: (MonadState JobState m) => URL -> m ()
 insertURI c =
   modify $ \s ->
     s { linksSeen = Set.insert c (linksSeen s) }
 
 
-seenURI :: MonadState JobState m => URL -> m Bool
+seenURI :: (MonadState JobState m) => URL -> m Bool
 seenURI url = do
-  seen <- (not . Set.member url) <$> gets linksSeen
+  newUrl <- (not . Set.member url) <$> gets linksSeen
   insertURI url
-  return seen
+  return newUrl
 
 
 extractLinks :: StrictBS.ByteString -> [URL]
@@ -261,10 +258,8 @@ extractLinks =
       isControl c || c `elem` (" <>\"{}|\\^[]`" :: String)
 
     looksOkay s =
-      http `StrictBS.isPrefixOf` s
+      "http:" `StrictBS.isPrefixOf` s || "https:" `StrictBS.isPrefixOf` s
 
-    http =
-      "http:"
 
 -- COMMAND LINE PARSING
 data Flag
