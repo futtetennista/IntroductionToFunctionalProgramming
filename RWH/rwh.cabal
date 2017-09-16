@@ -67,6 +67,7 @@ library
                      , stm
                      , network-uri
                      , optparse-applicative
+                     , conduit-combinators
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 

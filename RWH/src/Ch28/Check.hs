@@ -1,8 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE PatternGuards #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiWayIf #-}
 #!/usr/bin/env stack
 {-
 stack --resolver lts-8.6
@@ -12,22 +7,30 @@ stack --resolver lts-8.6
 --package http-client-tls
 --package http-types
 --package bytestring
---package conteainers
+--package conduit
+--package containers
 --package async
+--package optparse-applicative
 script
 -}
+
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiWayIf #-}
 module Ch28.Check
 where
 
 
-import Control.Concurrent (forkIO)
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (IOException, catch, finally)
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Char (isControl)
 import Data.List (nub)
-import Network.URI
+import Network.URI (URI, parseURI)
 import System.Console.GetOpt
 import System.Environment (getArgs)
 import System.Exit (ExitCode(..), exitWith)
@@ -62,16 +65,17 @@ main = do
       length files
   badCount <- newTVarIO (0 :: Int)
   badLinks <- newTChanIO
-  jobs <- newTChanIO
+  jobQueue <- newTChanIO
   workers <- newTVarIO k
-  _ <- forkIO $ writeBadLinks badLinks
+  _ <- withAsync (writeBadLinks badLinks) $ const (return ())
   manager <- newManager tlsManagerSettings
-  forkTimes k workers (worker manager badLinks jobs badCount)
+  replicateTimes k workers (worker manager badLinks jobQueue badCount)
   stats <- execJob (mapM_ checkURLs files)
-                   (JobState Set.empty 0 jobs)
-  atomically $ replicateM_ k (writeTChan jobs Done)
+                   (JobState Set.empty 0 jobQueue)
+  atomically $ replicateM_ k (writeTChan jobQueue Done)
   waitFor workers
-  broken <- atomically $ readTVar badCount
+  -- is atomically really needed here? All workers are done by this time
+  broken <- readTVarIO badCount
   printf fmt broken
              (linksFound stats)
              (Set.size (linksSeen stats))
@@ -81,10 +85,10 @@ main = do
       "Found %d broken links. Checked %d links (%d unique) in %d files.\n"
 
 
-forkTimes :: Int -> TVar Int -> IO () -> IO ()
-forkTimes k alive act =
-  replicateM_ k . forkIO $
-    act `finally` (atomically $ modifyTVar' alive (subtract 1))
+replicateTimes :: Int -> TVar Int -> IO () -> IO ()
+replicateTimes k alive action =
+  replicateConcurrently_ k $ do
+    action `finally` (atomically $ modifyTVar' alive (subtract 1))
 
 
 writeBadLinks :: TChan String -> IO ()
@@ -100,6 +104,7 @@ waitFor alive =
     check (count == 0)
 
 
+-- CHECKING LINKS
 getStatusE :: Manager -> URI -> IO (Either String Int)
 getStatusE m =
   runExceptT . chase (5 :: Int)
