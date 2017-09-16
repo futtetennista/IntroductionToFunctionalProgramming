@@ -1,6 +1,7 @@
-{-# LANGUAGE BangPatterns #-}
 #!/usr/bin/env stack
 -- stack script --resolver lts-8.22
+
+{-# LANGUAGE BangPatterns #-}
 module AsyncPlayground
 
 where
@@ -102,6 +103,8 @@ Efficiently implement `waitCatch` in terms of `poll`.
 1. there's a `threadWaitRead` but it requires a `Fd` that I don't know how to
    get from a `ThreadId`, which is the only thing known about the thread
 2. leveraging MVars or Chan not sure how though
+
+It turns out it's not possible! STM to the rescue.
 -}
 waitCatch :: Async a -> IO (Either SomeException a)
 waitCatch = do
