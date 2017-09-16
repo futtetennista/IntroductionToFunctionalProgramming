@@ -36,7 +36,6 @@ import System.Environment (getArgs)
 import System.Exit (ExitCode(..), exitWith)
 import System.IO (hFlush, hPutStrLn, stderr, stdout)
 import Text.Printf (printf)
-import qualified Data.ByteString.Lazy.Char8 as LazyBS
 import qualified Data.ByteString.Char8 as StrictBS
 import qualified Data.Set as Set
 import Network.HTTP.Client ( Manager, Response
@@ -46,10 +45,11 @@ import Network.HTTP.Client ( Manager, Response
 import Network.HTTP.Types.Status
 import Network.HTTP.Types.Header (hLocation)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Conduit
 
 
 type URL =
-  LazyBS.ByteString
+  StrictBS.ByteString
 
 
 data Task
@@ -162,7 +162,7 @@ worker m badLinks jobQueue badCount =
           return ()
 
         Check x ->
-          checkOne (LazyBS.unpack x) >> loop
+          checkOne (StrictBS.unpack x) >> loop
 
     checkOne :: String -> IO ()
     checkOne url =
@@ -209,13 +209,20 @@ execJob =
 
 
 checkURLs :: FilePath -> Job ()
-checkURLs f = do
-  src <- liftIO $ LazyBS.readFile f
-  let
-    urls =
-      extractLinks src
-  filterM seenURI urls >>= sendJobs
-  updateStats (length urls)
+checkURLs fp =
+  Job $
+    runConduitRes $ sourceFileBS fp
+      .| mapC extractLinks
+      .| (getZipConduit $
+            ZipConduit (filterMCE seenURI .| mapC sendJobs)
+            <* ZipConduit (lengthC >>= return . updateStats))
+      .| sinkNull
+  -- where
+  --   actions :: ConduitM [URL] (Job ()) Job ()
+  --   actions =
+  --     getZipConduit $
+  --       ZipConduit (filterMCE seenURI .| mapC sendJobs)
+  --       <* ZipConduit (lengthC >>= return . updateStats)
 
 
 updateStats :: Int -> Job ()
@@ -224,37 +231,37 @@ updateStats n =
     s { linksFound = linksFound s + n }
 
 
-insertURI :: URL -> Job ()
+sendJobs :: [URL] -> Job ()
+sendJobs urls = do
+  task <- gets linkQueue
+  liftIO . atomically $ mapM_ (writeTChan task . Check) urls
+
+
+insertURI :: MonadState JobState m => URL -> m ()
 insertURI c =
   modify $ \s ->
     s { linksSeen = Set.insert c (linksSeen s) }
 
 
-seenURI :: URL -> Job Bool
+seenURI :: MonadState JobState m => URL -> m Bool
 seenURI url = do
   seen <- (not . Set.member url) <$> gets linksSeen
   insertURI url
   return seen
 
 
-sendJobs :: [URL] -> Job ()
-sendJobs urls = do
-  c <- gets linkQueue
-  liftIO . atomically $ mapM_ (writeTChan c . Check) urls
-
-
-extractLinks :: LazyBS.ByteString -> [URL]
+extractLinks :: StrictBS.ByteString -> [URL]
 extractLinks =
-  concatMap uris . LazyBS.lines
+  concatMap uris . StrictBS.lines
   where
     uris s =
-      filter looksOkay (LazyBS.splitWith isDelim s)
+      filter looksOkay (StrictBS.splitWith isDelim s)
 
     isDelim c =
       isControl c || c `elem` (" <>\"{}|\\^[]`" :: String)
 
     looksOkay s =
-      http `LazyBS.isPrefixOf` s
+      http `StrictBS.isPrefixOf` s
 
     http =
       "http:"
