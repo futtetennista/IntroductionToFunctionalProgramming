@@ -29,12 +29,8 @@ import Control.Exception (IOException, catch, finally)
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Char (isControl)
-import Data.List (nub)
 import Network.URI (URI, parseURI)
-import System.Console.GetOpt
-import System.Environment (getArgs)
-import System.Exit (ExitCode(..), exitWith)
-import System.IO (hFlush, hPutStrLn, stderr, stdout)
+import System.IO (hFlush, stdout)
 import Text.Printf (printf)
 import qualified Data.ByteString.Char8 as StrictBS
 import qualified Data.Set as Set
@@ -46,6 +42,11 @@ import Network.HTTP.Types.Status
 import Network.HTTP.Types.Header (hLocation)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Conduit
+import Options.Applicative ( (<**>), Parser, ParserInfo
+                           , many, strOption, metavar, option, auto, short
+                           , value, help, info, helper, fullDesc, progDesc
+                           , header, execParser)
+import Data.Semigroup ((<>))
 
 
 type URL =
@@ -59,10 +60,13 @@ data Task
 
 main :: IO ()
 main = do
-  (files, k) <- parseArgs
+  opts <- execParser p_opts
   let
     numFiles =
-      length files
+      length (optFiles opts)
+
+    N k =
+      optFlag opts
   badCount <- newTVarIO (0 :: Int)
   badLinks <- newTChanIO
   jobQueue <- newTChanIO
@@ -70,11 +74,10 @@ main = do
   _ <- withAsync (writeBadLinks badLinks) $ const (return ())
   manager <- newManager tlsManagerSettings
   replicateTimes k workers (worker manager badLinks jobQueue badCount)
-  stats <- execJob (mapM_ checkURLs files)
+  stats <- execJob (mapM_ checkURLs (optFiles opts))
                    (JobState Set.empty 0 jobQueue)
   atomically $ replicateM_ k (writeTChan jobQueue Done)
   waitFor workers
-  -- is atomically really needed here? All workers are done by this time
   broken <- readTVarIO badCount
   printf fmt broken
              (linksFound stats)
@@ -252,60 +255,45 @@ extractLinks =
   concatMap uris . StrictBS.lines
   where
     uris s =
-      filter looksOkay (StrictBS.splitWith isDelim s)
+      filter httpSchemes (StrictBS.splitWith isDelim s)
 
     isDelim c =
       isControl c || c `elem` (" <>\"{}|\\^[]`" :: String)
 
-    looksOkay s =
+    httpSchemes s =
       "http:" `StrictBS.isPrefixOf` s || "https:" `StrictBS.isPrefixOf` s
 
 
 -- COMMAND LINE PARSING
-data Flag
-  = Help
-  | N Int
+newtype Flag =
+  N Int
   deriving Eq
 
 
-parseArgs :: IO ([String], Int)
-parseArgs = do
-  argv <- getArgs
-  case parse argv of
-    ([], files, []) ->
-      return (nub files, 16)
+data Options =
+  Options { optFiles :: [FilePath]
+          , optFlag :: !Flag
+          }
 
-    (opts, files, [])
-      | Help `elem` opts ->
-          help
-      | [N n] <- filter (/=Help) opts ->
-          return (nub files, n)
 
-    (_, _, errs) ->
-      die errs
+p_options :: Parser Options
+p_options =
+  Options <$> p_files <*> p_flag
   where
-    parse argv =
-      getOpt Permute options argv
-
-    header =
-      "Usage: urlcheck [-h] [-n n] [file ...]"
-
-    info =
-      usageInfo header options
-
-    dump =
-      hPutStrLn stderr
-
-    die errs =
-      dump (concat errs ++ info) >> exitWith (ExitFailure 1)
-
-    help =
-      dump info >> exitWith ExitSuccess
+    p_files =
+      many $ strOption (metavar "FILEPATH")
 
 
-options :: [OptDescr Flag]
-options =
-  [ Option ['h'] ["help"] (NoArg Help) "Show this help message"
-  , Option ['n'] [] (ReqArg (\s -> N (read s)) "N") $
-      "Number of concurrent connections (default 16)"
-  ]
+p_flag :: Parser Flag
+p_flag =
+  N <$> option auto (short 'n'
+                     <> value 16
+                     <> help "Number of concurrent connections (defaults to 16)")
+
+
+p_opts :: ParserInfo Options
+p_opts =
+  info (p_options <**> helper)
+    (fullDesc
+     <> progDesc "Check hyperlinks contained in [FILEPATH ...]"
+     <> header "urlcheck - a hyperlink checker")
