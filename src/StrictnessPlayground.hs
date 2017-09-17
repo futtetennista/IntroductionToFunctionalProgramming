@@ -127,7 +127,7 @@ averageForce =
 
 averageBangs :: Monad m => ConduitM Int o m Double
 averageBangs =
-  divide <$> foldlC (\xs x -> let !res = add xs x in res) (0, 0)
+  divide <$> foldlC add (0, 0)
   where
     divide (total, count) = fromIntegral total / count
     add (total, count) x =
