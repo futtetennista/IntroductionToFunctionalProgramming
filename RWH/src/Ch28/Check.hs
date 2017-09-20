@@ -19,8 +19,8 @@ script
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiWayIf #-}
-module Ch28.Check
-where
+-- module Ch28.Check
+-- where
 
 
 import Control.Concurrent.Async
