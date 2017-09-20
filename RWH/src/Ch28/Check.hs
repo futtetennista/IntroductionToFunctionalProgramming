@@ -25,7 +25,7 @@ where
 
 import Control.Concurrent.Async
 import Control.Concurrent.STM
-import Control.Exception (IOException, catch, finally)
+import Control.Exception (IOException, catch)
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Char (isControl)
@@ -70,14 +70,14 @@ main = do
   badCount <- newTVarIO (0 :: Int)
   badLinks <- newTChanIO
   jobQueue <- newTChanIO
-  workers <- newTVarIO k
-  _ <- withAsync (writeBadLinks badLinks) $ const (return ())
+  _badLinksWriter <- withAsync (return ()) $
+    \a -> do _ <- wait a ; writeBadLinks badLinks
   manager <- newManager tlsManagerSettings
-  replicateTimes k workers (worker manager badLinks jobQueue badCount)
+  workers <- replicateTimes k (worker manager badLinks jobQueue badCount)
   stats <- execJob (mapM_ checkURLs (optFiles opts))
                    (JobState Set.empty 0 jobQueue)
   atomically $ replicateM_ k (writeTChan jobQueue Done)
-  waitFor workers
+  waitAll workers
   broken <- readTVarIO badCount
   printf fmt broken
              (linksFound stats)
@@ -88,10 +88,17 @@ main = do
       "Found %d broken links. Checked %d links (%d unique) in %d files.\n"
 
 
-replicateTimes :: Int -> TVar Int -> IO () -> IO ()
-replicateTimes k alive action =
-  replicateConcurrently_ k $ do
-    action `finally` (atomically $ modifyTVar' alive (subtract 1))
+replicateTimes :: Int -> IO () -> IO [Async ()]
+replicateTimes n action =
+  forM [1..n] $ const (async action)
+
+
+-- Wait for all workers to be done, ignoring failures
+waitAll :: [Async a] -> IO ()
+waitAll [] =
+  return ()
+waitAll (a:as) =
+  waitCatch a *> waitAll as
 
 
 writeBadLinks :: TChan String -> IO ()
