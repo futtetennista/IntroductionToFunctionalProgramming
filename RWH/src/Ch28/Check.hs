@@ -34,7 +34,7 @@ import System.IO (hFlush, stdout)
 import Text.Printf (printf)
 import qualified Data.ByteString.Char8 as StrictBS
 import qualified Data.Set as Set
-import Network.HTTP.Client ( Manager, Response
+import Network.HTTP.Client ( Manager, Response, HttpException(..)
                            , newManager, httpNoBody, parseRequest, responseStatus
                            , responseHeaders
                            )
@@ -116,7 +116,7 @@ getStatusE m =
     chase 0 _ =
       throwError "too many redirects"
     chase n u = do
-      r <- embedEither show =<< liftIO (getHead u)
+      r <- embedEither show =<< liftIO (getHead u `catch` httpExceptionHandler)
       case statusIsRedirection (responseStatus r) of
         True -> do
           u'  <- embedMaybe (show r) $ findHeader hLocation
@@ -128,14 +128,23 @@ getStatusE m =
 
         False ->
           return . statusCode . responseStatus $ r
+        where
+          httpExceptionHandler :: HttpException -> IO (Either StrictBS.ByteString (Response ()))
+          httpExceptionHandler (HttpExceptionRequest _ content) =
+            return . Left . StrictBS.pack $ show content
+          httpExceptionHandler (InvalidUrlException _ reason) =
+            return . Left . StrictBS.pack $ reason
 
     getHead :: URI -> IO (Either StrictBS.ByteString (Response ()))
     getHead uri = do
       request <- parseRequest ("HEAD " ++ show uri)
       response <- httpNoBody request m
+        -- Doesn't work cause of fundep `MonadError IO`
+        -- `catch` (throwError :: HttpException -> IO (Response ()))
       let
         status =
           responseStatus response
+
       if | statusIsSuccessful status ->
              return $ Right response
          | statusIsRedirection status ->
