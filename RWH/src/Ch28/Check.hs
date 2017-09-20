@@ -1,17 +1,17 @@
 #!/usr/bin/env stack
 {-
-stack --resolver lts-8.6
+stack --resolver lts-8.6 script
 --package stm
+--package mtl
 --package network-uri
 --package http-client
 --package http-client-tls
 --package http-types
 --package bytestring
---package conduit
+--package conduit-combinators
 --package containers
 --package async
 --package optparse-applicative
-script
 -}
 
 {-# LANGUAGE FlexibleContexts #-}
