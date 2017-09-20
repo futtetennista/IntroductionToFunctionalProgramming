@@ -76,8 +76,10 @@ main = do
   stats <- execJob (mapM_ checkURLs (optFiles opts))
                    (JobState Set.empty 0 jobQueue)
   atomically $ replicateM_ k (writeTChan jobQueue Done)
+
   waitAll workers
   uninterruptibleCancel badLinksWriter
+
   broken <- readTVarIO badCount
   printf fmt broken
              (linksFound stats)
