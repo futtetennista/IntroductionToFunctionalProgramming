@@ -70,14 +70,14 @@ main = do
   badCount <- newTVarIO (0 :: Int)
   badLinks <- newTChanIO
   jobQueue <- newTChanIO
-  _badLinksWriter <- withAsync (return ()) $
-    \a -> do _ <- wait a ; writeBadLinks badLinks
+  badLinksWriter <- async (writeBadLinks badLinks)
   manager <- newManager tlsManagerSettings
   workers <- replicateTimes k (worker manager badLinks jobQueue badCount)
   stats <- execJob (mapM_ checkURLs (optFiles opts))
                    (JobState Set.empty 0 jobQueue)
   atomically $ replicateM_ k (writeTChan jobQueue Done)
   waitAll workers
+  uninterruptibleCancel badLinksWriter
   broken <- readTVarIO badCount
   printf fmt broken
              (linksFound stats)
@@ -104,14 +104,7 @@ waitAll (a:as) =
 writeBadLinks :: TChan String -> IO ()
 writeBadLinks c =
   forever $
-    atomically (readTChan c) >>= putStrLn >> hFlush stdout
-
-
-waitFor :: TVar Int -> IO ()
-waitFor alive =
-  atomically $ do
-    count <- readTVar alive
-    check (count == 0)
+    atomically (readTChan c) >>= putStrLn . ("BAD LINK: " ++) >> hFlush stdout
 
 
 -- CHECKING LINKS
