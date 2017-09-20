@@ -43,9 +43,9 @@ import Network.HTTP.Types.Header (hLocation)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Conduit
 import Options.Applicative ( (<**>), Parser, ParserInfo
-                           , many, strOption, metavar, option, auto, short
+                           , many, argument, metavar, option, auto, short
                            , value, help, info, helper, fullDesc, progDesc
-                           , header, execParser)
+                           , header, execParser, str)
 import Data.Semigroup ((<>))
 
 
@@ -286,9 +286,11 @@ data Options =
 p_options :: Parser Options
 p_options =
   Options <$> p_files <*> p_flag
-  where
-    p_files =
-      many $ strOption (metavar "FILEPATH")
+
+
+p_files :: Parser [String]
+p_files =
+  many $ argument str (metavar "FILEPATH")
 
 
 p_flag :: Parser Flag
@@ -296,7 +298,6 @@ p_flag =
   N <$> option auto (short 'n'
                      <> value 16
                      <> help "Number of concurrent connections (defaults to 16)")
-
 
 p_opts :: ParserInfo Options
 p_opts =
