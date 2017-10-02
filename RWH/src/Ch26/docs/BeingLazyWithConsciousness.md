@@ -1,24 +1,24 @@
 # Being lazy with consciousness
 
 Lazy evaluation sometimes makes it trickier to really understand how a piece of
-code for folks used to languages with strict semantics (as I am). We sometimes
-want - or need - to introduce strictness to avoid space leaks and to make
+code for folks used to languages with strict semantics (as I am). Sometimes
+introducing strictness is necessary to avoid space leaks and to make
 memory allocations more predictable in certain parts of our code. The usual
 suggestion is to "carefully sprinkle strict evaluation" in our code; one of the
 classic examples of memory leak is using `foldl` to sum a list of ints, with the
-result that instead of returning a result using constant space, it ends up
-exhausting the available memory before returning a result because thunks pile up.
-Apart from a couple of really good examples in Real World Haskell, I didn't
-found too many examples of what that actually means in more complex scenarios and
-I find it always tricky to add strictness to a piece of Haskell code.
+result that instead of returning a result using constant space, it ends up taking
+an outrageous amount of memory before returning a result because thunks pile up
+(this behaviour is known as space leak). Most of the times I personally find it
+tricky to add strictness to a piece of Haskell code, so I'd like to share my
+latest experience doing that.
 
 We'll be using the Bloom filter implemented in chapter 26 of Real World Haskell
 as an example, the version contained in the book creates the filter lazily:
 our goal will be to create a strict version of that particular piece of code.
 In a nutshell, a [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) is a
 probabilistic data structure that consists of several hash functions and a bit
-array whose API allows only insertion and membership querying. The latter API might
-return false positives with an expected error rate decided when the filter
+array whose API allows only insertion and membership querying. The latter API
+might return false positives with an expected error rate decided when the filter
 is instantiated. Here's a function that builds a Bloom filter lazily:
 
 ``` haskell
@@ -279,3 +279,7 @@ use in our code.
 3. Keep in mind the difference between NF and WHNF: if we cannot manage to force
    evaluation of an expression it's because some sub-expression is still in WHNF
 4. Carefully analyse our code to identify where strictness needs to be added
+
+## Further readings
+- https://www.fpcomplete.com/blog/2017/09/all-about-strictness
+- https://queue.acm.org/detail.cfm?id=2538488
