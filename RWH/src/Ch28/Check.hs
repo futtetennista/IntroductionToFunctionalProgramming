@@ -231,7 +231,10 @@ checkURLs fp =
     setupJob :: Consumer [URL] (ResourceT (StateT JobState IO)) ()
     setupJob =
       (getZipConduit $
-        ZipConduit (filterMCE seenURI .| mapM_C enqueueTasks)
+        ZipConduit (filterMCE seenURI
+                     .| (getZipConduit $
+                          ZipConduit (mapM_CE insertURI)
+                          *> ZipConduit (mapM_C enqueueTasks)))
         <* ZipConduit (mapM_C (updateStats . length)))
 
 
@@ -248,16 +251,14 @@ enqueueTasks urls = do
 
 
 insertURI :: (MonadState JobState m) => URL -> m ()
-insertURI c =
+insertURI url = do
   modify $ \s ->
-    s { linksSeen = Set.insert c (linksSeen s) }
+    s { linksSeen = Set.insert url (linksSeen s) }
 
 
 seenURI :: (MonadState JobState m) => URL -> m Bool
-seenURI url = do
-  newUrl <- (not . Set.member url) <$> gets linksSeen
-  insertURI url
-  return newUrl
+seenURI url =
+  (not . Set.member url) <$> gets linksSeen
 
 
 extractLinks :: StrictBS.ByteString -> [URL]
