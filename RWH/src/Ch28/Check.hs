@@ -22,7 +22,6 @@ stack --resolver lts-8.6 script
 -- module Ch28.Check
 -- where
 
-
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception (IOException, catch)
@@ -141,8 +140,8 @@ getStatusE m =
     getHead uri = do
       request <- parseRequest ("HEAD " ++ show uri)
       response <- httpNoBody request m
-        -- Doesn't work cause of fundep `MonadError IO`
-        -- `catch` (throwError :: HttpException -> IO (Response ()))
+      -- Doesn't work cause of fundep `MonadError IO`
+      -- `catch` (throwError :: HttpException -> IO (Response ()))
       let
         status =
           responseStatus response

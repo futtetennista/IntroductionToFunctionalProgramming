@@ -299,10 +299,10 @@ main = do
     handleConnAsync a =
       -- if an exception occurs and it's not handled the whole loop breaks:
       -- we don't want an open connection to bring down the server!
-      catch (handleConn =<< wait a) handleEx
+      catch (handleConn =<< wait a) logEx
       where
-        handleEx :: IOError -> IO ()
-        handleEx =
+        logEx :: IOError -> IO ()
+        logEx =
           print
 
     handleConn (h, hostname, port) =
