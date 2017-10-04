@@ -76,7 +76,7 @@ main = do
                    (JobState Set.empty 0 jobQueue)
   atomically $ replicateM_ k (writeTChan jobQueue Done)
 
-  waitAll workers
+  waitAll workers -- mapM_ waitCatch workers
   uninterruptibleCancel badLinksWriter
 
   broken <- readTVarIO badCount
